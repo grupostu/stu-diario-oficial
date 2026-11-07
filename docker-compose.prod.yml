@@ -1,0 +1,22 @@
+services:
+  stu-diario-oficial:
+    container_name: stu-diario-oficial
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      - PORT=4700
+      - NODE_ENV=production
+    networks:
+      - stu_global_proxy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:4700/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+networks:
+  stu_global_proxy:
+    external: true

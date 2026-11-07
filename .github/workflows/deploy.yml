@@ -1,0 +1,103 @@
+name: Deploy Stu Diario Oficial
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-stu-diario-oficial
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  CONTABO_HOST: 169.58.255.217
+  DEPLOY_DIR: /srv/stu/stu-diario-oficial
+  SSH_USER: ${{ secrets.CONTABO_SSH_USER || 'root' }}
+  SSH_PORT: ${{ secrets.CONTABO_SSH_PORT || 22 }}
+
+jobs:
+  verify:
+    name: Build & Tests Verification
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify & Test
+        run: |
+          npm install
+          npm run build
+          npm test
+
+  deploy:
+    name: Deploy to Contabo (diariosoficiales.grupostu.com)
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure SSH
+        env:
+          CONTABO_SSH_KEY: ${{ secrets.CONTABO_SSH_KEY }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$CONTABO_SSH_KEY" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          ssh-keyscan -p "$SSH_PORT" -T 15 -H "$CONTABO_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
+          cat << 'SSHEOF' > ~/.ssh/config
+          Host contabo-vps ${{ env.CONTABO_HOST }}
+            HostName ${{ env.CONTABO_HOST }}
+            User ${{ env.SSH_USER }}
+            Port ${{ env.SSH_PORT }}
+            IdentityFile ~/.ssh/id_deploy
+            IdentitiesOnly yes
+            ConnectTimeout 25
+            ConnectionAttempts 5
+            ServerAliveInterval 15
+            ServerAliveCountMax 4
+            StrictHostKeyChecking accept-new
+            BatchMode yes
+          SSHEOF
+          chmod 600 ~/.ssh/config
+
+      - name: Sync sources to VPS
+        run: |
+          retry() {
+            local max=5; local delay=3; local count=1
+            while true; do
+              "$@" && break || {
+                if [ $count -lt $max ]; then
+                  echo "[CI-Resilience] Intento $count fallido. Reintentando en ${delay}s..."
+                  sleep $delay
+                  count=$((count + 1))
+                else
+                  echo "[CI-Resilience] Comando falló tras $max intentos: $*"
+                  return 1
+                fi
+              }
+            done
+          }
+
+          retry ssh contabo-vps "mkdir -p $DEPLOY_DIR"
+          retry rsync -az --delete -e "ssh" \
+            --exclude='.git' --exclude='node_modules' --exclude='dist' \
+            ./ contabo-vps:$DEPLOY_DIR/
+
+      - name: Build and Start Containers
+        run: |
+          ssh contabo-vps bash -se <<REMOTE
+          set -euo pipefail
+          cd $DEPLOY_DIR
+          docker compose -f docker-compose.prod.yml up -d --build
+          docker image prune -f >/dev/null
+          REMOTE
+
+      - name: Verify Containers Health
+        run: |
+          ssh contabo-vps \
+            'for i in $(seq 1 30); do [ "$(docker inspect -f "{{.State.Health.Status}}" stu-diario-oficial)" = healthy ] && echo diario healthy && break; sleep 4; done; docker ps --filter name=stu-diario-oficial'

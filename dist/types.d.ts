@@ -1,0 +1,33 @@
+export type CategoryType = 'EDICTO_JUDICIAL' | 'REGISTRO_MARCA' | 'DECRETO_LEGISLATIVO' | 'ACUERDO_EJECUTIVO' | 'SUBASTA_EMBARGO' | 'BALANCE_FINANCIERO' | 'GENERAL';
+export interface DiarioRecord {
+    id: string;
+    tomo: number;
+    numero: number;
+    fecha: string;
+    pagina: number;
+    categoria: CategoryType;
+    seccion: string;
+    titular: string;
+    contenido: string;
+    duisEncontrados: string[];
+    nitsEncontrados: string[];
+    nombresClave: string[];
+    pdfUrlOficial: string;
+}
+export interface AlertaSuscripcion {
+    id: string;
+    usuarioEmail: string;
+    telefonoWhatsapp?: string;
+    criterioBusqueda: string;
+    tipoCriterio: 'DUI' | 'NOMBRE' | 'MARCA' | 'EMPRESA';
+    activa: boolean;
+    fechaCreacion: string;
+}
+export interface SearchResult {
+    total: number;
+    results: Array<{
+        diario: DiarioRecord;
+        snippet: string;
+        coincidenciaExacta: boolean;
+    }>;
+}
