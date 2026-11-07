@@ -5,7 +5,7 @@
   "main": "dist/server.js",
   "type": "module",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && node -e \"const fs=require('fs'); fs.copyFileSync('src/data_diario_real.json', 'dist/data_diario_real.json'); fs.copyFileSync('src/data_marcas.json', 'dist/data_marcas.json');\"",
     "start": "node dist/server.js",
     "dev": "tsx watch src/server.ts",
     "test": "tsx --test tests/*.test.ts"
