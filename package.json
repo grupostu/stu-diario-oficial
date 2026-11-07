@@ -1,0 +1,25 @@
+{
+  "name": "@stu/diario-oficial",
+  "version": "1.0.0",
+  "description": "Plataforma Inteligente de Búsqueda, Digitalización y Alertas de Diarios Oficiales de El Salvador - Grupo Stu, S.A.S. (diario.grupostu.com)",
+  "main": "dist/server.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "dev": "tsx watch src/server.ts",
+    "test": "tsx --test tests/*.test.ts"
+  },
+  "keywords": ["diario-oficial", "el-salvador", "laip", "edictos", "dui", "alertas", "grupo-stu"],
+  "author": "Grupo Stu, S.A.S.",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.13.1",
+    "tsx": "^4.19.3",
+    "typescript": "^5.7.3"
+  }
+}
