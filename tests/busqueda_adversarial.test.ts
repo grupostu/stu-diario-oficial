@@ -84,6 +84,65 @@ describe('Adversarial: el resaltado cae exactamente donde ocurre la coincidencia
 });
 
 // ------------------------------------------------------------------------------------------------
+describe('Adversarial: fuzz del plegado y del mapa de posiciones', () => {
+  const alfabeto = ['a', 'B', 'ñ', 'Ñ', 'é', 'é', 'İ', 'ß', 'ﬁ', 'ǅ', ' ', '  ', '\n', '\r\n', ' ', '\u0000', '­', '​', '😀', '𝒜', '“', '”', '"', "'", '.', '-', '—', ',', ';', '<', '>', '&', '9', '7', 'ley', 'leyes', 'fiscal', 'No.', 'D.', '690', '\ud800', 'x́', '́', 'º', '№'];
+  const prng = (semilla: number) => () => {
+    semilla = (semilla + 0x6d2b79f5) | 0;
+    let t = Math.imul(semilla ^ (semilla >>> 15), 1 | semilla);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+
+  it('3000 consultas aleatorias hostiles nunca lanzan, respetan los límites y devuelven HTML equilibrado', () => {
+    const r = prng(99);
+    const idx = new DiarioIndex();
+    idx.addBatch(corpus.slice(0, 120).map((d) => ({ ...d })));
+    for (let i = 0; i < 3000; i++) {
+      const n = 1 + Math.floor(r() * 30);
+      let q = '';
+      for (let k = 0; k < n; k++) q += alfabeto[Math.floor(r() * alfabeto.length)]! + (r() < 0.4 ? ' ' : '');
+      q = q.slice(0, 220);
+      const resp = idx.buscar({ q, pagina: 1 + Math.floor(r() * 3), porPagina: 1 + Math.floor(r() * 50) });
+      assert.ok(resp.total >= 0 && resp.resultados.length <= resp.porPagina);
+      assert.ok(resp.consulta.criterios.length <= 16);
+      for (const x of resp.resultados) {
+        for (const c of x.coincidencias) {
+          assert.equal((c.html.match(/<mark/g) ?? []).length, (c.html.match(/<\/mark>/g) ?? []).length);
+          assert.ok(!/<(?!\/?mark)/.test(c.html), `etiqueta sin escapar para ${JSON.stringify(q)}`);
+        }
+      }
+    }
+  });
+
+  it('para 4000 textos aleatorios: el mapa es monótono, el HTML conserva todo el texto y las marcas son subcadenas exactas', () => {
+    const r = prng(424242);
+    const consultas = ['ley', 'leyes fiscal', '"ley fiscal"', 'fiscal 690', 'Decreto No. 690', 'D.690', 'istanbul', 'strasse', 'cafe', 'ano'];
+    for (let i = 0; i < 4000; i++) {
+      const n = 1 + Math.floor(r() * 25);
+      let texto = '';
+      for (let k = 0; k < n; k++) texto += alfabeto[Math.floor(r() * alfabeto.length)]! + (r() < 0.5 ? ' ' : '');
+      const f = nucleo.plegar(texto);
+      assert.equal(f.ini.length, f.plano.length);
+      assert.equal(f.fin.length, f.plano.length);
+      for (let k = 0; k < f.ini.length; k++) {
+        assert.ok(f.ini[k]! >= 0 && f.fin[k]! <= texto.length && f.ini[k]! < f.fin[k]!, `rango inválido en ${JSON.stringify(texto)}`);
+        if (k > 0) assert.ok(f.ini[k]! >= f.ini[k - 1]!, `mapa no monótono en ${JSON.stringify(texto)}`);
+      }
+      for (const q of consultas) {
+        const html = nucleo.resaltarConsulta(texto, q);
+        assert.equal(desescapar(html.replace(/<\/?mark[^>]*>/g, '')), texto, `el HTML perdió o inventó texto: ${JSON.stringify(texto)} / ${q}`);
+        const abiertas = (html.match(/<mark/g) ?? []).length;
+        assert.equal(abiertas, (html.match(/<\/mark>/g) ?? []).length);
+        for (const m of marcado(html)) {
+          assert.ok(m.length > 0 && texto.includes(m), `la marca no es subcadena literal: ${JSON.stringify(m)} en ${JSON.stringify(texto)}`);
+          assert.ok(!/^[\udc00-\udfff]/.test(m) && !/[\ud800-\udbff]$/.test(m) || /\ud800(?![\udc00-\udfff])/.test(texto), 'la marca parte un par sustituto');
+        }
+      }
+    }
+  });
+});
+
+// ------------------------------------------------------------------------------------------------
 describe('Adversarial: oráculo de fuerza bruta sobre el corpus real', () => {
   const idx = new DiarioIndex();
   idx.addBatch(corpus.map((r) => ({ ...r })));
@@ -417,6 +476,17 @@ describe('Adversarial: XSS con datos hostiles del corpus', () => {
     assert.ok(!/<img src=x/i.test(badge.replace(/<img src="[^"]*" alt="" class="w-4 h-4">/, '')), badge);
     const chips = b.run<string>(`renderDuiChipsHtml([${JSON.stringify("');alert(1);//")}], ${JSON.stringify("1' onmouseover='alert(1)")})`);
     assert.ok(!/onclick/.test(chips) && !/onmouseover='/.test(chips), chips);
+  });
+
+  it('la transcripción del visor escapa registros hostiles y resalta con marcas operables con teclado', () => {
+    const mal = '<img src=x onerror=alert(1)>';
+    const b = navegador(() => ({ status: 200, body: {} }));
+    b.run(`currentHighlightedTerm = 'fiscal'; currentEbookPage = 4;`);
+    b.run(`renderTranscriptionCards([{ tomo: ${JSON.stringify(mal)}, numero: 1, pagina: ${JSON.stringify("4' onmouseover='x")}, titular: ${JSON.stringify(mal)}, contenido: ${JSON.stringify('texto ' + mal + ' fiscal <script>x()</script>')}, duisEncontrados: [${JSON.stringify("1'2")}] }])`);
+    const h = b.el('ebook-transcription-content').innerHTML;
+    assert.ok(!/<img src=x/i.test(h) && !/<script>/i.test(h), h);
+    assert.match(h, /<mark class="highlight-clickable"[^>]*tabindex="0"[^>]*role="button"[^>]*>fiscal<\/mark>/);
+    assert.ok(!/onclick="[^"]*(onmouseover|alert)/.test(h));
   });
 
   it('el HTML de la portada no incrusta datos dinámicos ni JSON en <script> con valores del corpus', () => {
