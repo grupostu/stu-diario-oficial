@@ -168,7 +168,7 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
 
   <!-- Cintillo de Deslinde, Transparencia y Fuentes Gubernamentales Oficiales -->
   <div class="bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 border-b border-slate-800 text-xs py-2 px-4 text-center text-slate-400">
-    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono">
+    <div class="max-w-none mx-auto flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono">
       <span class="flex items-center gap-2">
         <img src="/assets/graphics/escudo-soberania-documental.svg" alt="Escudo Soberanía" class="w-4 h-4 inline-block">
         <span>REPÚBLICA DE EL SALVADOR · ARCHIVO CÍVICO SOBERANO DE DIARIOS OFICIALES</span>
@@ -183,7 +183,7 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
 
   <!-- Header Institucional -->
   <header class="border-b border-slate-800/80 bg-slate-950/90 sticky top-0 z-40 backdrop-blur-md">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 lg:py-0 lg:h-20 flex flex-wrap lg:flex-nowrap items-center justify-between gap-3">
+    <div class="max-w-none mx-auto px-4 sm:px-6 lg:px-8 py-3 lg:py-0 lg:h-20 flex flex-wrap lg:flex-nowrap items-center justify-between gap-3">
       <div class="flex items-center gap-3.5 min-w-0">
         <img src="/assets/graphics/escudo-soberania-documental.svg" alt="Escudo Diario Oficial" class="w-12 h-12 shrink-0 rounded-2xl shadow-lg shadow-brand-500/20 border border-brand-500/30">
         <div class="min-w-0">
@@ -209,7 +209,7 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
 
   <!-- Métricas Rápidas -->
   <div class="border-b border-slate-800/60 bg-slate-950/40 py-2.5">
-    <div class="max-w-7xl mx-auto px-4 flex flex-wrap items-center justify-between gap-3 text-xs font-mono text-slate-400">
+    <div class="max-w-none mx-auto px-4 flex flex-wrap items-center justify-between gap-3 text-xs font-mono text-slate-400">
       <div class="flex items-center gap-5 sm:gap-7 flex-wrap">
         <span><strong class="text-white">${stats.totalDocumentos}</strong> Registros Transcritos</span>
         <span><strong class="text-amber-400">Tomo 453 · N° 198</strong> (164 Págs HD)</span>
@@ -223,7 +223,7 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
   </div>
 
   <!-- Contenedor Principal -->
-  <main class="flex-1 max-w-6xl mx-auto px-4 py-8 sm:py-10 w-full">
+  <main class="flex-1 max-w-none mx-auto px-4 py-8 sm:py-10 w-full">
     
     <!-- Hero Principal con Sellos Gráficos -->
     <div class="text-center mb-8">
