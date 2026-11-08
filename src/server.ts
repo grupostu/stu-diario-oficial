@@ -16,6 +16,20 @@ const PORT = process.env.PORT || 4700;
 
 app.use(express.json());
 
+// Servir archivos estáticos (PDFs originales de la gaceta)
+const possiblePublicPaths = [
+  path.join(__dirname, '../public'),
+  path.join(process.cwd(), 'public'),
+  path.join(__dirname, 'public')
+];
+for (const p of possiblePublicPaths) {
+  if (fs.existsSync(p)) {
+    app.use(express.static(p));
+    console.log(`[stu-diario-oficial] Sirviendo archivos estáticos desde: ${p}`);
+    break;
+  }
+}
+
 const index = new DiarioIndex();
 const notifier = new NotifierEngine();
 
@@ -23,6 +37,7 @@ const notifier = new NotifierEngine();
 // CARGA DE DATOS OFICIALES REALES Y MARCAS
 // ------------------------------------------------------------------------------
 let marcasData: any[] = [];
+let allRealRecords: DiarioRecord[] = [];
 
 // 1. Cargar registros extraídos del Diario Oficial real
 const possibleRealPaths = [
@@ -35,9 +50,9 @@ const realDataPath = possibleRealPaths.find(p => fs.existsSync(p));
 if (realDataPath) {
   try {
     const raw = fs.readFileSync(realDataPath, 'utf8');
-    const realRecords: DiarioRecord[] = JSON.parse(raw);
-    index.addBatch(realRecords);
-    console.log(`[stu-diario-oficial] Base de datos enriquecida con ${realRecords.length} publicaciones oficiales reales desde ${realDataPath}.`);
+    allRealRecords = JSON.parse(raw);
+    index.addBatch(allRealRecords);
+    console.log(`[stu-diario-oficial] Base de datos enriquecida con ${allRealRecords.length} publicaciones oficiales reales desde ${realDataPath}.`);
   } catch (err) {
     console.error('[stu-diario-oficial] Error al leer data_diario_real.json:', err);
   }
@@ -66,11 +81,11 @@ if (marcasPath) {
       categoria: 'REGISTRO_MARCA',
       seccion: 'Registro de la Propiedad Intelectual (CNR)',
       titular: `SOLICITUD DE MARCA: ${m.denominacion} (Clase ${m.claseNiza})`,
-      contenido: `REGISTRO DE LA PROPIEDAD INTELECTUAL. Solicitud de registro de signo distintivo. Denominación: "${m.denominacion}". Tipo: ${m.tipoSigno}. Clase Internacional de Niza: ${m.claseNiza}. Cobertura: ${m.claseDescripcion}. Solicitante / Titular: ${m.titular}. Número de Expediente: ${m.expediente}. Tomo ${m.tomo}, Página ${m.pagina}. Publicación oficial para efectos de oposición de terceros.`,
+      contenido: `REGISTRO DE LA PROPIEDAD INTELECTUAL. Solicitud de registro de signo distintivo. Denominación: "${m.denominacion}". Tipo: ${m.tipoSigno}. Clase Internacional de Niza: ${m.claseNiza}. Cobertura: ${m.claseDescripcion}. Solicitante / Titular: ${m.titular}. Número de Expediente: ${m.expediente}. Tomo ${m.tomo}, Página ${m.pagina}. Publicación oficial para efectos de oposición de terceros conforme a la Ley de Marcas.`,
       duisEncontrados: [],
       nitsEncontrados: [],
       nombresClave: [m.denominacion, m.titular],
-      pdfUrlOficial: m.pdfUrlOficial
+      pdfUrlOficial: `/pdf/23-10-2026.pdf#page=${m.pagina}`
     }));
 
     index.addBatch(marcasDiario);
@@ -86,12 +101,12 @@ if (index.count() === 0) {
     parseRawEntry(
       `TRIBUNAL SEGUNDO DE SENTENCIA DE SANTA ANA. Causa Penal No. 120-2024.
 Se hace saber al señor DAVID SAUL ACOSTA MARTINEZ, con Documento Único de Identidad número 02444983-6, que mediante auto de fecha 15 de octubre de 2024 se ha dictado sentencia condenatoria en su contra en calidad de REBELDÍA por el delito de Estafa Informática en perjuicio de la Iglesia de Chalchuapa, condenándole a cuatro años de prisión y al pago de diecinueve mil quinientos dólares de los Estados Unidos de América en concepto de responsabilidad civil. Se libran las correspondientes órdenes de captura.`,
-      { tomo: 441, numero: 204, fecha: '2024-10-28', pagina: 45, pdfUrl: 'https://www.diariooficial.gob.sv/diarios/2024/do-441-204.pdf' }
+      { tomo: 441, numero: 204, fecha: '2024-10-28', pagina: 45, pdfUrl: '/pdf/23-10-2026.pdf#page=45' }
     ),
     parseRawEntry(
       `JUZGADO TERCERO DE LO CIVIL Y MERCANTIL DE SAN SALVADOR.
 Emplazamiento por edicto a la sociedad INVERSIONES SANTA ELENA, S.A. DE C.V., con NIT 0614-120598-101-2, en juicio ejecutivo mercantil promovido por Banco Agrícola para que en el plazo de diez días hábiles conteste la demanda bajo apercibimiento de ley.`,
-      { tomo: 442, numero: 210, fecha: '2024-11-04', pagina: 78, pdfUrl: 'https://www.diariooficial.gob.sv/diarios/2024/do-442-210.pdf' }
+      { tomo: 442, numero: 210, fecha: '2024-11-04', pagina: 78, pdfUrl: '/pdf/23-10-2026.pdf#page=78' }
     )
   ];
   index.addBatch(sampleEntries);
@@ -125,6 +140,21 @@ app.get('/api/v1/search', (req: Request, res: Response) => {
   const forceDui = req.query.forceDui === 'true' || req.query.forceDui === '1';
   const result = index.search(query, categoria, forceDui);
   res.json(result);
+});
+
+// Endpoint para obtener todos los registros transcritos de una página específica para el visor Ebook
+app.get('/api/v1/page-data/:page', (req: Request, res: Response) => {
+  const pageNum = parseInt(String(req.params.page), 10);
+  if (isNaN(pageNum)) {
+    return res.status(400).json({ error: 'Número de página inválido' });
+  }
+
+  const pageRecords = index.getAllRecords().filter(r => r.pagina === pageNum);
+  res.json({
+    pagina: pageNum,
+    totalRegistros: pageRecords.length,
+    records: pageRecords
+  });
 });
 
 // Endpoint especializado para el buscador de marcas
