@@ -1,4 +1,5 @@
-import type { CategoryType, DiarioRecord } from './types.js';
+import { DIGIT_WORD_RE, extractCardinalDuis } from './dui_words.js';
+import type { CategoryType, DiarioRecord, LegalClassification } from './types.js';
 
 const WORDS_MAP: Record<string, string> = {
   cero: '0',
@@ -13,6 +14,35 @@ const WORDS_MAP: Record<string, string> = {
   nueve: '9'
 };
 
+const DIGIT_TO_WORD: string[] = [
+  'CERO',
+  'UNO',
+  'DOS',
+  'TRES',
+  'CUATRO',
+  'CINCO',
+  'SEIS',
+  'SIETE',
+  'OCHO',
+  'NUEVE'
+];
+
+/**
+ * Convierte un DUI canónico (00356274-2) a su representación notarial en palabras:
+ * "CERO CERO TRES CINCO SEIS DOS SIETE CUATRO - DOS"
+ */
+export function duiToWords(dui: string): string {
+  const digits = dui.replace(/\D/g, '');
+  if (digits.length !== 9) return dui;
+  const first8 = digits
+    .slice(0, 8)
+    .split('')
+    .map((d) => DIGIT_TO_WORD[parseInt(d, 10)] || d)
+    .join(' ');
+  const last1 = DIGIT_TO_WORD[parseInt(digits[8]!, 10)] || digits[8];
+  return `${first8} - ${last1}`;
+}
+
 /**
  * Normaliza cualquier entrada de DUI del usuario:
  * - 003562742 (9 dígitos seguidos)
@@ -21,9 +51,15 @@ const WORDS_MAP: Record<string, string> = {
  * - 00356274 2 (separado por espacio)
  * - CERO CERO TRES CINCO SEIS DOS SIETE CUATRO - DOS (escrito en letras)
  */
-export function normalizeDuiInput(input: string): { canonical: string; cleanDigits: string; isValidDui: boolean } {
+export function normalizeDuiInput(input: string): {
+  canonical: string;
+  cleanDigits: string;
+  isValidDui: boolean;
+  incomplete?: boolean;
+  checkDigitOk?: boolean;
+} {
   const trimmed = input.trim().toLowerCase();
-  
+
   // 1. Detectar si viene en palabras
   const wordTokens = trimmed.match(/\b(cero|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve)\b/gi);
   if (wordTokens && wordTokens.length >= 8) {
@@ -33,24 +69,35 @@ export function normalizeDuiInput(input: string): { canonical: string; cleanDigi
     }
     if (digits.length === 9) {
       const canonical = `${digits.slice(0, 8)}-${digits.slice(8)}`;
-      return { canonical, cleanDigits: digits, isValidDui: true };
+      return { canonical, cleanDigits: digits, isValidDui: true, checkDigitOk: validarDigitoDui(digits) };
     }
   }
 
   // 2. Extraer dígitos numéricos
   let digits = trimmed.replace(/\D/g, '');
 
-  // Si tiene entre 6 y 8 dígitos (típico cuando omiten los ceros iniciales en El Salvador), rellenar con 0s a la izquierda
-  if (digits.length >= 6 && digits.length <= 8) {
+  // Solo se rellenan ceros iniciales cuando el usuario separó el dígito verificador ("356274-2"):
+  // sin separador, 6 a 8 dígitos es un DUI incompleto y NO se inventan dígitos.
+  const conSeparador = /^\s*\d{1,8}\s*[-–—\s]\s*\d\s*$/.test(trimmed);
+  if (conSeparador && digits.length >= 6 && digits.length <= 8) {
     digits = digits.padStart(9, '0');
   }
 
   if (digits.length === 9) {
     const canonical = `${digits.slice(0, 8)}-${digits.slice(8)}`;
-    return { canonical, cleanDigits: digits, isValidDui: true };
+    return { canonical, cleanDigits: digits, isValidDui: true, checkDigitOk: validarDigitoDui(digits) };
   }
 
-  return { canonical: input.trim(), cleanDigits: digits, isValidDui: false };
+  const incomplete = digits.length >= 6 && digits.length <= 8 && /^[\d\s\-–—]+$/.test(trimmed);
+  return { canonical: input.trim(), cleanDigits: digits, isValidDui: false, incomplete };
+}
+
+/** Valida el dígito verificador del DUI salvadoreño (módulo 10 con pesos 9..2). */
+export function validarDigitoDui(digits9: string): boolean {
+  if (!/^\d{9}$/.test(digits9)) return false;
+  let suma = 0;
+  for (let i = 0; i < 8; i++) suma += Number(digits9[i]) * (9 - i);
+  return (10 - (suma % 10)) % 10 === Number(digits9[8]);
 }
 
 /**
@@ -76,30 +123,29 @@ export function extractDuis(text: string): string[] {
 
   // 3. DUIs escritos en palabras (obligatorio en resoluciones judiciales salvadoreñas)
   // Ej: CERO CERO TRES CINCO SEIS DOS SIETE CUATRO - DOS
-  const wordsRegex = /\b(cero|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve)\s+(cero|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve)\s+(cero|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve)\s+(cero|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve)\s+(cero|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve)\s+(cero|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve)\s+(cero|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve)\s+(cero|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve)\s*[-–—\s]+\s*(cero|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve)\b/gi;
-  
-  const wordMatches = text.matchAll(wordsRegex);
-  for (const wm of wordMatches) {
-    const digits = [
-      WORDS_MAP[wm[1].toLowerCase()],
-      WORDS_MAP[wm[2].toLowerCase()],
-      WORDS_MAP[wm[3].toLowerCase()],
-      WORDS_MAP[wm[4].toLowerCase()],
-      WORDS_MAP[wm[5].toLowerCase()],
-      WORDS_MAP[wm[6].toLowerCase()],
-      WORDS_MAP[wm[7].toLowerCase()],
-      WORDS_MAP[wm[8].toLowerCase()],
-      WORDS_MAP[wm[9].toLowerCase()]
-    ].join('');
-    found.add(`${digits.slice(0, 8)}-${digits.slice(8)}`);
+  // La forma verbal no debe ser parte de una racha más larga de palabras-dígito (p. ej. una matrícula
+  // registral "NUEVE CERO UNO ... TRES-CERO CERO CERO CERO CERO" no es un DUI).
+  const wordsRegex = new RegExp(
+    String.raw`(?<!${DIGIT_WORD_RE}\s+)\b(${DIGIT_WORD_RE})(?:\s+(${DIGIT_WORD_RE})){7}\s*[-–—\s]+\s*(${DIGIT_WORD_RE})\b(?!\s+${DIGIT_WORD_RE}\b)`,
+    'gi'
+  );
+
+  for (const wm of text.matchAll(wordsRegex)) {
+    const words = wm[0].toLowerCase().match(new RegExp(DIGIT_WORD_RE, 'g')) || [];
+    const digits = words.map((w) => WORDS_MAP[w]).join('');
+    if (digits.length === 9) found.add(`${digits.slice(0, 8)}-${digits.slice(8)}`);
   }
+
+  // 4. DUIs en forma cardinal ("cero dos millones treinta y seis mil ... - ocho")
+  for (const c of extractCardinalDuis(text)) found.add(c);
 
   return Array.from(found);
 }
 
 export function extractNits(text: string): string[] {
-  const matches = text.match(/\b\d{4}-\d{6}-\d{3}-\d\b/g) || [];
-  return Array.from(new Set(matches));
+  // Tolera saltos de línea y espacios alrededor de los guiones (texto OCR de columnas angostas)
+  const matches = text.match(/\b\d{4}\s*-\s*\d{6}\s*-\s*\d{3}\s*-\s*\d\b/g) || [];
+  return Array.from(new Set(matches.map((m) => m.replace(/\s+/g, ''))));
 }
 
 export function detectCategory(text: string): CategoryType {
@@ -125,6 +171,82 @@ export function detectCategory(text: string): CategoryType {
   return 'GENERAL';
 }
 
+/**
+ * Clasificación Jurídica Automática de alta precisión (7 categorías canónicas):
+ * - Aceptación de Herencia
+ * - Declaratoria de Rebeldía
+ * - Título Supletorio
+ * - Subasta Pública
+ * - Aviso de Sociedad
+ * - Decreto/Acuerdo
+ * - Edicto Judicial
+ */
+export function classifyLegalRecord(text: string, category?: CategoryType): LegalClassification {
+  const lower = text.toLowerCase();
+  if (
+    lower.includes('herencia') ||
+    lower.includes('heredero') ||
+    lower.includes('sucesión') ||
+    lower.includes('sucesion') ||
+    lower.includes('causante') ||
+    lower.includes('intestada')
+  ) {
+    return 'Aceptación de Herencia';
+  }
+  if (
+    lower.includes('rebeldía') ||
+    lower.includes('rebeldia') ||
+    lower.includes('ausente') ||
+    lower.includes('orden de captura') ||
+    lower.includes('órdenes de captura')
+  ) {
+    return 'Declaratoria de Rebeldía';
+  }
+  if (
+    lower.includes('título supletorio') ||
+    lower.includes('titulo supletorio') ||
+    lower.includes('titulación supletoria') ||
+    lower.includes('titulacion supletoria') ||
+    lower.includes('título municipal')
+  ) {
+    return 'Título Supletorio';
+  }
+  if (
+    category === 'SUBASTA_EMBARGO' ||
+    lower.includes('subasta') ||
+    lower.includes('remate') ||
+    lower.includes('embargo') ||
+    lower.includes('pública subasta')
+  ) {
+    return 'Subasta Pública';
+  }
+  if (
+    category === 'BALANCE_FINANCIERO' ||
+    category === 'REGISTRO_MARCA' ||
+    lower.includes('sociedad anónima') ||
+    lower.includes('s.a. de c.v.') ||
+    lower.includes('balance general') ||
+    lower.includes('disolución') ||
+    lower.includes('liquidación') ||
+    lower.includes('marca') ||
+    lower.includes('signo distintivo')
+  ) {
+    return 'Aviso de Sociedad';
+  }
+  if (
+    category === 'DECRETO_LEGISLATIVO' ||
+    category === 'ACUERDO_EJECUTIVO' ||
+    lower.includes('decreto no') ||
+    lower.includes('acuerdo no') ||
+    lower.includes('órgano legislativo') ||
+    lower.includes('organo legislativo') ||
+    lower.includes('ramo de')
+  ) {
+    return 'Decreto/Acuerdo';
+  }
+  return 'Edicto Judicial';
+}
+
 export function parseRawEntry(
   rawText: string,
   meta: { tomo: number; numero: number; fecha: string; pagina: number; pdfUrl: string }
@@ -133,6 +255,7 @@ export function parseRawEntry(
   const duis = extractDuis(rawText);
   const nits = extractNits(cleaned);
   const categoria = detectCategory(cleaned);
+  const clasificacionJuridica = classifyLegalRecord(cleaned, categoria);
 
   const lines = rawText.split('\n').map((l) => l.trim()).filter(Boolean);
   const titular = lines[0]?.slice(0, 120) || `Publicación Oficial Pag. ${meta.pagina}`;
@@ -144,6 +267,7 @@ export function parseRawEntry(
     fecha: meta.fecha,
     pagina: meta.pagina,
     categoria,
+    clasificacionJuridica,
     seccion: categoria === 'EDICTO_JUDICIAL' ? 'Carteles Oficiales y Edictos Judiciales' : categoria === 'REGISTRO_MARCA' ? 'Registro de la Propiedad Intelectual' : 'Sección Oficial General',
     titular,
     contenido: cleaned,

@@ -9,6 +9,7 @@ RUN npm run build
 FROM node:22-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
+ENV NODE_OPTIONS="--max-old-space-size=384"
 ENV PORT=4700
 COPY package.json ./
 RUN npm install --omit=dev

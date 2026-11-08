@@ -1,3 +1,5 @@
+import { validarAlerta } from './alert_validation.js';
+import { resolverEnlaceVisor } from './visor.js';
 import express, { type Request, type Response } from 'express';
 import fs from 'fs';
 import path from 'path';
@@ -6,17 +8,19 @@ import { DiarioIndex } from './indexer.js';
 import { NotifierEngine } from './notifier.js';
 import { parseRawEntry } from './parser.js';
 import { renderPortal } from './views.js';
+import { renderPrivacidad } from './privacidad.js';
 import type { DiarioRecord } from './types.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+app.disable('x-powered-by');
 const PORT = process.env.PORT || 4700;
 
-app.use(express.json());
+app.use(express.json({ limit: '64kb' }));
 
-// Servir archivos estáticos (PDFs originales de la gaceta)
+// Servir archivos estáticos (PDFs originales de la gaceta) con caché inmutable de 30 días
 const possiblePublicPaths = [
   path.join(__dirname, '../public'),
   path.join(process.cwd(), 'public'),
@@ -24,7 +28,7 @@ const possiblePublicPaths = [
 ];
 for (const p of possiblePublicPaths) {
   if (fs.existsSync(p)) {
-    app.use(express.static(p));
+    app.use(express.static(p, { maxAge: '30d', immutable: true }));
     console.log(`[stu-diario-oficial] Sirviendo archivos estáticos desde: ${p}`);
     break;
   }
@@ -113,10 +117,64 @@ Emplazamiento por edicto a la sociedad INVERSIONES SANTA ELENA, S.A. DE C.V., co
 }
 
 // ------------------------------------------------------------------------------
+// ÍNDICES O(1) Y CACHÉ EN MEMORIA PARA ALTA CONCURRENCIA
+// ------------------------------------------------------------------------------
+const recordsByPage = new Map<number, DiarioRecord[]>();
+for (const r of index.getAllRecords()) {
+  const list = recordsByPage.get(r.pagina);
+  if (list) list.push(r);
+  else recordsByPage.set(r.pagina, [r]);
+}
+
+const cachedEdictos = {
+  total: index.getRecentByCategory('EDICTO_JUDICIAL', 20).length,
+  edictos: index.getRecentByCategory('EDICTO_JUDICIAL', 20)
+};
+
+const cachedLeyes = {
+  total: index.getRecentByCategory('DECRETO_LEGISLATIVO', 15).length,
+  leyes: index.getRecentByCategory('DECRETO_LEGISLATIVO', 15)
+};
+
+let cachedPortalKey = '';
+let cachedPortalHtml = '';
+
+export function invalidatePortalCache(): void {
+  cachedPortalKey = '';
+  cachedPortalHtml = '';
+}
+
+function getPortalHtml(): string {
+  const docs = index.count();
+  const alerts = notifier.getSubscriptionsCount();
+  const key = `${docs}:${alerts}`;
+  if (key !== cachedPortalKey || !cachedPortalHtml) {
+    cachedPortalHtml = renderPortal({ totalDocumentos: docs, totalAlertas: alerts });
+    cachedPortalKey = key;
+  }
+  return cachedPortalHtml;
+}
+// Pre-calentar el HTML del portal en arranque
+getPortalHtml();
+
+const EDGE_HTML_HEADERS = {
+  'Content-Type': 'text/html; charset=utf-8',
+  'Cache-Control': 'public, max-age=300, s-maxage=3600, stale-while-revalidate=86400',
+  'CDN-Cache-Control': 'public, max-age=3600, stale-while-revalidate=86400',
+  'Cloudflare-CDN-Cache-Control': 'public, max-age=3600, stale-while-revalidate=86400'
+};
+
+const EDGE_API_HEADERS = {
+  'Cache-Control': 'public, max-age=120, s-maxage=600, stale-while-revalidate=3600',
+  'CDN-Cache-Control': 'public, max-age=600, stale-while-revalidate=3600'
+};
+
+// ------------------------------------------------------------------------------
 // RUTAS WEB Y API
 // ------------------------------------------------------------------------------
 
-app.get('/health', (_req: Request, res: Response) => {
+app.get(['/health', '/api/health'], (_req: Request, res: Response) => {
+  res.setHeader('Cache-Control', 'no-store');
   res.json({
     status: 'ok',
     service: 'stu-diario-oficial',
@@ -128,28 +186,48 @@ app.get('/health', (_req: Request, res: Response) => {
 });
 
 app.get('/', (_req: Request, res: Response) => {
-  res.send(renderPortal({
-    totalDocumentos: index.count(),
-    totalAlertas: notifier.getSubscriptionsCount()
-  }));
+  res.set(EDGE_HTML_HEADERS);
+  res.send(getPortalHtml());
+});
+
+// Mapa del sitio y robots para buscadores (la portada es la única página pública indexable).
+app.get('/privacidad', (_req: Request, res: Response) => {
+  res.set(EDGE_HTML_HEADERS);
+  res.send(renderPrivacidad());
+});
+
+app.get('/robots.txt', (_req: Request, res: Response) => {
+  res.type('text/plain').send('User-agent: *\nAllow: /\nDisallow: /api/\nSitemap: https://diariosoficiales.grupostu.com/sitemap.xml\n');
+});
+app.get('/sitemap.xml', (_req: Request, res: Response) => {
+  res.type('application/xml').send('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>https://diariosoficiales.grupostu.com/</loc><changefreq>weekly</changefreq></url><url><loc>https://diariosoficiales.grupostu.com/privacidad</loc></url></urlset>\n');
 });
 
 app.get('/api/v1/search', (req: Request, res: Response) => {
-  const query = String(req.query.q || '');
+  const query = String(req.query.q || '').slice(0, 120);
   const categoria = req.query.categoria ? String(req.query.categoria) : undefined;
   const forceDui = req.query.forceDui === 'true' || req.query.forceDui === '1';
   const result = index.search(query, categoria, forceDui);
+  res.set(EDGE_API_HEADERS);
   res.json(result);
 });
 
-// Endpoint para obtener todos los registros transcritos de una página específica para el visor Ebook
+// Enlace directo desde cada resultado al folio del PDF en el Visor Ebook: /visor?id=...
+app.get('/visor', (req: Request, res: Response) => {
+  const destino = resolverEnlaceVisor(index, req.query.id);
+  if (!destino) return res.status(404).json({ error: 'Publicación no encontrada' });
+  res.redirect(302, destino);
+});
+
+// Endpoint O(1) para obtener todos los registros transcritos de una página específica para el visor Ebook
 app.get('/api/v1/page-data/:page', (req: Request, res: Response) => {
   const pageNum = parseInt(String(req.params.page), 10);
   if (isNaN(pageNum)) {
     return res.status(400).json({ error: 'Número de página inválido' });
   }
 
-  const pageRecords = index.getAllRecords().filter(r => r.pagina === pageNum);
+  const pageRecords = recordsByPage.get(pageNum) ?? [];
+  res.set(EDGE_API_HEADERS);
   res.json({
     pagina: pageNum,
     totalRegistros: pageRecords.length,
@@ -159,7 +237,7 @@ app.get('/api/v1/page-data/:page', (req: Request, res: Response) => {
 
 // Endpoint especializado para el buscador de marcas
 app.get('/api/v1/marcas', (req: Request, res: Response) => {
-  const query = String(req.query.q || '').trim().toLowerCase();
+  const query = String(req.query.q || '').trim().toLowerCase().slice(0, 100);
   const clase = req.query.clase ? String(req.query.clase).trim() : '';
 
   let filtered = marcasData;
@@ -169,7 +247,7 @@ app.get('/api/v1/marcas', (req: Request, res: Response) => {
   }
 
   if (query) {
-    filtered = filtered.filter(m => 
+    filtered = filtered.filter(m =>
       m.denominacion.toLowerCase().includes(query) ||
       m.titular.toLowerCase().includes(query) ||
       m.claseDescripcion.toLowerCase().includes(query) ||
@@ -177,6 +255,7 @@ app.get('/api/v1/marcas', (req: Request, res: Response) => {
     );
   }
 
+  res.set(EDGE_API_HEADERS);
   res.json({
     total: filtered.length,
     marcas: filtered
@@ -185,27 +264,22 @@ app.get('/api/v1/marcas', (req: Request, res: Response) => {
 
 // Endpoint para los últimos edictos judiciales
 app.get('/api/v1/edictos-recientes', (_req: Request, res: Response) => {
-  const edictos = index.getRecentByCategory('EDICTO_JUDICIAL', 20);
-  res.json({
-    total: edictos.length,
-    edictos
-  });
+  res.set(EDGE_API_HEADERS);
+  res.json(cachedEdictos);
 });
 
 // Endpoint para decretos y resoluciones oficiales
 app.get('/api/v1/leyes-recientes', (_req: Request, res: Response) => {
-  const leyes = index.getRecentByCategory('DECRETO_LEGISLATIVO', 15);
-  res.json({
-    total: leyes.length,
-    leyes
-  });
+  res.set(EDGE_API_HEADERS);
+  res.json(cachedLeyes);
 });
 
 app.post('/api/v1/alerts', (req: Request, res: Response) => {
-  const { usuarioEmail, telefonoWhatsapp, criterioBusqueda, tipoCriterio } = req.body;
-  if (!usuarioEmail || !criterioBusqueda) {
-    return res.status(400).json({ error: 'Faltan campos obligatorios' });
+  const check = validarAlerta(req.body);
+  if (!check.ok) {
+    return res.status(400).json({ error: check.error });
   }
+  const { usuarioEmail, telefonoWhatsapp, criterioBusqueda, tipoCriterio } = check.value;
 
   const sub = notifier.subscribe({
     usuarioEmail,
@@ -214,7 +288,9 @@ app.post('/api/v1/alerts', (req: Request, res: Response) => {
     tipoCriterio: tipoCriterio || 'DUI'
   });
 
-  res.status(201).json({ success: true, subscription: sub });
+  invalidatePortalCache();
+  // Minimización: no se devuelven DUI, correo ni teléfono; solo el identificador de la alerta.
+  res.status(201).json({ success: true, id: sub.id });
 });
 
 app.listen(PORT, () => {

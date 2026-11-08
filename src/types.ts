@@ -7,6 +7,15 @@ export type CategoryType =
   | 'BALANCE_FINANCIERO'
   | 'GENERAL';
 
+export type LegalClassification =
+  | 'Aceptación de Herencia'
+  | 'Edicto Judicial'
+  | 'Declaratoria de Rebeldía'
+  | 'Título Supletorio'
+  | 'Subasta Pública'
+  | 'Aviso de Sociedad'
+  | 'Decreto/Acuerdo';
+
 export interface DiarioRecord {
   id: string;
   tomo: number;
@@ -14,6 +23,7 @@ export interface DiarioRecord {
   fecha: string; // YYYY-MM-DD
   pagina: number;
   categoria: CategoryType;
+  clasificacionJuridica?: LegalClassification;
   seccion: string;
   titular: string;
   contenido: string;
@@ -21,6 +31,7 @@ export interface DiarioRecord {
   nitsEncontrados: string[];
   nombresClave: string[];
   pdfUrlOficial: string;
+  pdfUrlLocal?: string;
 }
 
 export interface AlertaSuscripcion {

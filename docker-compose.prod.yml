@@ -8,14 +8,26 @@ services:
     environment:
       - PORT=4700
       - NODE_ENV=production
+      - NODE_OPTIONS=--max-old-space-size=384
     networks:
       - stu_global_proxy
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:4700/health"]
       interval: 15s
       timeout: 5s
       retries: 3
       start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          memory: 128M
 
 networks:
   stu_global_proxy:
