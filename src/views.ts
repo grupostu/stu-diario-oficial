@@ -84,6 +84,11 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
       border-radius: 4px;
       box-shadow: 0 0 0 1px #facc15;
     }
+    /* Las marcas fluyen en línea y parten en varias líneas (móvil): nunca desbordan el ancho de la tarjeta */
+    mark.highlight-clickable, mark.gs-mark { display: inline; overflow-wrap: anywhere; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+    mark.highlight-clickable { padding: 0 4px; }
+    mark.highlight-clickable:focus-visible, button:focus-visible, [data-ebook-pag]:focus-visible, a:focus-visible, select:focus-visible, input:focus-visible { outline: 3px solid #38bdf8; outline-offset: 2px; }
+    @media (forced-colors: active) { mark { background: Mark; color: MarkText; forced-color-adjust: none; } }
     mark.highlight-clickable:hover {
       transform: scale(1.05);
       background: #fef08a;
@@ -281,7 +286,7 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
           <div>
             <div class="relative">
               <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
-              <input type="text" id="query-input" maxlength="200" autocomplete="off" aria-describedby="ayuda-busqueda" placeholder="Ingresa DUI (ej. 00000000-0, 000000000 o en letras), Nombre Completo o Causante..."
+              <input type="text" id="query-input" maxlength="200" aria-label="Buscar en el Diario Oficial" enterkeyhint="search" autocomplete="off" aria-describedby="ayuda-busqueda" placeholder="Ingresa DUI (ej. 00000000-0, 000000000 o en letras), Nombre Completo o Causante..."
                 oninput="handleDuiInputPreview(this.value)"
                 class="w-full bg-slate-950/90 border border-slate-700 focus:border-brand-500 rounded-2xl pl-11 pr-4 py-4 text-white text-sm outline-none font-mono">
             </div>
@@ -310,17 +315,19 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
           </div>
           
           <div class="flex flex-col lg:flex-row gap-3">
-            <select id="category-filter" class="flex-1 min-w-0bg-slate-950 border border-slate-700 rounded-2xl px-4 py-3 text-slate-300 text-xs sm:text-sm outline-none font-medium">
+            <select id="category-filter" aria-label="Filtrar por sección del Diario Oficial" class="flex-1 min-w-0 bg-slate-950 border border-slate-700 rounded-2xl px-4 py-3 text-slate-300 text-xs sm:text-sm outline-none font-medium">
               <option value="">Todas las Secciones del Diario Oficial</option>
               <option value="EDICTO_JUDICIAL">Edictos Judiciales y Notariales (Herencias, Emplazamientos, Rebeldías)</option>
               <option value="REGISTRO_MARCA">Registro de Marcas y Patentes (CNR)</option>
               <option value="DECRETO_LEGISLATIVO">Decretos de la Asamblea Legislativa</option>
               <option value="SUBASTA_EMBARGO">Subastas, Embargos y Remates Públicos</option>
               <option value="ACUERDO_EJECUTIVO">Acuerdos Ejecutivos y Reglamentos</option>
+              <option value="BALANCE_FINANCIERO">Balances y Estados Financieros</option>
+              <option value="GENERAL">Otras Publicaciones Oficiales</option>
             </select>
 
             <div class="flex items-center gap-2 bg-slate-950 px-4 py-3 rounded-2xl border border-slate-700">
-              <input type="checkbox" id="force-dui-check" class="w-5 h-5 roundedtext-brand-500 focus:ring-0 bg-slate-900 border-slate-600">
+              <input type="checkbox" id="force-dui-check" class="w-5 h-5 rounded text-brand-500 focus:ring-0 bg-slate-900 border-slate-600">
               <label for="force-dui-check" class="text-xs text-slate-300 select-none cursor-pointer">Filtrar exclusivamente por DUI</label>
             </div>
 
@@ -332,7 +339,7 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
       </div>
 
       <!-- Resultados Dinámicos -->
-      <div id="search-aviso" role="status" class="hidden mb-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-300 text-left"></div>
+      <div id="search-aviso" role="alert" class="hidden mb-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-300 text-left"></div>
       <div id="search-resumen" role="status" aria-live="polite" aria-atomic="true" class="hidden mb-4 p-4 rounded-2xl bg-slate-900/70 border border-slate-700 text-left outline-none"></div>
       <div id="results-container" class="space-y-4" aria-live="polite" aria-relevant="additions">
         <!-- Renderizado por JS -->
@@ -849,7 +856,7 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
       };
       const st = map[label] || map['Edicto Judicial'];
       return \`<span class="inline-flex items-center gap-1.5 text-xs font-mono font-bold px-2.5 py-1 rounded-lg border \${st.cls}">
-        <img src="\${st.icon}" alt="" class="w-4 h-4"> \${label}
+        <img src="\${st.icon}" alt="" class="w-4 h-4"> \${escapeHtmlText(label)}
       </span>\`;
     }
 
@@ -859,10 +866,10 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
         '<span class="text-[11px] font-mono text-amber-400 font-bold flex items-center gap-1"><i class="fa-solid fa-fingerprint"></i> DUIs Identificados:</span>' +
         duis.map(dui => {
           const words = duiToNotarialWordsJS(dui);
-          return \`<button type="button" onclick="openEbookViewer(\${pagina}, '\${dui}')" title="Clic para abrir el Visor Ebook en Pág. \${pagina} y localizar en el PDF: \${words}"
+          return \`<button type="button" data-ebook-pag="\${escapeHtmlText(parseInt(pagina, 10) || 1)}" data-term="\${escapeHtmlText(dui)}" title="Clic para abrir el Visor Ebook en Pág. \${escapeHtmlText(parseInt(pagina, 10) || 1)} y localizar en el PDF: \${escapeHtmlText(words)}"
             class="group px-2.5 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-400 text-amber-300 hover:text-slate-950 border border-amber-500/40 text-xs font-mono font-black transition-all flex items-center gap-1.5 shadow-sm">
-            <span>\${dui}</span>
-            <span class="text-[10px] text-amber-200/80 group-hover:text-slate-900 font-normal hidden sm:inline">(\${words.split(' ').slice(0, 3).join(' ')}...)</span>
+            <span>\${escapeHtmlText(dui)}</span>
+            <span class="text-[10px] text-amber-200/80 group-hover:text-slate-900 font-normal hidden sm:inline">(\${escapeHtmlText(words.split(' ').slice(0, 3).join(' '))}...)</span>
             <i class="fa-solid fa-crosshairs text-[10px]"></i>
           </button>\`;
         }).join('') +
@@ -913,9 +920,9 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
         <div class="text-amber-400 font-bold border-b border-slate-800 pb-1.5 mb-2">CERTIFICACIÓN DE REFERENCIA HEBDO-DOCUMENTAL (LAIP ARTS. 10 Y 11)</div>
         <div><strong>Órgano / Fuente Oficial:</strong> Diario Oficial de la República de El Salvador (Imprenta Nacional)</div>
         <div><strong>Datos de Edición:</strong> Tomo N° 453 · Diario N° 198 · Fecha: 23 de Octubre de 2026</div>
-        <div><strong>Ubicación Exacta:</strong> Página <strong>\${currentEbookPage} de 164</strong></div>
-        <div><strong>Clasificación Jurídica:</strong> \${clasif}</div>
-        <div><strong>Término / DUI Verificado:</strong> \${currentHighlightedTerm || (duisList.length ? duisList.join(', ') : 'Consulta General de Hoja')}</div>
+        <div><strong>Ubicación Exacta:</strong> Página <strong>\${escapeHtmlText(currentEbookPage)} de 164</strong></div>
+        <div><strong>Clasificación Jurídica:</strong> \${escapeHtmlText(clasif)}</div>
+        <div><strong>Término / DUI Verificado:</strong> \${escapeHtmlText(currentHighlightedTerm || (duisList.length ? duisList.join(', ') : 'Consulta General de Hoja'))}</div>
         <div><strong>URL Primaria Estatal:</strong> https://www.diariooficial.gob.sv/</div>
         <div class="text-[11px] text-emerald-400 pt-2 border-t border-slate-800">Referencia informativa indexada por Grupo Stu, S.A.S. No sustituye al Diario Oficial publicado por la imprenta nacional; verifique siempre en la fuente estatal.</div>
       \`;
@@ -1309,7 +1316,7 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
     function buildInteractiveHighlightedHtml(content, term, pageNum) {
       if (!term || !term.trim()) return gsEscapar(content);
       const pg = parseInt(pageNum, 10) || 1;
-      return gsResaltarConsulta(content, term, 'highlight-clickable', ' data-pag="' + pg + '" title="Clic para localizar y enfocar en el PDF original (Pág. ' + pg + ')"');
+      return gsResaltarConsulta(content, term, 'highlight-clickable', ' data-pag="' + pg + '" tabindex="0" role="button" title="Clic o Enter para localizar y enfocar en el PDF original (Pág. ' + pg + ')"');
     }
 
     function selectArticleCardAndFocusPdf(idx, anchorPhrase, pageNum) {
@@ -1340,8 +1347,8 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
         transBox.innerHTML = \`
           <div class="p-5 rounded-2xl bg-slate-950 border border-slate-800 text-slate-400 text-center space-y-2">
             <i class="fa-solid fa-file-pdf text-2xl text-brand-400"></i>
-            <p class="font-bold text-white">Página \${currentEbookPage} de 164 · Vista Facsimilar</p>
-            <p class="text-[11px] text-slate-400">El motor PDF.js a la izquierda ha cargado la capa de texto completa de la página \${currentEbookPage}. Usa el buscador superior para remarcar cualquier palabra directamente sobre el PDF.</p>
+            <p class="font-bold text-white">Página \${escapeHtmlText(currentEbookPage)} de 164 · Vista Facsimilar</p>
+            <p class="text-[11px] text-slate-400">El motor PDF.js a la izquierda ha cargado la capa de texto completa de la página \${escapeHtmlText(currentEbookPage)}. Usa el buscador superior para remarcar cualquier palabra directamente sobre el PDF.</p>
           </div>\`;
         return;
       }
@@ -1360,9 +1367,9 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
               '<span class="text-[10px] text-amber-400 font-bold"><i class="fa-solid fa-fingerprint mr-1"></i>DUIs Identificados (Clic para enfocar en PDF):</span>' +
               rec.duisEncontrados.map(d => {
                 const w = duiToNotarialWordsJS(d);
-                return \`<button type="button" onclick="focusTermInPdfFromTranscription('\${d}', \${rec.pagina})" title="Clic para localizar y enfocar en el PDF original: \${w}"
+                return \`<button type="button" data-focus-term="\${escapeHtmlText(d)}" data-pag="\${escapeHtmlText(parseInt(rec.pagina, 10) || 1)}" title="Clic para localizar y enfocar en el PDF original: \${escapeHtmlText(w)}"
                   class="px-2 py-0.5 rounded bg-amber-400/20 hover:bg-amber-400 text-amber-300 hover:text-slate-950 border border-amber-400/40 text-[11px] font-black transition-all cursor-pointer">
-                  \${d} <i class="fa-solid fa-location-crosshairs ml-0.5 text-[10px]"></i>
+                  \${escapeHtmlText(d)} <i class="fa-solid fa-location-crosshairs ml-0.5 text-[10px]"></i>
                 </button>\`;
               }).join('') +
             '</div>'
@@ -1373,7 +1380,7 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
             <div class="flex flex-wrap items-center justify-between gap-1.5 border-b border-slate-800 pb-2">
               \${getLegalClassificationBadge(clasif)}
               <span class="text-[11px] font-mono font-bold text-amber-300 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
-                Tomo \${rec.tomo} · N° \${rec.numero} · Pág. \${rec.pagina} de 164
+                Tomo \${escapeHtmlText(rec.tomo)} · N° \${escapeHtmlText(rec.numero)} · Pág. \${escapeHtmlText(rec.pagina)} de 164
               </span>
             </div>
             <h6 class="font-bold text-white text-xs leading-snug">\${escapeHtmlText(rec.titular)}</h6>
@@ -1433,9 +1440,37 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
     }
 
     // Búsqueda General y DUI: resultados por campo y párrafo (ver src/busqueda_vista.ts)
-    function searchDiario(e, pagina) {
+    // Cada consulta lleva un número de solicitud y su propio AbortController: una respuesta vieja jamás pisa a la nueva.
+    let gsSolicitudId = 0;
+    let gsAbortar = null;
+    let gsPaginaActual = 1;
+
+    function gsMostrarFallo(contenedor, titulo, detalle, conReintento) {
+      contenedor.innerHTML = '<div role="alert" class="glass-card p-6 rounded-3xl text-center border border-rose-500/40">' +
+        '<h4 class="text-base font-bold text-white">' + escapeHtmlText(titulo) + '</h4>' +
+        '<p class="text-xs sm:text-sm text-slate-300 mt-1 max-w-md mx-auto">' + escapeHtmlText(detalle) + '</p>' +
+        (conReintento ? '<button type="button" data-gs-reintentar="1" class="mt-3 px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-brand-400 font-bold text-xs">Reintentar</button>' : '') +
+        '</div>';
+    }
+
+    // Dirección compartible: ?q=...&categoria=...&forceDui=1&pagina=n
+    function gsActualizarUrl(q, cat, forceDui, pag, reemplazar) {
+      try {
+        const p = new URLSearchParams();
+        if (q) p.set('q', q);
+        if (cat) p.set('categoria', cat);
+        if (forceDui) p.set('forceDui', '1');
+        if (pag > 1) p.set('pagina', String(pag));
+        const destino = location.pathname + (p.toString() ? '?' + p.toString() : '');
+        if (destino === location.pathname + location.search) return;
+        if (reemplazar) history.replaceState(null, '', destino);
+        else history.pushState(null, '', destino);
+      } catch (_) { /* historial no disponible: la búsqueda funciona igual */ }
+    }
+
+    function searchDiario(e, pagina, sinHistorial) {
       if (e && e.preventDefault) e.preventDefault();
-      const pag = parseInt(pagina, 10) > 1 ? parseInt(pagina, 10) : 1;
+      const pag = parseInt(pagina, 10) > 1 ? Math.min(parseInt(pagina, 10), 1000) : 1;
       const q = document.getElementById('query-input').value.trim();
       const cat = document.getElementById('category-filter').value;
       const forceDui = document.getElementById('force-dui-check').checked;
@@ -1443,17 +1478,28 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
       const resumenEl = document.getElementById('search-resumen');
       const btn = document.getElementById('btn-search');
       const avisoEl = document.getElementById('search-aviso');
+      const idSolicitud = ++gsSolicitudId;
+      if (gsAbortar) { try { gsAbortar.abort(); } catch (_) { /* ya terminó */ } gsAbortar = null; }
       avisoEl.classList.add('hidden');
       resumenEl.classList.add('hidden');
       resumenEl.innerHTML = '';
-      gsActivarAcciones(resContainer, function (n) { searchDiario(null, n); });
+      gsActivarAcciones(resContainer, function (n) { searchDiario(null, n > 0 ? n : gsPaginaActual); });
+
+      const restaurarBoton = function () {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-bolt"></i> Consultar Archivo Oficial';
+        resContainer.removeAttribute('aria-busy');
+      };
 
       if (q.length === 0) {
+        restaurarBoton();
         avisoEl.innerText = 'Escribe un DUI, un nombre, un número de decreto o una frase entre comillas para buscar en el archivo.';
         avisoEl.classList.remove('hidden');
         resContainer.innerHTML = '';
         return;
       }
+      gsPaginaActual = pag;
+      if (!sinHistorial) gsActualizarUrl(q, cat, forceDui, pag, false);
 
       btn.disabled = true;
       btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Consultando Archivo...';
@@ -1464,45 +1510,52 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
                   (cat ? '&categoria=' + encodeURIComponent(cat) : '') +
                   (forceDui ? '&forceDui=1' : '') +
                   (pag > 1 ? '&pagina=' + pag : '');
+      const control = typeof AbortController === 'function' ? new AbortController() : null;
+      gsAbortar = control;
 
-      fetch(url)
-        .then(r => r.json())
-        .then(data => {
-          btn.disabled = false;
-          btn.innerHTML = '<i class="fa-solid fa-bolt"></i> Consultar Archivo Oficial';
-          resContainer.removeAttribute('aria-busy');
+      fetch(url, control ? { signal: control.signal, headers: { Accept: 'application/json' } } : { headers: { Accept: 'application/json' } })
+        .then(function (r) {
+          return r.json().catch(function () { return {}; }).then(function (cuerpo) { return { status: r.status, ok: r.ok, data: cuerpo || {} }; });
+        })
+        .then(function (res) {
+          if (idSolicitud !== gsSolicitudId) return; // llegó tarde: ya hay una consulta más reciente
+          restaurarBoton();
+          const data = res.data;
+          if (res.status === 429) {
+            gsMostrarFallo(resContainer, 'Demasiadas consultas seguidas', 'Espera unos segundos antes de volver a buscar.', true);
+            return;
+          }
+          if (res.status === 400) {
+            resContainer.innerHTML = '<div role="alert" class="glass-card p-6 rounded-3xl text-center border border-amber-500/40"><i class="fa-solid fa-triangle-exclamation text-3xl text-amber-400 mb-2"></i><h4 class="text-base font-bold text-white">Revisa lo que escribiste</h4><p class="text-xs sm:text-sm text-slate-300 mt-1 max-w-md mx-auto">' + escapeHtmlText(data.aviso || 'La consulta no es válida.') + '</p></div>';
+            return;
+          }
+          if (!res.ok || !Array.isArray(data.resultados)) {
+            gsMostrarFallo(resContainer, 'El archivo no pudo responder', 'Hubo un problema en el servidor. Inténtalo de nuevo en unos segundos.', true);
+            return;
+          }
           if (data.aviso) {
             avisoEl.innerText = data.aviso;
             avisoEl.classList.remove('hidden');
           }
-
-          if (data.entradaInvalida) {
-            // Entrada inválida (DUI incompleto o con verificador erróneo, texto muy corto): nunca se dice «sin publicaciones».
+          // Entrada inválida sin resultados: nunca se dice «sin publicaciones». Con resultados (p. ej. DUI con verificador dudoso) se muestran junto al aviso.
+          if (data.entradaInvalida && !(data.total > 0)) {
             resContainer.innerHTML = '<div role="alert" class="glass-card p-6 rounded-3xl text-center border border-amber-500/40"><i class="fa-solid fa-triangle-exclamation text-3xl text-amber-400 mb-2"></i><h4 class="text-base font-bold text-white">Revisa lo que escribiste</h4><p class="text-xs sm:text-sm text-slate-300 mt-1 max-w-md mx-auto">' + escapeHtmlText(data.aviso || 'La consulta no es válida.') + ' Todavía no se hizo una consulta confiable, así que no podemos decir si aparece o no en el archivo.</p></div>';
             return;
           }
 
           gsConsultaActual = String(data.duiNormalized || q).replace(/["“”«»]/g, '');
 
-          if (!data.resultados || data.resultados.length === 0) {
+          if (data.resultados.length === 0) {
             const fuera = data.total > 0 && pag > data.totalPaginas;
             resumenEl.innerHTML = '<p class="text-xs sm:text-sm text-slate-200">' + (fuera
-              ? 'La página que pediste no existe: esta búsqueda solo tiene ' + data.totalPaginas + ' páginas de resultados.'
+              ? 'La página que pediste no existe: esta búsqueda solo tiene ' + escapeHtmlText(data.totalPaginas) + ' páginas de resultados.'
               : 'No se encontraron publicaciones que contengan todo lo que buscaste.') + '</p>';
             resumenEl.classList.remove('hidden');
-            resContainer.innerHTML = \`
-              <div class="glass-card p-8 sm:p-10 rounded-3xl text-center text-slate-400 border border-slate-800">
-                <i class="fa-regular fa-circle-check text-4xl text-brand-400 mb-3"></i>
-                <h4 class="text-base sm:text-lg font-bold text-white">Sin publicaciones oficiales encontradas</h4>
-                <p class="text-xs sm:text-sm text-slate-400 mt-1 max-w-md mx-auto">
-                  El criterio «<strong>\${escapeHtmlText(q)}</strong>» no aparece en los títulos, números de decreto, órganos emisores ni en el texto de las publicaciones de este tomo. Prueba con menos palabras, revisa la ortografía (no importan las tildes ni las mayúsculas) o quita el filtro de sección.
-                </p>
-                <div class="mt-5">
-                  <button onclick="openModalAlert()" class="px-5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-brand-400 font-bold text-xs hover:bg-slate-800">
-                    <i class="fa-solid fa-bell"></i> Activar alerta preventiva por si se publica en el futuro &rarr;
-                  </button>
-                </div>
-              </div>\`;
+            resContainer.innerHTML = '<div class="glass-card p-8 sm:p-10 rounded-3xl text-center text-slate-400 border border-slate-800">' +
+              '<i class="fa-regular fa-circle-check text-4xl text-brand-400 mb-3"></i>' +
+              '<h4 class="text-base sm:text-lg font-bold text-white">Sin publicaciones oficiales encontradas</h4>' +
+              '<p class="text-xs sm:text-sm text-slate-400 mt-1 max-w-md mx-auto">El criterio «<strong>' + escapeHtmlText(q) + '</strong>» no aparece en los títulos, números de decreto, órganos emisores ni en el texto de las publicaciones de este tomo. Prueba con menos palabras, revisa la ortografía (no importan las tildes ni las mayúsculas) o quita el filtro de sección.</p>' +
+              '<div class="mt-5"><button type="button" onclick="openModalAlert()" class="px-5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-brand-400 font-bold text-xs hover:bg-slate-800">Crear una alerta para este criterio</button></div></div>';
             return;
           }
 
@@ -1515,11 +1568,11 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
             resumenEl.focus({ preventScroll: true });
           }
         })
-        .catch(() => {
-          btn.disabled = false;
-          btn.innerHTML = '<i class="fa-solid fa-bolt"></i> Consultar Archivo Oficial';
-          resContainer.removeAttribute('aria-busy');
-          resContainer.innerHTML = '<div role="alert" class="p-4 rounded-xl bg-rose-950 text-rose-300 text-sm">No pudimos conectar con el archivo oficial. Revisa tu conexión a internet y vuelve a pulsar «Consultar Archivo Oficial».</div>';
+        .catch(function (err) {
+          if (idSolicitud !== gsSolicitudId) return;
+          if (err && err.name === 'AbortError') return;
+          restaurarBoton();
+          gsMostrarFallo(resContainer, 'No pudimos conectar con el archivo oficial', 'Revisa tu conexión a internet y vuelve a intentarlo.', true);
         });
     }
 
@@ -1533,7 +1586,7 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
       container.innerHTML = '<div class="col-span-2 p-8 text-center text-slate-400"><i class="fa-solid fa-spinner fa-spin text-2xl text-cyan-400"></i><p class="mt-2 text-xs">Cargando catálogo oficial de marcas registradas...</p></div>';
 
       fetch('/api/v1/marcas?q=' + encodeURIComponent(q) + (clase ? '&clase=' + encodeURIComponent(clase) : ''))
-        .then(r => r.json())
+        .then(r => { if (!r.ok) throw new Error('http'); return r.json(); })
         .then(data => {
           if (!data.marcas || data.marcas.length === 0) {
             container.innerHTML = '<div class="col-span-2 glass-card p-8 rounded-3xl text-center text-slate-400">No se encontraron marcas para este criterio.</div>';
@@ -1543,17 +1596,17 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
             <div class="glass-card p-5 sm:p-6 rounded-3xl border border-slate-800 hover:border-cyan-500/50 transition-all text-left flex flex-col justify-between">
               <div>
                 <div class="flex flex-wrap items-center justify-between gap-2 mb-2.5">
-                  <span class="text-xs font-mono font-bold px-2.5 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">Clase Niza \${m.claseNiza}</span>
-                  <span class="text-xs font-mono font-black px-2.5 py-0.5 rounded bg-amber-400 text-slate-950">Pág. \${m.pagina} de 164 · Tomo \${m.tomo}</span>
+                  <span class="text-xs font-mono font-bold px-2.5 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">Clase Niza \${escapeHtmlText(m.claseNiza)}</span>
+                  <span class="text-xs font-mono font-black px-2.5 py-0.5 rounded bg-amber-400 text-slate-950">Pág. \${escapeHtmlText(m.pagina)} de 164 · Tomo \${escapeHtmlText(m.tomo)}</span>
                 </div>
-                <h4 class="text-base font-black text-white mb-1">\${m.denominacion}</h4>
-                <p class="text-xs text-slate-400 font-mono mb-2"><strong>Titular:</strong> \${m.titular}</p>
-                <p class="text-xs text-slate-300 leading-relaxed bg-slate-950/60 p-3 rounded-xl border border-slate-800/80 mb-3">\${m.claseDescripcion}</p>
+                <h4 class="text-base font-black text-white mb-1 break-words">\${escapeHtmlText(m.denominacion)}</h4>
+                <p class="text-xs text-slate-400 font-mono mb-2 break-words"><strong>Titular:</strong> \${escapeHtmlText(m.titular)}</p>
+                <p class="text-xs text-slate-300 leading-relaxed bg-slate-950/60 p-3 rounded-xl border border-slate-800/80 mb-3 break-words">\${escapeHtmlText(m.claseDescripcion)}</p>
               </div>
               <div class="flex items-center justify-between text-xs text-slate-400 border-t border-slate-800/80 pt-3">
-                <span class="font-mono">Exp: \${m.expediente} (\${m.fechaPublicacion})</span>
-                <button onclick="openEbookViewer(\${m.pagina}, '\${m.denominacion}')" class="text-cyan-400 hover:text-cyan-300 font-bold flex items-center gap-1">
-                  <i class="fa-solid fa-book-open"></i> Remarcar en Ebook (Pág. \${m.pagina}) <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                <span class="font-mono">Exp: \${escapeHtmlText(m.expediente)} (\${escapeHtmlText(m.fechaPublicacion)})</span>
+                <button type="button" data-ebook-pag="\${escapeHtmlText(parseInt(m.pagina, 10) || 1)}" data-term="\${escapeHtmlText(m.denominacion)}" class="text-cyan-400 hover:text-cyan-300 font-bold flex items-center gap-1">
+                  <i class="fa-solid fa-book-open"></i> Remarcar en Ebook (Pág. \${escapeHtmlText(m.pagina)}) <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
                 </button>
               </div>
             </div>
@@ -1583,22 +1636,25 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
               <div class="flex flex-wrap justify-between items-center gap-2 text-xs text-slate-400 font-mono mb-2">
                 <div class="flex flex-wrap items-center gap-2">
                   \${getLegalClassificationBadge(clasif)}
-                  <span onclick="openEbookViewer(\${e.pagina}, '\${firstDui}')" class="cursor-pointer px-2.5 py-0.5 rounded bg-amber-400 text-slate-950 font-black">
-                    Pág. \${e.pagina} de 164
-                  </span>
+                  <button type="button" data-ebook-pag="\${escapeHtmlText(parseInt(e.pagina, 10) || 1)}" data-term="\${escapeHtmlText(firstDui)}" class="cursor-pointer px-2.5 py-0.5 rounded bg-amber-400 text-slate-950 font-black">
+                    Pág. \${escapeHtmlText(e.pagina)} de 164
+                  </button>
                 </div>
-                <span class="font-bold text-slate-300">Tomo \${e.tomo} · N° \${e.numero} · \${e.fecha}</span>
+                <span class="font-bold text-slate-300">Tomo \${escapeHtmlText(e.tomo)} · N° \${escapeHtmlText(e.numero)} · \${escapeHtmlText(e.fecha)}</span>
               </div>
-              <h4 class="text-sm font-bold text-white mb-1.5">\${e.titular}</h4>
-              <p class="text-xs text-slate-300 line-clamp-3 leading-relaxed font-mono bg-slate-950/60 p-3 rounded-xl border border-slate-800/70">\${e.contenido}</p>
+              <h4 class="text-sm font-bold text-white mb-1.5 break-words">\${escapeHtmlText(e.titular)}</h4>
+              <p class="text-xs text-slate-300 line-clamp-3 leading-relaxed font-mono bg-slate-950/60 p-3 rounded-xl border border-slate-800/70 break-words">\${escapeHtmlText(e.contenido)}</p>
               \${renderDuiChipsHtml(e.duisEncontrados, e.pagina)}
               <div class="mt-3 text-right">
-                <button onclick="openEbookViewer(\${e.pagina}, '\${firstDui}')" class="text-xs text-brand-400 hover:underline font-bold inline-flex items-center gap-1.5">
-                  <i class="fa-solid fa-book-open-reader"></i> Abrir en Lector Ebook Interactivo (Pág. \${e.pagina}) &rarr;
+                <button type="button" data-ebook-pag="\${escapeHtmlText(parseInt(e.pagina, 10) || 1)}" data-term="\${escapeHtmlText(firstDui)}" class="text-xs text-brand-400 hover:underline font-bold inline-flex items-center gap-1.5">
+                  <i class="fa-solid fa-book-open-reader"></i> Abrir en Lector Ebook Interactivo (Pág. \${escapeHtmlText(e.pagina)}) &rarr;
                 </button>
               </div>
             </div>\`;
           }).join('');
+        })
+        .catch(() => {
+          container.innerHTML = '<div role="alert" class="glass-card p-6 text-center text-rose-300">No pudimos cargar los edictos. Inténtalo de nuevo en unos segundos.</div>';
         });
     }
 
@@ -1620,19 +1676,22 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
               <div class="flex flex-wrap justify-between items-center gap-2 text-xs text-slate-400 font-mono mb-2">
                 <div class="flex items-center gap-2">
                   \${getLegalClassificationBadge(clasif)}
-                  <span class="px-2.5 py-0.5 rounded bg-amber-400 text-slate-950 font-black">Pág. \${l.pagina} de 164</span>
+                  <span class="px-2.5 py-0.5 rounded bg-amber-400 text-slate-950 font-black">Pág. \${escapeHtmlText(l.pagina)} de 164</span>
                 </div>
-                <span class="font-bold text-slate-300">Tomo \${l.tomo} · N° \${l.numero} · \${l.fecha}</span>
+                <span class="font-bold text-slate-300">Tomo \${escapeHtmlText(l.tomo)} · N° \${escapeHtmlText(l.numero)} · \${escapeHtmlText(l.fecha)}</span>
               </div>
-              <h4 class="text-sm font-bold text-white mb-2">\${l.titular}</h4>
-              <p class="text-xs text-slate-300 line-clamp-4 leading-relaxed bg-slate-950/50 p-3 rounded-xl border border-slate-800/60 mb-2 font-mono">\${l.contenido}</p>
+              <h4 class="text-sm font-bold text-white mb-2 break-words">\${escapeHtmlText(l.titular)}</h4>
+              <p class="text-xs text-slate-300 line-clamp-4 leading-relaxed bg-slate-950/50 p-3 rounded-xl border border-slate-800/60 mb-2 font-mono break-words">\${escapeHtmlText(l.contenido)}</p>
               <div class="text-right">
-                <button onclick="openEbookViewer(\${l.pagina}, 'Decreto')" class="text-xs text-cyan-400 hover:underline font-bold inline-flex items-center gap-1.5">
-                  <i class="fa-solid fa-book-open-reader"></i> Ver texto de ley en Visor Ebook (Pág. \${l.pagina}) &rarr;
+                <button type="button" data-ebook-pag="\${escapeHtmlText(parseInt(l.pagina, 10) || 1)}" data-term="Decreto" class="text-xs text-cyan-400 hover:underline font-bold inline-flex items-center gap-1.5">
+                  <i class="fa-solid fa-book-open-reader"></i> Ver texto de ley en Visor Ebook (Pág. \${escapeHtmlText(l.pagina)}) &rarr;
                 </button>
               </div>
             </div>\`;
           }).join('');
+        })
+        .catch(() => {
+          container.innerHTML = '<div role="alert" class="glass-card p-6 text-center text-rose-300">No pudimos cargar las leyes. Inténtalo de nuevo en unos segundos.</div>';
         });
     }
 
@@ -1684,7 +1743,36 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
           if (m) focusTermInPdfFromTranscription(m.textContent || '', parseInt(m.getAttribute('data-pag'), 10) || currentEbookPage);
         });
       }
-      quickSearchDemo('Decreto No. 690');
+      // Un solo manejador delegado para todo botón [data-ebook-pag] / [data-focus-term]: ningún texto del corpus entra en un onclick.
+      transBoxEl && transBoxEl.addEventListener('keydown', (ev) => {
+        if (ev.key !== 'Enter' && ev.key !== ' ') return;
+        const m = ev.target && ev.target.closest ? ev.target.closest('mark[data-pag]') : null;
+        if (m) { ev.preventDefault(); focusTermInPdfFromTranscription(m.textContent || '', parseInt(m.getAttribute('data-pag'), 10) || currentEbookPage); }
+      });
+      document.addEventListener('click', (ev) => {
+        const t = ev.target && ev.target.closest ? ev.target : null;
+        if (!t) return;
+        const ab = t.closest('[data-ebook-pag]');
+        if (ab) { openEbookViewer(parseInt(ab.getAttribute('data-ebook-pag'), 10) || 1, ab.getAttribute('data-term') || ''); return; }
+        const fb = t.closest('[data-focus-term]');
+        if (fb) focusTermInPdfFromTranscription(fb.getAttribute('data-focus-term') || '', parseInt(fb.getAttribute('data-pag'), 10) || currentEbookPage);
+      });
+      // La búsqueda se puede compartir por enlace (?q=...&categoria=...&forceDui=1&pagina=2) y el botón «atrás» la restaura.
+      const aplicarUrl = (primera) => {
+        let p;
+        try { p = new URLSearchParams(location.search); } catch (_) { p = null; }
+        const q = p ? (p.get('q') || '').slice(0, 200) : '';
+        if (!q) { if (primera) quickSearchDemo('Decreto No. 690'); return; }
+        document.getElementById('query-input').value = q;
+        const cat = p.get('categoria') || '';
+        const sel = document.getElementById('category-filter');
+        sel.value = Array.from(sel.options).some((o) => o.value === cat) ? cat : '';
+        document.getElementById('force-dui-check').checked = p.get('forceDui') === '1';
+        handleDuiInputPreview(q);
+        searchDiario(null, p.get('pagina'), true);
+      };
+      window.addEventListener('popstate', () => aplicarUrl(false));
+      aplicarUrl(true);
     });
   </script>
 </body>

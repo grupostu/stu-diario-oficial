@@ -1,6 +1,6 @@
 import { validarAlerta } from './alert_validation.js';
 import { resolverEnlaceVisor } from './visor.js';
-import express, { type Request, type Response } from 'express';
+import express, { type NextFunction, type Request, type Response } from 'express';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -10,6 +10,7 @@ import { parseRawEntry } from './parser.js';
 import { renderPortal } from './views.js';
 import { renderPrivacidad } from './privacidad.js';
 import { validarParametrosBusqueda } from './busqueda_esquema.js';
+import { LimitadorTasa } from './limitador.js';
 import type { DiarioRecord } from './types.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -17,6 +18,16 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 app.disable('x-powered-by');
+// El servicio corre detrás de un proxy inverso local o de la red privada del contenedor: solo de ellos se acepta X-Forwarded-For.
+app.set('trust proxy', 'loopback, linklocal, uniquelocal');
+
+// Cabeceras de endurecimiento (no restringen scripts en línea: la portada los usa).
+app.use((_req: Request, res: Response, next: NextFunction) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Content-Security-Policy', "base-uri 'self'; object-src 'none'; frame-ancestors 'self'");
+  next();
+});
 const PORT = process.env.PORT || 4700;
 
 app.use(express.json({ limit: '64kb' }));
@@ -206,7 +217,18 @@ app.get('/sitemap.xml', (_req: Request, res: Response) => {
 
 // Búsqueda por campo y párrafo. Todos los parámetros se validan con un esquema estricto (src/busqueda_esquema.ts):
 // consulta <= 200 caracteres, sección conocida, página y tamaño de página acotados. Nunca se compila una RegExp con la entrada.
-app.get('/api/v1/search', (req: Request, res: Response) => {
+// Limitación por IP con penalización exponencial (ver src/limitador.ts). Configurable por entorno.
+const limiteBusqueda = new LimitadorTasa(Number(process.env.RATE_LIMIT_SEARCH_MAX) || 90, 60_000);
+function limitarTasa(limitador: LimitadorTasa) {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    const d = limitador.consumir(req.ip || 'desconocida');
+    if (d.permitido) return next();
+    res.set({ 'Cache-Control': 'no-store', 'Retry-After': String(d.reintentarEnSeg) });
+    res.status(429).json({ error: 'Demasiadas solicitudes', aviso: `Hiciste demasiadas consultas seguidas. Espera ${d.reintentarEnSeg} segundos y vuelve a intentar.`, reintentarEnSeg: d.reintentarEnSeg });
+  };
+}
+
+app.get('/api/v1/search', limitarTasa(limiteBusqueda), (req: Request, res: Response) => {
   const v = validarParametrosBusqueda(req.query as Record<string, unknown>);
   if (!v.ok) {
     res.set('Cache-Control', 'no-store');
@@ -243,7 +265,7 @@ app.get('/api/v1/page-data/:page', (req: Request, res: Response) => {
 });
 
 // Endpoint especializado para el buscador de marcas
-app.get('/api/v1/marcas', (req: Request, res: Response) => {
+app.get('/api/v1/marcas', limitarTasa(limiteBusqueda), (req: Request, res: Response) => {
   const query = String(req.query.q || '').trim().toLowerCase().slice(0, 100);
   const clase = req.query.clase ? String(req.query.clase).trim() : '';
 
@@ -298,6 +320,14 @@ app.post('/api/v1/alerts', (req: Request, res: Response) => {
   invalidatePortalCache();
   // Minimización: no se devuelven DUI, correo ni teléfono; solo el identificador de la alerta.
   res.status(201).json({ success: true, id: sub.id });
+});
+
+// Manejador final de errores: respuesta genérica, sin trazas ni rutas internas.
+app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
+  if (res.headersSent) return next(err);
+  const status = Number.isInteger(err?.status) && err.status >= 400 && err.status < 600 ? err.status : 500;
+  res.set('Cache-Control', 'no-store');
+  res.status(status).json({ error: status >= 500 ? 'Error interno del servidor' : 'Solicitud inválida' });
 });
 
 app.listen(PORT, () => {

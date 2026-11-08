@@ -21,6 +21,10 @@ var GS_VACIAS = { de: 1, del: 1, la: 1, las: 1, el: 1, los: 1, en: 1, y: 1, e: 1
 var GS_CLAVES_DOC = { decreto: 1, decr: 1, dec: 1, acuerdo: 1, acdo: 1, ley: 1, d: 1 };
 var GS_RELLENO_DOC = { no: 1, n: 1, num: 1, nro: 1, numero: 1, legislativo: 1, ejecutivo: 1 };
 var GS_COMILLAS = '"“”„«»';
+// Letras que no se descomponen por Unicode pero que el lector espera equivalentes (ß = ss, æ = ae...).
+var GS_ESPECIALES = { 'ß': 'ss', 'æ': 'ae', 'œ': 'oe', 'ø': 'o', 'đ': 'd', 'ł': 'l', 'ı': 'i', 'ð': 'd', 'þ': 'th' };
+// Abreviaturas tras las cuales un punto NO cierra la oración (una frase exacta puede cruzarlas: "No. 690").
+var GS_ABREV = { no: 1, nro: 1, num: 1, art: 1, arts: 1, sr: 1, sra: 1, srta: 1, dr: 1, dra: 1, lic: 1, licda: 1, ing: 1, inc: 1, cia: 1, pag: 1, tel: 1, ref: 1, etc: 1, vs: 1, col: 1, av: 1, cap: 1, fol: 1, tomo: 1, dec: 1, decr: 1, acdo: 1 };
 var GS_ESC_HTML = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
 
 function gsEscapar(s) {
@@ -69,17 +73,17 @@ function gsPlegar(texto) {
       if (fin.length > 0 && !espera) fin[fin.length - 1] = fin_i;
     } else {
       if (espera) { if (out.length > 0) emitir(' ', eIni, eFin); espera = false; }
-      var partes = Array.from(ch.normalize('NFD'));
+      var partes = Array.from(ch.normalize('NFKD'));
       for (var k = 0; k < partes.length; k++) {
         var p = partes[k];
         if (/\p{M}/u.test(p)) { if (fin.length > 0) fin[fin.length - 1] = fin_i; continue; }
         if (p === '’' || p === '‘' || p === '‛' || p === '´') p = "'";
         else if (p === '“' || p === '”' || p === '„' || p === '«' || p === '»') p = '"';
         else if (p === '–' || p === '—' || p === '−' || p === '‐' || p === '‑') p = '-';
-        var bajo = Array.from(p.toLowerCase().normalize('NFD'));
+        var bajo = Array.from(p.toLowerCase().normalize('NFKD'));
         for (var m = 0; m < bajo.length; m++) {
           if (/\p{M}/u.test(bajo[m])) continue;
-          emitir(bajo[m], i, fin_i);
+          emitir(GS_ESPECIALES[bajo[m]] || bajo[m], i, fin_i);
         }
       }
     }
@@ -288,6 +292,23 @@ function gsSoloSeparador(plano, a, b) {
   return true;
 }
 
+/**
+ * Una frase exacta solo puede cruzar separadores "blandos" (espacio, coma, guion, punto de abreviatura): nunca un fin de
+ * oración ("ley. Otra"), dos puntos, punto y coma, paréntesis ni comillas. Así "ley otra" no coincide con "la ley. Otra cosa".
+ */
+function gsGapFrase(plano, a, b, previo) {
+  if (b - a > 5) return false;
+  var punto = false;
+  for (var i = a; i < b; i++) {
+    var ch = plano.charAt(i);
+    if (" .,-'/°".indexOf(ch) < 0) return false;
+    if (ch === '.') punto = true;
+  }
+  // Punto seguido de espacio = fin de oración, salvo tras abreviatura, letra suelta o número ("S.A. de", "No. 690")
+  if (punto && plano.slice(a, b).indexOf('. ') >= 0 && previo.length > 1 && GS_ABREV[previo] !== 1 && !/^[0-9]+$/.test(previo)) return false;
+  return true;
+}
+
 function gsHit(seg, c, a, b, fuerte) {
   return { c: c, a: seg.ini[a], b: seg.fin[b - 1], fuerte: fuerte };
 }
@@ -299,6 +320,7 @@ function gsSecuencia(seg, i, seq, pref) {
     var tk = seg.toks[i + j];
     if (j === k - 1 && pref) { if (!gsPrefijo(tk, seq[j])) return false; }
     else if (tk !== seq[j]) return false;
+    if (j > 0 && !gsGapFrase(seg.plano, seg.tb[i + j - 1], seg.ta[i + j], seg.toks[i + j - 1])) return false;
   }
   return true;
 }
@@ -352,13 +374,13 @@ function gsLocalizar(seg, criterios) {
   return hits;
 }
 
-/** Une rangos solapados o separados solo por espacios, de modo que "JUAN JOSÉ" salga en una sola marca. */
+/** Une SOLO rangos que se solapan o se tocan: dos apariciones separadas siguen siendo dos marcas distintas. */
 function gsUnirRangos(rangos, texto) {
   var r = rangos.map(function (x) { return [x[0], x[1]]; }).sort(function (x, y) { return x[0] - y[0] || x[1] - y[1]; });
   var out = [];
   for (var i = 0; i < r.length; i++) {
     var ult = out.length ? out[out.length - 1] : null;
-    if (ult && (r[i][0] <= ult[1] || (texto && /^\s+$/.test(texto.slice(ult[1], r[i][0]))))) {
+    if (ult && r[i][0] <= ult[1]) {
       if (r[i][1] > ult[1]) ult[1] = r[i][1];
     } else out.push(r[i]);
   }

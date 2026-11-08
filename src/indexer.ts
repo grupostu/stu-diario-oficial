@@ -137,8 +137,19 @@ export class DiarioIndex {
   /** Índice invertido: token plegado -> posiciones (ascendentes) de los documentos que lo contienen. */
   private postings: Map<string, number[]> = new Map();
   private vocabulario: string[] | null = null;
+  /** Documento indexado que originó cada resultado (evita buscar por id si hubiera ids repetidos). */
+  private origenResultado: WeakMap<object, DocumentoIndexado> = new WeakMap();
 
   addRecord(record: DiarioRecord): void {
+    // Defensa ante datos incompletos: campos nulos, tipos inesperados o listas ausentes no deben tumbar la indexación.
+    const texto = (v: unknown): string => (typeof v === 'string' ? v : v == null || typeof v === 'object' ? '' : String(v));
+    const lista = (v: unknown): string[] => (Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : []);
+    record.titular = texto(record.titular);
+    record.contenido = texto(record.contenido);
+    record.seccion = texto(record.seccion);
+    record.duisEncontrados = lista(record.duisEncontrados);
+    record.nitsEncontrados = lista(record.nitsEncontrados);
+    record.nombresClave = lista(record.nombresClave);
     if (!record.clasificacionJuridica) {
       record.clasificacionJuridica = classifyLegalRecord(record.contenido + ' ' + record.titular, record.categoria);
     }
@@ -384,8 +395,9 @@ export class DiarioIndex {
 
   buscar(params: ParametrosIndice, formatoMarca?: (rec: DiarioRecord) => FormatoMarca): RespuestaBusqueda {
     const t0 = performance.now();
-    const porPagina = Math.max(1, Math.floor(params.porPagina ?? 10));
-    const pagina = Math.max(1, Math.floor(params.pagina ?? 1));
+    const entero = (v: unknown, defecto: number): number => (typeof v === 'number' && Number.isFinite(v) ? Math.max(1, Math.floor(v)) : defecto);
+    const porPagina = entero(params.porPagina, 10);
+    const pagina = entero(params.pagina, 1);
     const base = (extra: Partial<RespuestaBusqueda> & { texto?: string; criterios?: DescripcionCriterio[] }): RespuestaBusqueda => {
       const { texto, criterios, ...resto } = extra;
       return {
@@ -477,13 +489,14 @@ export class DiarioIndex {
       const evs = ev?.segs ?? [];
       const cabeceraEv = evs.filter((e) => e.seg.def.cabecera);
       const cuerpoEv = evs.filter((e) => !e.seg.def.cabecera);
-      const elegidosCuerpo = cuerpoEv.slice(0, MAX_FRAGMENTOS_CUERPO);
+      // Se eligen los mejores párrafos por puntaje, pero se muestran en el orden del documento.
+      const elegidosCuerpo = cuerpoEv.slice(0, MAX_FRAGMENTOS_CUERPO).sort((a, b) => doc.segs.indexOf(a.seg) - doc.segs.indexOf(b.seg));
       const coincidencias = [...cabeceraEv, ...elegidosCuerpo].map((e) => this.construirFragmento(e, formato));
       if (coincidencias.length === 0) {
         const f = this.fragmentoSinCoincidencia(doc);
         if (f) coincidencias.push(f);
       }
-      return {
+      const resultado: ResultadoDocumento = {
         id: doc.rec.id,
         puntaje: Math.round((ev?.puntaje ?? 0) * 10) / 10,
         diario: this.publico(doc.rec),
@@ -494,6 +507,8 @@ export class DiarioIndex {
         camposCoincidentes: [...cabeceraEv, ...cuerpoEv].map((e) => e.seg.def.etiqueta),
         coincidenciaExacta: exacta
       };
+      this.origenResultado.set(resultado, doc);
+      return resultado;
     });
 
     return base({
@@ -527,7 +542,7 @@ export class DiarioIndex {
       results: r.resultados.map((x) => {
         const f = x.coincidencias.find((c) => c.ubicacion === 'cuerpo') ?? x.coincidencias[0];
         return {
-          diario: this.porId.get(x.id)!,
+          diario: this.origenResultado.get(x)?.rec ?? this.porId.get(x.id)!,
           snippet: f ? `${f.recortadoAntes ? '...' : ''}${f.html}${f.recortadoDespues ? '...' : ''}` : '',
           coincidenciaExacta: x.coincidenciaExacta
         };

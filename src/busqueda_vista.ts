@@ -34,14 +34,14 @@ function gsHtmlResumen(data) {
 function gsHtmlFragmento(f, pagina) {
   var marcas = f.rangos && f.rangos.length ? f.texto.slice(f.rangos[0][0], f.rangos[0][1]) : '';
   var botonPdf = marcas
-    ? '<button type="button" data-gs-visor="1" data-pag="' + pagina + '" data-term="' + gsEscapar(marcas) + '" class="text-[11px] font-bold text-cyan-300 hover:text-cyan-200 underline underline-offset-2 whitespace-nowrap">Ubicar en el PDF</button>'
+    ? '<button type="button" data-gs-visor="1" data-pag="' + gsEscapar(parseInt(pagina, 10) || 1) + '" data-term="' + gsEscapar(marcas) + '" class="text-[11px] font-bold text-cyan-300 hover:text-cyan-200 underline underline-offset-2 whitespace-nowrap">Ubicar en el PDF</button>'
     : '';
   return '<figure class="rounded-2xl border border-slate-800/80 bg-slate-950/85 p-4">' +
     '<figcaption class="flex flex-wrap items-center justify-between gap-2 mb-2">' +
       '<span class="text-[11px] font-mono font-black uppercase tracking-wide text-amber-300">Coincide en: ' + gsEscapar(f.etiqueta) + '</span>' +
       botonPdf +
     '</figcaption>' +
-    '<blockquote class="text-xs sm:text-sm text-slate-200 leading-relaxed">' +
+    '<blockquote class="text-xs sm:text-sm text-slate-200 leading-relaxed break-words" style="overflow-wrap:anywhere">' +
       (f.recortadoAntes ? '<span aria-hidden="true" class="text-slate-500">&hellip; </span>' : '') + f.html +
       (f.recortadoDespues ? '<span aria-hidden="true" class="text-slate-500"> &hellip;</span>' : '') +
     '</blockquote></figure>';
@@ -63,7 +63,7 @@ function gsHtmlTarjeta(item) {
     '<span class="text-xs font-mono font-black px-3 py-1 rounded-lg bg-amber-400 text-slate-950">Pág. ' + gsEscapar(d.pagina) + ' de 164</span>' +
     '</div>' +
     '<button type="button" data-gs-cita="' + gsEscapar(citation) + '" title="Copiar la cita de esta publicación" class="text-xs text-slate-400 hover:text-white font-mono flex items-center gap-1.5 bg-slate-900/80 px-2.5 py-1 rounded-lg border border-slate-800"><i class="fa-regular fa-copy text-brand-400"></i> Copiar Cita</button></div>';
-  html += '<h4 class="text-base sm:text-lg font-bold text-white mb-2">' + cab.tituloHtml + '</h4>';
+  html += '<h4 class="text-base sm:text-lg font-bold text-white mb-2 break-words">' + cab.tituloHtml + '</h4>';
   html += '<dl class="grid grid-cols-1 sm:grid-cols-3 gap-x-4 gap-y-1 mb-3 text-[11px] sm:text-xs text-slate-300">' +
     '<div><dt class="inline text-slate-500">Órgano emisor: </dt><dd class="inline">' + (cab.organoHtml || 'No indicado en la publicación') + '</dd></div>' +
     '<div><dt class="inline text-slate-500">Fecha de publicación: </dt><dd class="inline">' + cab.fechaHtml + '</dd></div>' +
@@ -94,12 +94,13 @@ function gsHtmlTarjeta(item) {
 
 function gsHtmlPaginacion(data) {
   if (data.totalPaginas <= 1) return '';
-  var prev = data.pagina > 1, sig = data.pagina < data.totalPaginas;
+  var pagina = Number(data.pagina) || 1, total = Number(data.totalPaginas) || 1;
+  var prev = pagina > 1, sig = pagina < total;
   var base = 'px-4 py-2.5 rounded-xl border text-xs font-bold ';
   return '<nav aria-label="Paginación de resultados" class="flex flex-wrap items-center justify-between gap-3 pt-2">' +
-    '<button type="button" data-gs-pagina="' + (data.pagina - 1) + '"' + (prev ? '' : ' disabled') + ' class="' + base + (prev ? 'border-slate-600 text-white hover:bg-slate-800' : 'border-slate-800 text-slate-600 cursor-not-allowed') + '">&larr; Página anterior</button>' +
-    '<span class="text-xs text-slate-300 font-mono">Página ' + data.pagina + ' de ' + data.totalPaginas + '</span>' +
-    '<button type="button" data-gs-pagina="' + (data.pagina + 1) + '"' + (sig ? '' : ' disabled') + ' class="' + base + (sig ? 'border-slate-600 text-white hover:bg-slate-800' : 'border-slate-800 text-slate-600 cursor-not-allowed') + '">Página siguiente &rarr;</button></nav>';
+    '<button type="button" data-gs-pagina="' + (pagina - 1) + '"' + (prev ? '' : ' disabled aria-disabled="true"') + ' class="' + base + (prev ? 'border-slate-600 text-white hover:bg-slate-800' : 'border-slate-800 text-slate-600 cursor-not-allowed') + '">&larr; Página anterior</button>' +
+    '<span class="text-xs text-slate-300 font-mono" aria-current="page">Página ' + pagina + ' de ' + total + '</span>' +
+    '<button type="button" data-gs-pagina="' + (pagina + 1) + '"' + (sig ? '' : ' disabled aria-disabled="true"') + ' class="' + base + (sig ? 'border-slate-600 text-white hover:bg-slate-800' : 'border-slate-800 text-slate-600 cursor-not-allowed') + '">Página siguiente &rarr;</button></nav>';
 }
 
 /** Pinta resumen, tarjetas y paginación. Devuelve el HTML de las tarjetas. */
@@ -119,13 +120,15 @@ function gsActivarAcciones(contenedor, buscarPagina) {
   if (contenedor.__gsActivo) return;
   contenedor.__gsActivo = true;
   contenedor.addEventListener('click', function (ev) {
-    var el = ev.target && ev.target.closest ? ev.target.closest('[data-gs-visor],[data-gs-cita],[data-gs-pagina]') : null;
+    var el = ev.target && ev.target.closest ? ev.target.closest('[data-gs-visor],[data-gs-cita],[data-gs-pagina],[data-gs-reintentar]') : null;
     if (!el || el.disabled) return;
     if (el.hasAttribute('data-gs-visor')) {
       var t = el.getAttribute('data-term') || gsConsultaActual;
       openEbookViewer(parseInt(el.getAttribute('data-pag'), 10) || 1, t);
     } else if (el.hasAttribute('data-gs-cita')) {
       copyCitation(el.getAttribute('data-gs-cita'));
+    } else if (el.hasAttribute('data-gs-reintentar')) {
+      buscarPagina(0);
     } else if (el.hasAttribute('data-gs-pagina')) {
       buscarPagina(parseInt(el.getAttribute('data-gs-pagina'), 10) || 1);
     }
