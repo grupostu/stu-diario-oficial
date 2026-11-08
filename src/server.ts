@@ -9,6 +9,7 @@ import { NotifierEngine } from './notifier.js';
 import { parseRawEntry } from './parser.js';
 import { renderPortal } from './views.js';
 import { renderPrivacidad } from './privacidad.js';
+import { validarParametrosBusqueda } from './busqueda_esquema.js';
 import type { DiarioRecord } from './types.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -203,11 +204,17 @@ app.get('/sitemap.xml', (_req: Request, res: Response) => {
   res.type('application/xml').send('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>https://diariosoficiales.grupostu.com/</loc><changefreq>weekly</changefreq></url><url><loc>https://diariosoficiales.grupostu.com/privacidad</loc></url></urlset>\n');
 });
 
+// Búsqueda por campo y párrafo. Todos los parámetros se validan con un esquema estricto (src/busqueda_esquema.ts):
+// consulta <= 200 caracteres, sección conocida, página y tamaño de página acotados. Nunca se compila una RegExp con la entrada.
 app.get('/api/v1/search', (req: Request, res: Response) => {
-  const query = String(req.query.q || '').slice(0, 120);
-  const categoria = req.query.categoria ? String(req.query.categoria) : undefined;
-  const forceDui = req.query.forceDui === 'true' || req.query.forceDui === '1';
-  const result = index.search(query, categoria, forceDui);
+  const v = validarParametrosBusqueda(req.query as Record<string, unknown>);
+  if (!v.ok) {
+    res.set('Cache-Control', 'no-store');
+    const aviso = v.errores.map((e) => e.mensaje).join(' ');
+    return res.status(400).json({ error: 'Parámetros de búsqueda inválidos', errores: v.errores, aviso, entradaInvalida: true });
+  }
+  const { q, categoria, soloDui, pagina, porPagina } = v.valor;
+  const result = index.buscar({ q, categoria, soloDui, pagina, porPagina });
   res.set(EDGE_API_HEADERS);
   res.json(result);
 });

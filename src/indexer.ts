@@ -1,56 +1,142 @@
 import type { CategoryType, DiarioRecord, SearchResult } from './types.js';
 import { classifyLegalRecord, duiToWords, normalizeDuiInput } from './parser.js';
 import { avisoConsultaBusqueda } from './criterio.js';
+import { nucleo, type Coincidencia, type ConsultaAnalizada, type Criterio, type DescripcionCriterio, type SegmentoPreparado } from './resaltado.js';
+import { PESO_CAMPO, segmentarRegistro, type CampoBusqueda, type Identificacion, type SegmentoDoc } from './segmentos.js';
 
 /**
  * Pliega texto para comparar: minúsculas, sin acentos y con cualquier racha de espacios/saltos
  * de línea reducida a un espacio. Devuelve además el mapa posición plegada -> posición original.
+ * (Se conserva por compatibilidad; delega en el núcleo compartido con el navegador.)
  */
 export function plegarTexto(texto: string): { plano: string; mapa: number[] } {
-  let plano = '';
-  const mapa: number[] = [];
-  let espacioPrevio = true;
-  for (let i = 0; i < texto.length; i++) {
-    const ch = texto[i]!;
-    if (/\s/.test(ch)) {
-      if (!espacioPrevio) {
-        plano += ' ';
-        mapa.push(i);
-        espacioPrevio = true;
-      }
-      continue;
-    }
-    const base = ch.normalize('NFD')[0]!.toLowerCase().charAt(0) || ch;
-    if (/[\u0300-\u036f]/.test(base)) continue;
-    plano += base;
-    mapa.push(i);
-    espacioPrevio = false;
-  }
-  return { plano: plano.trimEnd(), mapa };
+  const f = nucleo.plegar(texto);
+  return { plano: f.plano, mapa: f.ini };
 }
 
-const VARIANTES: Record<string, string> = {
-  a: 'aáàâäã', e: 'eéèêë', i: 'iíìîï', o: 'oóòôöõ', u: 'uúùûü', n: 'nñ', c: 'cç'
-};
+// ------------------------------------------------------------------------------------------------
+// Tipos públicos de la búsqueda por campo y párrafo
+// ------------------------------------------------------------------------------------------------
 
-/** Patrón que ignora acentos, mayúsculas y diferencias de espacios/saltos de línea. */
-export function patronTolerante(term: string): string {
-  return plegarTexto(term)
-    .plano.split('')
-    .map((ch) => {
-      if (ch === ' ') return '\\s+';
-      const v = VARIANTES[ch];
-      return v ? `[${v}]` : ch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    })
-    .join('');
+export interface Fragmento {
+  campo: CampoBusqueda;
+  /** Etiqueta visible: "Artículo 3", "Considerando II", "Denominación oficial", "Título"... */
+  etiqueta: string;
+  /** Número de párrafo del cuerpo (null en campos de cabecera). */
+  indice: number | null;
+  ubicacion: 'cabecera' | 'cuerpo';
+  /** Texto plano del fragmento (la ventana centrada en la coincidencia). */
+  texto: string;
+  /** Rangos [inicio, fin) de las coincidencias DENTRO de `texto`. */
+  rangos: Array<[number, number]>;
+  /** HTML seguro: el texto va escapado y solo las coincidencias llevan <mark>. */
+  html: string;
+  recortadoAntes: boolean;
+  recortadoDespues: boolean;
+  /** true si el registro entró por el índice de DUI pero el DUI no se halló literalmente en el texto. */
+  aproximada: boolean;
 }
+
+export interface CabeceraResultado {
+  tipoHtml: string;
+  numeroHtml: string | null;
+  tituloHtml: string;
+  organoHtml: string | null;
+  fechaHtml: string;
+}
+
+export interface DiarioPublico {
+  id: string;
+  tomo: number;
+  numero: number;
+  fecha: string;
+  pagina: number;
+  categoria: CategoryType;
+  clasificacionJuridica?: DiarioRecord['clasificacionJuridica'];
+  seccion: string;
+  titular: string;
+  duisEncontrados: string[];
+  pdfUrlOficial: string;
+  pdfUrlLocal?: string;
+}
+
+export interface ResultadoDocumento {
+  id: string;
+  puntaje: number;
+  diario: DiarioPublico;
+  identificacion: Identificacion;
+  cabecera: CabeceraResultado;
+  coincidencias: Fragmento[];
+  /** Cantidad de párrafos del cuerpo que coinciden y no se enviaron (solo se envían los mejores). */
+  coincidenciasOmitidas: number;
+  /** Nombres de los campos donde coincide la búsqueda, p. ej. ["Título", "Párrafo 3"]. */
+  camposCoincidentes: string[];
+  coincidenciaExacta: boolean;
+}
+
+export interface RespuestaBusqueda {
+  consulta: { texto: string; criterios: DescripcionCriterio[] };
+  total: number;
+  pagina: number;
+  porPagina: number;
+  totalPaginas: number;
+  resultados: ResultadoDocumento[];
+  duiNormalized?: string;
+  duiWords?: string;
+  aviso?: string;
+  entradaInvalida?: boolean;
+  tiempoMs: number;
+}
+
+export interface ParametrosIndice {
+  q: string;
+  categoria?: string;
+  soloDui?: boolean;
+  pagina?: number;
+  porPagina?: number;
+}
+
+interface FormatoMarca {
+  clase: string;
+  atributos: string;
+}
+
+interface SegmentoIndexado {
+  def: SegmentoDoc;
+  prep: SegmentoPreparado;
+}
+
+interface DocumentoIndexado {
+  rec: DiarioRecord;
+  ident: Identificacion;
+  segs: SegmentoIndexado[];
+}
+
+interface EvaluacionSegmento {
+  seg: SegmentoIndexado;
+  hits: Coincidencia[];
+  puntaje: number;
+}
+
+const MAX_FRAGMENTOS_CUERPO = 4;
+const MAX_RANGOS_POR_SEGMENTO = 40;
+const VENTANA_COMPLETA = 480;
+const VENTANA_ANTES = 140;
+const VENTANA_TOTAL = 360;
+const MULT_FUERTE = 1.6;
+
+const esFuerte = (c: Criterio): boolean => c.tipo === 'frase' || c.tipo === 'alt' || c.tipo === 'decreto';
 
 export class DiarioIndex {
-  private plegados: Map<string, string> = new Map();
   private porId: Map<string, DiarioRecord> = new Map();
   private records: DiarioRecord[] = [];
+  private docs: DocumentoIndexado[] = [];
+  private posicionPorId: Map<string, number> = new Map();
   private duiIndex: Map<string, DiarioRecord[]> = new Map();
   private categoryIndex: Map<CategoryType, DiarioRecord[]> = new Map();
+  /** Índice invertido: token plegado -> posiciones (ascendentes) de los documentos que lo contienen. */
+  private postings: Map<string, number[]> = new Map();
+  private vocabulario: string[] | null = null;
 
   addRecord(record: DiarioRecord): void {
     if (!record.clasificacionJuridica) {
@@ -58,7 +144,24 @@ export class DiarioIndex {
     }
     this.records.push(record);
     this.porId.set(record.id, record);
-    this.plegados.set(record.id, plegarTexto(`${record.titular} ${record.contenido}`).plano);
+
+    // Segmentación por campo/párrafo y preparación (plegado + tokens) UNA sola vez al indexar.
+    const seg = segmentarRegistro(record);
+    const pos = this.docs.length;
+    const segs: SegmentoIndexado[] = seg.segmentos.map((def) => ({ def, prep: nucleo.preparar(def.texto) }));
+    this.docs.push({ rec: record, ident: seg.identificacion, segs });
+    this.posicionPorId.set(record.id, pos);
+    for (const s of segs) {
+      for (const tok of s.prep.toks) {
+        let lista = this.postings.get(tok);
+        if (!lista) {
+          lista = [];
+          this.postings.set(tok, lista);
+        }
+        if (lista[lista.length - 1] !== pos) lista.push(pos);
+      }
+    }
+    this.vocabulario = null;
 
     // Index by category
     const catList = this.categoryIndex.get(record.categoria) || [];
@@ -70,18 +173,12 @@ export class DiarioIndex {
       const cleanDigits = dui.replace(/\D/g, '');
       const canonical = dui.includes('-') ? dui : `${cleanDigits.slice(0, 8)}-${cleanDigits.slice(8)}`;
 
-      // Map clean digits
       const listDigits = this.duiIndex.get(cleanDigits) || [];
-      if (!listDigits.some(r => r.id === record.id)) {
-        listDigits.push(record);
-      }
+      if (!listDigits.some((r) => r.id === record.id)) listDigits.push(record);
       this.duiIndex.set(cleanDigits, listDigits);
 
-      // Map canonical
       const listCanonical = this.duiIndex.get(canonical) || [];
-      if (!listCanonical.some(r => r.id === record.id)) {
-        listCanonical.push(record);
-      }
+      if (!listCanonical.some((r) => r.id === record.id)) listCanonical.push(record);
       this.duiIndex.set(canonical, listCanonical);
     }
   }
@@ -92,66 +189,231 @@ export class DiarioIndex {
     }
   }
 
-  search(query: string, categoryFilter?: string, forceDuiOnly?: boolean): SearchResult & { duiNormalized?: string; duiWords?: string; aviso?: string; entradaInvalida?: boolean } {
-    const q = query.trim();
-    if (!q) {
-      return { total: 0, results: [], aviso: 'Escribe un DUI o un nombre para buscar en el archivo.', entradaInvalida: true };
+  // ----------------------------------------------------------------------------------------------
+  // Candidatos mediante el índice invertido
+  // ----------------------------------------------------------------------------------------------
+
+  private asegurarVocabulario(): string[] {
+    if (!this.vocabulario) this.vocabulario = Array.from(this.postings.keys()).sort();
+    return this.vocabulario;
+  }
+
+  private docsConPrefijo(prefijo: string): Set<number> {
+    const vocab = this.asegurarVocabulario();
+    let lo = 0;
+    let hi = vocab.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if (vocab[mid]! < prefijo) lo = mid + 1;
+      else hi = mid;
+    }
+    const out = new Set<number>();
+    for (let i = lo; i < vocab.length && vocab[i]!.startsWith(prefijo); i++) {
+      for (const d of this.postings.get(vocab[i]!)!) out.add(d);
+    }
+    return out;
+  }
+
+  private docsConToken(token: string): Set<number> {
+    return new Set(this.postings.get(token) ?? []);
+  }
+
+  private interseccion(conjuntos: Array<Set<number>>): Set<number> {
+    if (conjuntos.length === 0) return new Set();
+    const orden = [...conjuntos].sort((a, b) => a.size - b.size);
+    const out = new Set<number>();
+    for (const d of orden[0]!) if (orden.every((s) => s.has(d))) out.add(d);
+    return out;
+  }
+
+  /** Documentos que pueden cumplir un criterio (verificación posterior por segmento). */
+  private candidatosDe(c: Criterio): Set<number> {
+    switch (c.tipo) {
+      case 'termino':
+        return c.pref ? this.docsConPrefijo(c.t) : this.docsConToken(c.t);
+      case 'frase':
+        return this.interseccion(c.toks.map((t, i) => (i === c.toks.length - 1 && c.pref ? this.docsConPrefijo(t) : this.docsConToken(t))));
+      case 'alt': {
+        const out = new Set<number>();
+        for (const op of c.opciones) for (const d of this.interseccion(op.map((t) => this.docsConToken(t)))) out.add(d);
+        return out;
+      }
+      case 'decreto': {
+        const out = this.docsConToken(c.numero);
+        for (const k of ['decreto', 'decr', 'dec', 'acuerdo', 'acdo', 'ley', 'd']) for (const d of this.docsConToken(k + c.numero)) out.add(d);
+        return out;
+      }
+    }
+  }
+
+  // ----------------------------------------------------------------------------------------------
+  // Evaluación y ranking
+  // ----------------------------------------------------------------------------------------------
+
+  private evaluar(doc: DocumentoIndexado, criterios: Criterio[]): { puntaje: number; segs: EvaluacionSegmento[] } | null {
+    const requeridos = criterios.map((c, i) => (c.req ? i : -1)).filter((i) => i >= 0);
+    const cubiertos = new Set<number>();
+    const segs: EvaluacionSegmento[] = [];
+    for (const seg of doc.segs) {
+      const hits = nucleo.localizar(seg.prep, criterios);
+      if (hits.length === 0) continue;
+      const distintos = new Set<number>();
+      for (const h of hits) {
+        distintos.add(h.c);
+        cubiertos.add(h.c);
+      }
+      const peso = PESO_CAMPO[seg.def.campo];
+      let suma = 0;
+      for (const ci of distintos) suma += esFuerte(criterios[ci]!) ? MULT_FUERTE : 1;
+      let puntaje = peso * suma + peso * 0.1 * Math.min(hits.length - 1, 5);
+      // Todos los criterios requeridos juntos en el mismo párrafo: coincidencia mucho mejor
+      if (requeridos.length > 1 && requeridos.every((i) => distintos.has(i))) puntaje *= 1.5;
+      segs.push({ seg, hits, puntaje });
+    }
+    if (!requeridos.every((i) => cubiertos.has(i))) return null;
+
+    segs.sort((a, b) => b.puntaje - a.puntaje);
+    let puntaje = segs[0]!.puntaje;
+    for (let i = 1; i < segs.length; i++) puntaje += segs[i]!.puntaje * 0.2;
+    // Coincidencia exacta con el número oficial del decreto/acuerdo: sube al primer lugar
+    const num = doc.ident.numeroDocumento;
+    if (num) {
+      for (const c of criterios) {
+        if (c.req && ((c.tipo === 'decreto' && c.numero === num) || (c.tipo === 'termino' && c.t === num))) puntaje += 150;
+      }
+    }
+    return { puntaje, segs };
+  }
+
+  // ----------------------------------------------------------------------------------------------
+  // Fragmentos
+  // ----------------------------------------------------------------------------------------------
+
+  private construirFragmento(ev: EvaluacionSegmento, formato: FormatoMarca): Fragmento {
+    const { def, prep } = ev.seg;
+    const texto = prep.texto;
+    const cruda = ev.hits.slice(0, MAX_RANGOS_POR_SEGMENTO * 4).map((h): [number, number] => [h.a, h.b]);
+    const unidos = nucleo.unirRangos(cruda, texto).slice(0, MAX_RANGOS_POR_SEGMENTO);
+
+    let ini = 0;
+    let fin = texto.length;
+    const ancla = ev.hits.find((h) => h.fuerte) ?? ev.hits[0];
+    if (texto.length > VENTANA_COMPLETA && !ancla) {
+      // Sin coincidencia literal (registro hallado por el índice de DUI): se muestra el comienzo del párrafo
+      fin = VENTANA_TOTAL;
+      const sp = texto.indexOf(' ', fin);
+      fin = sp >= 0 && sp - fin < 40 ? sp : fin;
+    } else if (texto.length > VENTANA_COMPLETA && ancla) {
+      ini = Math.max(0, ancla.a - VENTANA_ANTES);
+      fin = Math.min(texto.length, Math.max(ini + VENTANA_TOTAL, ancla.b + 60));
+      if (ini > 0) {
+        const sp = texto.indexOf(' ', ini);
+        if (sp >= 0 && sp < ancla.a) ini = sp + 1;
+      }
+      if (fin < texto.length) {
+        const sp = texto.indexOf(' ', fin);
+        fin = sp >= 0 && sp - fin < 40 ? sp : fin;
+      }
+    }
+    const rangos: Array<[number, number]> = [];
+    for (const [a, b] of unidos) {
+      const x = Math.max(a, ini);
+      const y = Math.min(b, fin);
+      if (y > x) rangos.push([x - ini, y - ini]);
+    }
+    const trozo = texto.slice(ini, fin);
+    return {
+      campo: def.campo,
+      etiqueta: def.etiqueta,
+      indice: def.indice,
+      ubicacion: def.cabecera ? 'cabecera' : 'cuerpo',
+      texto: trozo,
+      rangos,
+      html: nucleo.resaltarHtml(trozo, rangos, formato.clase, formato.atributos),
+      recortadoAntes: ini > 0,
+      recortadoDespues: fin < texto.length,
+      aproximada: false
+    };
+  }
+
+  private fragmentoSinCoincidencia(doc: DocumentoIndexado): Fragmento | null {
+    const cuerpo = doc.segs.filter((s) => !s.def.cabecera);
+    const preferido = cuerpo.find((s) => /identidad|\bdui\b|documento unico/i.test(nucleo.plegar(s.def.texto).plano)) ?? cuerpo[0];
+    if (!preferido) return null;
+    const f = this.construirFragmento({ seg: preferido, hits: [], puntaje: 0 }, { clase: 'gs-mark', atributos: '' });
+    f.aproximada = true;
+    return f;
+  }
+
+  private cabeceraDe(doc: DocumentoIndexado, evs: EvaluacionSegmento[], formato: FormatoMarca): CabeceraResultado {
+    const html = (campo: CampoBusqueda, texto: string): string => {
+      const ev = evs.find((e) => e.seg.def.campo === campo);
+      if (!ev) return nucleo.escapar(texto);
+      return this.construirFragmento(ev, formato).html;
+    };
+    const id = doc.ident;
+    return {
+      tipoHtml: html('tipo', id.tipo),
+      numeroHtml: id.designacion ? html('numero', id.designacion) : null,
+      tituloHtml: html('titulo', id.titulo),
+      organoHtml: id.organo ? html('organo', id.organo) : null,
+      fechaHtml: html('fecha', `${id.fechaLarga} (${id.fechaIso})`)
+    };
+  }
+
+  private publico(rec: DiarioRecord): DiarioPublico {
+    return {
+      id: rec.id,
+      tomo: rec.tomo,
+      numero: rec.numero,
+      fecha: rec.fecha,
+      pagina: rec.pagina,
+      categoria: rec.categoria,
+      clasificacionJuridica: rec.clasificacionJuridica,
+      seccion: rec.seccion,
+      titular: rec.titular,
+      duisEncontrados: rec.duisEncontrados,
+      pdfUrlOficial: rec.pdfUrlOficial,
+      pdfUrlLocal: rec.pdfUrlLocal
+    };
+  }
+
+  // ----------------------------------------------------------------------------------------------
+  // Búsqueda
+  // ----------------------------------------------------------------------------------------------
+
+  buscar(params: ParametrosIndice, formatoMarca?: (rec: DiarioRecord) => FormatoMarca): RespuestaBusqueda {
+    const t0 = performance.now();
+    const porPagina = Math.max(1, Math.floor(params.porPagina ?? 10));
+    const pagina = Math.max(1, Math.floor(params.pagina ?? 1));
+    const base = (extra: Partial<RespuestaBusqueda> & { texto?: string; criterios?: DescripcionCriterio[] }): RespuestaBusqueda => {
+      const { texto, criterios, ...resto } = extra;
+      return {
+        consulta: { texto: texto ?? '', criterios: criterios ?? [] },
+        total: 0,
+        pagina,
+        porPagina,
+        totalPaginas: 0,
+        resultados: [],
+        tiempoMs: Math.round((performance.now() - t0) * 100) / 100,
+        ...resto
+      };
+    };
+
+    const q = String(params.q ?? '').replace(/\s+/g, ' ').trim();
+    if (!q) return base({ aviso: 'Escribe un DUI, un nombre, un número de decreto o una frase para buscar en el archivo.', entradaInvalida: true });
+    if (q.length > nucleo.LIM.maxChars) {
+      return base({ aviso: `La consulta admite ${nucleo.LIM.maxChars} caracteres como máximo. Acórtala y vuelve a intentar.`, entradaInvalida: true });
     }
 
     const duiInfo = normalizeDuiInput(q);
-    let matched: Array<{ diario: DiarioRecord; snippet: string; coincidenciaExacta: boolean }> = [];
+    const analisis: ConsultaAnalizada = nucleo.analizar(q, undefined, duiInfo.isValidDui ? duiInfo.cleanDigits : undefined);
 
-    // 1. Si es búsqueda de DUI o el usuario forzó búsqueda por DUI
-    if (duiInfo.isValidDui) {
-      const fromCanonical = this.duiIndex.get(duiInfo.canonical) || [];
-      const fromDigits = this.duiIndex.get(duiInfo.cleanDigits) || [];
-      const combinedDuiRecords = Array.from(new Set([...fromCanonical, ...fromDigits]));
-
-      for (const rec of combinedDuiRecords) {
-        if (categoryFilter && rec.categoria !== categoryFilter) continue;
-        matched.push({
-          diario: rec,
-          snippet: this.generateSnippet(rec.contenido, duiInfo.canonical, rec.pagina),
-          coincidenciaExacta: true
-        });
-      }
-    }
-
-    // Si el usuario marcó explícitamente "Solo DUI" y encontramos coincidencias o es un DUI válido, retornar
-    if (forceDuiOnly && duiInfo.isValidDui) {
-      return {
-        total: matched.length,
-        results: matched,
-        duiNormalized: duiInfo.canonical,
-        duiWords: duiToWords(duiInfo.canonical)
-      };
-    }
-
-    // 2. Búsqueda Full-Text insensible a acentos, mayúsculas y saltos de línea.
-    //    Primero frase exacta; luego todas las palabras en cualquier orden (coincidencia parcial).
-    const frase = plegarTexto(q).plano;
-    const palabras = frase.split(' ').filter((w) => w.length >= 2);
-    const frases: typeof matched = [];
-    const parciales: typeof matched = [];
-    // Con menos de 3 caracteres no se busca por texto (devolvería coincidencias sin sentido).
-    for (const rec of q.length < 3 ? [] : this.records) {
-      if (categoryFilter && rec.categoria !== categoryFilter) continue;
-      if (matched.some((m) => m.diario.id === rec.id)) continue;
-      const pajar = this.plegados.get(rec.id) ?? '';
-      if (frase && pajar.includes(frase)) {
-        frases.push({ diario: rec, snippet: this.generateSnippet(rec.contenido, q, rec.pagina), coincidenciaExacta: false });
-      } else if (palabras.length > 1 && palabras.every((w) => pajar.includes(w))) {
-        parciales.push({ diario: rec, snippet: this.generateSnippet(rec.contenido, palabras[0]!, rec.pagina), coincidenciaExacta: false });
-      }
-    }
-    matched = [...matched, ...frases, ...parciales];
-
-    let aviso: string | undefined;
     // La entrada es inválida (no es una consulta real): la interfaz debe mostrar el error
     // de validación y jamás «Sin publicaciones oficiales».
     // Etiquetas HTML, solo símbolos o «DUI» con letras (p. ej. abcdefgh-1) tampoco son consultas reales (R3-003).
     const avisoForma = avisoConsultaBusqueda(q);
-    const entradaInvalida = duiInfo.incomplete || (duiInfo.isValidDui && duiInfo.checkDigitOk === false) || q.length < 3 || avisoForma !== null;
+    let aviso: string | undefined;
     if (duiInfo.incomplete) {
       aviso = 'El número escrito está incompleto: un DUI tiene 9 dígitos (8 más el dígito verificador). Complétalo para una búsqueda por DUI confiable.';
     } else if (duiInfo.isValidDui && duiInfo.checkDigitOk === false) {
@@ -160,15 +422,120 @@ export class DiarioIndex {
       aviso = 'Escribe al menos 3 caracteres para buscar por nombre.';
     } else if (avisoForma) {
       aviso = avisoForma;
+    } else if (!analisis.ok) {
+      aviso = analisis.error;
+    }
+    // Consulta imposible de ejecutar (muy corta, con etiquetas, sin términos útiles): no se busca nada.
+    // DUI incompleto o con verificador erróneo: se busca igualmente, pero la interfaz muestra el aviso en lugar de «sin publicaciones».
+    if (!analisis.ok || q.length < 3 || avisoForma) return base({ aviso, entradaInvalida: true, texto: q });
+
+    const criterios = analisis.criterios;
+    const categoria = params.categoria;
+    const duiValido = duiInfo.isValidDui;
+
+    // Registros del índice de DUI (entran aunque el DUI esté escrito de otra forma en el texto)
+    const porDui = new Set<number>();
+    if (duiValido) {
+      for (const r of [...(this.duiIndex.get(duiInfo.canonical) ?? []), ...(this.duiIndex.get(duiInfo.cleanDigits) ?? [])]) {
+        const pos = this.posicionPorId.get(r.id);
+        if (pos !== undefined) porDui.add(pos);
+      }
     }
 
-    return {
-      total: matched.length,
-      results: matched,
-      duiNormalized: duiInfo.isValidDui ? duiInfo.canonical : undefined,
-      duiWords: duiInfo.isValidDui ? duiToWords(duiInfo.canonical) : undefined,
+    let candidatos: Set<number>;
+    if (params.soloDui && duiValido) {
+      candidatos = porDui;
+    } else {
+      const req = criterios.filter((c) => c.req).map((c) => this.candidatosDe(c));
+      candidatos = this.interseccion(req);
+      for (const p of porDui) candidatos.add(p);
+    }
+
+    const filtrados: Array<{ doc: DocumentoIndexado; ev: { puntaje: number; segs: EvaluacionSegmento[] } | null; exacta: boolean }> = [];
+    for (const pos of candidatos) {
+      const doc = this.docs[pos]!;
+      if (categoria && doc.rec.categoria !== categoria) continue;
+      const ev = this.evaluar(doc, criterios);
+      const exacta = porDui.has(pos);
+      if (!ev && !exacta) continue;
+      filtrados.push({ doc, ev, exacta });
+    }
+    filtrados.sort((a, b) => {
+      if (a.exacta !== b.exacta) return a.exacta ? -1 : 1;
+      const d = (b.ev?.puntaje ?? 0) - (a.ev?.puntaje ?? 0);
+      if (d !== 0) return d;
+      if (a.doc.rec.fecha !== b.doc.rec.fecha) return a.doc.rec.fecha < b.doc.rec.fecha ? 1 : -1;
+      if (a.doc.rec.pagina !== b.doc.rec.pagina) return a.doc.rec.pagina - b.doc.rec.pagina;
+      return a.doc.rec.id < b.doc.rec.id ? -1 : a.doc.rec.id > b.doc.rec.id ? 1 : 0;
+    });
+
+    const total = filtrados.length;
+    const totalPaginas = Math.ceil(total / porPagina);
+    const pagina_ = filtrados.slice((pagina - 1) * porPagina, pagina * porPagina);
+    const resultados: ResultadoDocumento[] = pagina_.map(({ doc, ev, exacta }) => {
+      const formato = formatoMarca ? formatoMarca(doc.rec) : { clase: 'gs-mark', atributos: '' };
+      const evs = ev?.segs ?? [];
+      const cabeceraEv = evs.filter((e) => e.seg.def.cabecera);
+      const cuerpoEv = evs.filter((e) => !e.seg.def.cabecera);
+      const elegidosCuerpo = cuerpoEv.slice(0, MAX_FRAGMENTOS_CUERPO);
+      const coincidencias = [...cabeceraEv, ...elegidosCuerpo].map((e) => this.construirFragmento(e, formato));
+      if (coincidencias.length === 0) {
+        const f = this.fragmentoSinCoincidencia(doc);
+        if (f) coincidencias.push(f);
+      }
+      return {
+        id: doc.rec.id,
+        puntaje: Math.round((ev?.puntaje ?? 0) * 10) / 10,
+        diario: this.publico(doc.rec),
+        identificacion: doc.ident,
+        cabecera: this.cabeceraDe(doc, cabeceraEv, formato),
+        coincidencias,
+        coincidenciasOmitidas: Math.max(0, cuerpoEv.length - elegidosCuerpo.length),
+        camposCoincidentes: [...cabeceraEv, ...cuerpoEv].map((e) => e.seg.def.etiqueta),
+        coincidenciaExacta: exacta
+      };
+    });
+
+    return base({
+      texto: q,
+      criterios: analisis.descripcion,
+      total,
+      totalPaginas,
+      resultados,
+      duiNormalized: duiValido ? duiInfo.canonical : undefined,
+      duiWords: duiValido ? duiToWords(duiInfo.canonical) : undefined,
       aviso,
-      entradaInvalida
+      entradaInvalida: aviso ? true : undefined
+    });
+  }
+
+  /**
+   * Interfaz histórica (resultado plano con `snippet`). Se apoya en la búsqueda por campo y párrafo:
+   * el snippet es el mejor párrafo coincidente, con el texto escapado y las marcas clicables del visor.
+   */
+  search(query: string, categoryFilter?: string, forceDuiOnly?: boolean): SearchResult & { duiNormalized?: string; duiWords?: string; aviso?: string; entradaInvalida?: boolean } {
+    const termino = String(query ?? '').replace(/[^\p{L}\p{N} .\-]/gu, '').slice(0, 60);
+    const r = this.buscar(
+      { q: query, categoria: categoryFilter, soloDui: forceDuiOnly, pagina: 1, porPagina: Number.MAX_SAFE_INTEGER },
+      (rec) => ({
+        clase: 'highlight-clickable gs-mark',
+        atributos: ` onclick="openEbookViewer(${Math.trunc(Number(rec.pagina)) || 1}, '${termino}')" title="Clic para abrir el Visor Ebook en Pág. ${Math.trunc(Number(rec.pagina)) || 1} y resaltar en el PDF original"`
+      })
+    );
+    return {
+      total: r.total,
+      results: r.resultados.map((x) => {
+        const f = x.coincidencias.find((c) => c.ubicacion === 'cuerpo') ?? x.coincidencias[0];
+        return {
+          diario: this.porId.get(x.id)!,
+          snippet: f ? `${f.recortadoAntes ? '...' : ''}${f.html}${f.recortadoDespues ? '...' : ''}` : '',
+          coincidenciaExacta: x.coincidenciaExacta
+        };
+      }),
+      duiNormalized: r.duiNormalized,
+      duiWords: r.duiWords,
+      aviso: r.aviso,
+      entradaInvalida: r.entradaInvalida
     };
   }
 
@@ -183,86 +550,6 @@ export class DiarioIndex {
 
   getAllRecords(): DiarioRecord[] {
     return this.records;
-  }
-
-  private generateSnippet(content: string, term: string, pagina = 1): string {
-    const lower = content.toLowerCase();
-    const cleanDigits = term.replace(/\D/g, '');
-    const wordMap = ['cero', 'uno', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve'];
-
-    let wordsRegexStr = '';
-    if (cleanDigits.length === 9) {
-      const wordsList = cleanDigits.split('').map(d => wordMap[parseInt(d, 10)] || d);
-      wordsRegexStr = wordsList.slice(0, 8).join('\\s+') + '\\s*[-–—\\s]+\\s*' + wordsList[8];
-    }
-
-    // Posición insensible a acentos/saltos de línea (mapeada al texto original)
-    const plegado = plegarTexto(content);
-    const termPlano = plegarTexto(term).plano;
-    let idx = lower.indexOf(term.toLowerCase());
-    let matchLen = term.length;
-    if (idx === -1 && termPlano) {
-      const p = plegado.plano.indexOf(termPlano);
-      if (p !== -1) {
-        idx = plegado.mapa[p]!;
-        const fin = plegado.mapa[Math.min(p + termPlano.length - 1, plegado.mapa.length - 1)]!;
-        matchLen = fin - idx + 1;
-      }
-    }
-
-    // Si no está el término exacto pero es DUI, buscar los dígitos o palabras en letras
-    if (idx === -1 && cleanDigits.length === 9) {
-      idx = lower.indexOf(cleanDigits);
-      if (idx !== -1) {
-        matchLen = cleanDigits.length;
-      } else if (wordsRegexStr) {
-        try {
-          const wm = content.match(new RegExp(wordsRegexStr, 'i'));
-          if (wm && wm.index !== undefined) {
-            idx = wm.index;
-            matchLen = wm[0].length;
-          }
-        } catch {
-          // ignore
-        }
-      }
-      if (idx === -1) {
-        idx = lower.indexOf('documento');
-        if (idx === -1) idx = lower.indexOf('identidad');
-        if (idx === -1) idx = 0;
-        matchLen = 25;
-      }
-    }
-
-    if (idx === -1) {
-      idx = 0;
-    }
-
-    const start = Math.max(0, idx - 110);
-    const end = Math.min(content.length, idx + matchLen + 160);
-    const slice = content.slice(start, end);
-
-    const escapedTerm = patronTolerante(term);
-    const patterns = [
-      escapedTerm,
-      cleanDigits.length === 9 ? cleanDigits : null,
-      wordsRegexStr ? wordsRegexStr : null
-    ].filter(Boolean);
-
-    const safeTermAttr = term.replace(/'/g, "\\'").replace(/"/g, '&quot;');
-    try {
-      const regex = new RegExp(`(${patterns.join('|')})`, 'gi');
-      return (
-        (start > 0 ? '...' : '') +
-        slice.replace(
-          regex,
-          `<mark onclick="openEbookViewer(${pagina}, '${safeTermAttr}')" title="Clic para abrir el Visor Ebook en Pág. ${pagina} y resaltar en el PDF original" class="highlight-clickable bg-amber-400 hover:bg-amber-300 text-slate-950 font-black px-1.5 py-0.5 rounded cursor-pointer shadow-sm transition-all">$1</mark>`
-        ) +
-        (end < content.length ? '...' : '')
-      );
-    } catch {
-      return (start > 0 ? '...' : '') + slice + (end < content.length ? '...' : '');
-    }
   }
 
   count(): number {

@@ -1,5 +1,7 @@
 import { CRITERIO_CLIENT_JS } from './criterio.js';
 import { MASTER_FOOTER_HTML } from './master-footer.js';
+import { RESALTADO_CLIENT_JS } from './resaltado.js';
+import { BUSQUEDA_CLIENT_JS } from './busqueda_vista.js';
 
 export function renderPortal(stats: { totalDocumentos: number; totalAlertas: number }): string {
   return `<!DOCTYPE html>
@@ -72,6 +74,15 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
       border: 1px solid #fef08a;
       transition: all 0.2s ease;
       display: inline-block;
+    }
+    /* Coincidencias de la búsqueda: amarillo con texto casi negro (contraste > 12:1), sin romper el salto de línea */
+    mark.gs-mark {
+      background: #fde047;
+      color: #0f172a;
+      font-weight: 700;
+      padding: 0 3px;
+      border-radius: 4px;
+      box-shadow: 0 0 0 1px #facc15;
     }
     mark.highlight-clickable:hover {
       transform: scale(1.05);
@@ -270,10 +281,12 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
           <div>
             <div class="relative">
               <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
-              <input type="text" id="query-input" placeholder="Ingresa DUI (ej. 00000000-0, 000000000 o en letras), Nombre Completo o Causante..."
+              <input type="text" id="query-input" maxlength="200" autocomplete="off" aria-describedby="ayuda-busqueda" placeholder="Ingresa DUI (ej. 00000000-0, 000000000 o en letras), Nombre Completo o Causante..."
                 oninput="handleDuiInputPreview(this.value)"
                 class="w-full bg-slate-950/90 border border-slate-700 focus:border-brand-500 rounded-2xl pl-11 pr-4 py-4 text-white text-sm outline-none font-mono">
             </div>
+
+            <p id="ayuda-busqueda" class="mt-2 text-[11px] sm:text-xs text-slate-400 leading-relaxed text-left">Puedes buscar por DUI, por nombre, por número de decreto (por ejemplo «Decreto No. 690», «decreto 690» o «D. 690») o por cualquier palabra del texto. Para buscar una frase exacta, escríbela entre comillas, por ejemplo «&quot;amnistía fiscal&quot;». No importan las mayúsculas ni las tildes, y el máximo es de 200 caracteres.</p>
 
             <!-- Demostraciones rápidas 1-clic -->
             <div class="mt-2.5 flex flex-wrap items-center gap-2 text-[11px] font-mono text-slate-400">
@@ -320,7 +333,8 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
 
       <!-- Resultados Dinámicos -->
       <div id="search-aviso" role="status" class="hidden mb-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-300 text-left"></div>
-      <div id="results-container" class="space-y-4">
+      <div id="search-resumen" role="status" aria-live="polite" aria-atomic="true" class="hidden mb-4 p-4 rounded-2xl bg-slate-900/70 border border-slate-700 text-left outline-none"></div>
+      <div id="results-container" class="space-y-4" aria-live="polite" aria-relevant="additions">
         <!-- Renderizado por JS -->
       </div>
     </div>
@@ -858,6 +872,12 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
     // Misma validación que el servidor (src/criterio.ts): DUI completo y válido, o nombre sin etiquetas ni símbolos.
     ${CRITERIO_CLIENT_JS}
 
+    // Núcleo compartido con el servidor: plegado de tildes, mapa de posiciones, coincidencias y resaltado seguro.
+    ${RESALTADO_CLIENT_JS}
+
+    // Presentación de resultados por campo y párrafo.
+    ${BUSQUEDA_CLIENT_JS}
+
     function escapeHtmlText(t) {
       return String(t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     }
@@ -1285,33 +1305,11 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
       }, 3000);
     }
 
+    // Resaltado seguro: el texto se escapa SIEMPRE y solo después se inserta <mark> (núcleo compartido con el servidor).
     function buildInteractiveHighlightedHtml(content, term, pageNum) {
-      if (!term || !term.trim()) return content;
-      const cleanDigits = term.replace(/\\D/g, '');
-      const wordMap = ['cero', 'uno', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve'];
-      let wordsPattern = '';
-      if (cleanDigits.length >= 7 && cleanDigits.length <= 9) {
-        const padded = cleanDigits.padStart(9, '0');
-        const wordsList = padded.split('').map(d => wordMap[parseInt(d, 10)]);
-        wordsPattern = wordsList.slice(0, 8).join('\\\\s+') + '\\\\s*[-–—\\\\s]+\\\\s*' + wordsList[8];
-      }
-      const escapedTerm = term.replace(/[.*+?^()|[\\]\\\\]/g, '\\\\$&');
-      const patterns = [
-        escapedTerm,
-        cleanDigits.length >= 7 ? cleanDigits : null,
-        wordsPattern ? wordsPattern : null
-      ].filter(Boolean);
-
-      const safeTerm = term.replace(/'/g, "\\\\'");
-      try {
-        const regex = new RegExp('(' + patterns.join('|') + ')', 'gi');
-        return content.replace(
-          regex,
-          \`<mark onclick="focusTermInPdfFromTranscription('\${safeTerm}', \${pageNum})" title="Clic para localizar y enfocar en el PDF original (Pág. \${pageNum})" class="highlight-clickable">$1</mark>\`
-        );
-      } catch (_) {
-        return content;
-      }
+      if (!term || !term.trim()) return gsEscapar(content);
+      const pg = parseInt(pageNum, 10) || 1;
+      return gsResaltarConsulta(content, term, 'highlight-clickable', ' data-pag="' + pg + '" title="Clic para localizar y enfocar en el PDF original (Pág. ' + pg + ')"');
     }
 
     function selectArticleCardAndFocusPdf(idx, anchorPhrase, pageNum) {
@@ -1351,7 +1349,7 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
       // Primero los registros que coinciden con la búsqueda (texto o DUI), para no hacer desplazar al usuario.
       const qTerm = String(currentHighlightedTerm || '').toLowerCase().trim();
       const qDigits = qTerm.replace(/[^0-9]/g, '');
-      const hits = (r) => !!qTerm && ((r.contenido || '').toLowerCase().includes(qTerm) || (qDigits.length >= 6 && (r.duisEncontrados || []).some(d => String(d).replace(/[^0-9]/g, '').includes(qDigits))));
+      const hits = (r) => !!qTerm && (gsRegistroCoincide(r.contenido || '', qTerm) || (qDigits.length >= 6 && (r.duisEncontrados || []).some(d => String(d).replace(/[^0-9]/g, '').includes(qDigits))));
       records = records.slice().sort((a, b) => (hits(b) ? 1 : 0) - (hits(a) ? 1 : 0));
 
       transBox.innerHTML = records.map(rec => {
@@ -1378,7 +1376,7 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
                 Tomo \${rec.tomo} · N° \${rec.numero} · Pág. \${rec.pagina} de 164
               </span>
             </div>
-            <h6 class="font-bold text-white text-xs leading-snug">\${rec.titular}</h6>
+            <h6 class="font-bold text-white text-xs leading-snug">\${escapeHtmlText(rec.titular)}</h6>
             <div class="text-[11px] text-slate-300 leading-relaxed whitespace-pre-line">\${highlightedContent}</div>
             \${duisChips}
           </div>\`;
@@ -1434,19 +1432,24 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
       }
     }
 
-    // Búsqueda General y DUI con Tarjetas Enriquecidas
-    function searchDiario(e) {
-      if (e) e.preventDefault();
+    // Búsqueda General y DUI: resultados por campo y párrafo (ver src/busqueda_vista.ts)
+    function searchDiario(e, pagina) {
+      if (e && e.preventDefault) e.preventDefault();
+      const pag = parseInt(pagina, 10) > 1 ? parseInt(pagina, 10) : 1;
       const q = document.getElementById('query-input').value.trim();
       const cat = document.getElementById('category-filter').value;
       const forceDui = document.getElementById('force-dui-check').checked;
       const resContainer = document.getElementById('results-container');
+      const resumenEl = document.getElementById('search-resumen');
       const btn = document.getElementById('btn-search');
       const avisoEl = document.getElementById('search-aviso');
       avisoEl.classList.add('hidden');
+      resumenEl.classList.add('hidden');
+      resumenEl.innerHTML = '';
+      gsActivarAcciones(resContainer, function (n) { searchDiario(null, n); });
 
       if (q.length === 0) {
-        avisoEl.innerText = 'Escribe un DUI o un nombre para buscar en el archivo.';
+        avisoEl.innerText = 'Escribe un DUI, un nombre, un número de decreto o una frase entre comillas para buscar en el archivo.';
         avisoEl.classList.remove('hidden');
         resContainer.innerHTML = '';
         return;
@@ -1454,17 +1457,20 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
 
       btn.disabled = true;
       btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Consultando Archivo...';
-      resContainer.innerHTML = '<div class="glass-card p-10 text-center text-slate-400"><i class="fa-solid fa-spinner fa-spin text-3xl text-brand-400"></i><p class="mt-3 text-sm font-mono">Buscando en publicaciones oficiales y sumarios jurídicos...</p></div>';
+      resContainer.setAttribute('aria-busy', 'true');
+      resContainer.innerHTML = '<div class="glass-card p-10 text-center text-slate-400"><i class="fa-solid fa-spinner fa-spin text-3xl text-brand-400"></i><p class="mt-3 text-sm font-mono">Buscando en los títulos, números de decreto, órganos emisores y en cada párrafo de las publicaciones oficiales...</p></div>';
 
-      const url = '/api/v1/search?q=' + encodeURIComponent(q) + 
+      const url = '/api/v1/search?v=2&q=' + encodeURIComponent(q) +
                   (cat ? '&categoria=' + encodeURIComponent(cat) : '') +
-                  (forceDui ? '&forceDui=1' : '');
+                  (forceDui ? '&forceDui=1' : '') +
+                  (pag > 1 ? '&pagina=' + pag : '');
 
       fetch(url)
         .then(r => r.json())
         .then(data => {
           btn.disabled = false;
           btn.innerHTML = '<i class="fa-solid fa-bolt"></i> Consultar Archivo Oficial';
+          resContainer.removeAttribute('aria-busy');
           if (data.aviso) {
             avisoEl.innerText = data.aviso;
             avisoEl.classList.remove('hidden');
@@ -1472,17 +1478,24 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
 
           if (data.entradaInvalida) {
             // Entrada inválida (DUI incompleto o con verificador erróneo, texto muy corto): nunca se dice «sin publicaciones».
-            resContainer.innerHTML = '<div role="alert" class="glass-card p-6 rounded-3xl text-center border border-amber-500/40"><i class="fa-solid fa-triangle-exclamation text-3xl text-amber-400 mb-2"></i><h4 class="text-base font-bold text-white">Revisa lo que escribiste</h4><p class="text-xs sm:text-sm text-slate-300 mt-1 max-w-md mx-auto">' + (data.aviso || 'La consulta no es válida.') + ' Todavía no se hizo una consulta confiable, así que no podemos decir si aparece o no en el archivo.</p></div>';
+            resContainer.innerHTML = '<div role="alert" class="glass-card p-6 rounded-3xl text-center border border-amber-500/40"><i class="fa-solid fa-triangle-exclamation text-3xl text-amber-400 mb-2"></i><h4 class="text-base font-bold text-white">Revisa lo que escribiste</h4><p class="text-xs sm:text-sm text-slate-300 mt-1 max-w-md mx-auto">' + escapeHtmlText(data.aviso || 'La consulta no es válida.') + ' Todavía no se hizo una consulta confiable, así que no podemos decir si aparece o no en el archivo.</p></div>';
             return;
           }
 
-          if (!data.results || data.results.length === 0) {
+          gsConsultaActual = String(data.duiNormalized || q).replace(/["“”«»]/g, '');
+
+          if (!data.resultados || data.resultados.length === 0) {
+            const fuera = data.total > 0 && pag > data.totalPaginas;
+            resumenEl.innerHTML = '<p class="text-xs sm:text-sm text-slate-200">' + (fuera
+              ? 'La página que pediste no existe: esta búsqueda solo tiene ' + data.totalPaginas + ' páginas de resultados.'
+              : 'No se encontraron publicaciones que contengan todo lo que buscaste.') + '</p>';
+            resumenEl.classList.remove('hidden');
             resContainer.innerHTML = \`
               <div class="glass-card p-8 sm:p-10 rounded-3xl text-center text-slate-400 border border-slate-800">
                 <i class="fa-regular fa-circle-check text-4xl text-brand-400 mb-3"></i>
                 <h4 class="text-base sm:text-lg font-bold text-white">Sin publicaciones oficiales encontradas</h4>
                 <p class="text-xs sm:text-sm text-slate-400 mt-1 max-w-md mx-auto">
-                  El criterio «<strong>\${escapeHtmlText(q)}</strong>» no registra edictos judiciales, avisos de rebeldía ni embargos publicados en este tomo.
+                  El criterio «<strong>\${escapeHtmlText(q)}</strong>» no aparece en los títulos, números de decreto, órganos emisores ni en el texto de las publicaciones de este tomo. Prueba con menos palabras, revisa la ortografía (no importan las tildes ni las mayúsculas) o quita el filtro de sección.
                 </p>
                 <div class="mt-5">
                   <button onclick="openModalAlert()" class="px-5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-brand-400 font-bold text-xs hover:bg-slate-800">
@@ -1493,59 +1506,20 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
             return;
           }
 
-          resContainer.innerHTML = data.results.map(item => {
-            const d = item.diario;
-            const clasif = classifyLegalRecordJS(d);
-            const citation = \`Diario Oficial Tomo \${d.tomo}, N° \${d.numero}, Pág. \${d.pagina} de 164 (\${d.fecha})\`;
-            const isDuiMatch = d.duisEncontrados && d.duisEncontrados.length > 0;
-            const safeQ = (data.duiNormalized || q).replace(/'/g, "\\\\'");
-
-            return \`
-            <div class="glass-card p-5 sm:p-7 rounded-3xl border \${isDuiMatch ? 'border-brand-500/50 bg-brand-950/10' : 'border-slate-800'} hover:border-brand-500/70 transition-all text-left">
-              <!-- Fila Superior de Badges Destacados: Clasificación Jurídica + Página Exacta + Tomo + Número + Fecha -->
-              <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-                <div class="flex flex-wrap items-center gap-2">
-                  \${getLegalClassificationBadge(clasif)}
-                  <span onclick="openEbookViewer(\${d.pagina}, '\${safeQ}')" class="cursor-pointer text-xs font-mono font-black px-3 py-1 rounded-lg bg-amber-400 text-slate-950 hover:bg-amber-300 transition-all shadow-sm flex items-center gap-1.5">
-                    <i class="fa-solid fa-file-lines"></i> Pág. \${d.pagina} de 164
-                  </span>
-                  <span class="text-xs font-mono font-bold px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-700 text-slate-200">
-                    Tomo \${d.tomo} · N° \${d.numero} · \${d.fecha}
-                  </span>
-                </div>
-                <button onclick="copyCitation('\${citation}')" title="Copiar cita jurídica certificada" class="text-xs text-slate-400 hover:text-white font-mono flex items-center gap-1.5 bg-slate-900/80 px-2.5 py-1 rounded-lg border border-slate-800">
-                  <i class="fa-regular fa-copy text-brand-400"></i> Copiar Cita
-                </button>
-              </div>
-
-              <h4 class="text-base sm:text-lg font-bold text-white mb-2.5">\${d.titular}</h4>
-
-              <!-- Extracto con fragmento remarcado interactivo -->
-              <div class="text-xs sm:text-sm font-mono text-slate-300 leading-relaxed bg-slate-950/85 p-4 rounded-2xl border border-slate-800/80 mb-3 whitespace-pre-line">\${item.snippet}</div>
-
-              <!-- Chips interactivos de DUIs Identificados (numérico + letras notariales) -->
-              \${renderDuiChipsHtml(d.duisEncontrados, d.pagina)}
-
-              <div class="flex flex-wrap items-center justify-between gap-3 text-xs border-t border-slate-800/80 pt-3 mt-3">
-                <div class="flex flex-wrap items-center gap-3">
-                  <button onclick="openEbookViewer(\${d.pagina}, '\${safeQ}')" class="bg-brand-500 hover:bg-brand-400 text-slate-950 font-black px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 transition-all shadow-lg shadow-brand-500/20">
-                    <i class="fa-solid fa-book-open-reader"></i> Abrir en Visor Ebook y Remarcar en PDF (Pág. \${d.pagina})
-                  </button>
-                  <a href="/pdf/23-10-2026.pdf#page=\${d.pagina}" download="Diario_Oficial_23_Octubre_2026_GrupoStu.pdf" class="text-slate-400 hover:text-white font-bold flex items-center gap-1">
-                    <i class="fa-solid fa-download"></i> PDF Original
-                  </a>
-                </div>
-                <a href="https://www.diariooficial.gob.sv/" target="_blank" rel="noopener noreferrer" class="text-cyan-400 hover:text-cyan-300 font-bold flex items-center gap-1.5">
-                  Fuente Estatal: diariooficial.gob.sv <i class="fa-solid fa-arrow-up-right-from-square text-[11px]"></i>
-                </a>
-              </div>
-            </div>\`;
-          }).join('');
+          resumenEl.innerHTML = gsHtmlResumen(data);
+          resumenEl.classList.remove('hidden');
+          resContainer.innerHTML = gsRenderResultados(data);
+          if (pag > 1) {
+            resumenEl.setAttribute('tabindex', '-1');
+            resumenEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            resumenEl.focus({ preventScroll: true });
+          }
         })
         .catch(() => {
           btn.disabled = false;
           btn.innerHTML = '<i class="fa-solid fa-bolt"></i> Consultar Archivo Oficial';
-          resContainer.innerHTML = '<div class="p-4 rounded-xl bg-rose-950 text-rose-300 text-sm">Error de conexión al consultar el archivo oficial.</div>';
+          resContainer.removeAttribute('aria-busy');
+          resContainer.innerHTML = '<div role="alert" class="p-4 rounded-xl bg-rose-950 text-rose-300 text-sm">No pudimos conectar con el archivo oficial. Revisa tu conexión a internet y vuelve a pulsar «Consultar Archivo Oficial».</div>';
         });
     }
 
@@ -1702,6 +1676,14 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
 
     // Ejecutar una búsqueda inicial demostrativa al cargar para mostrar las tarjetas enriquecidas de inmediato
     window.addEventListener('DOMContentLoaded', () => {
+      // Clic en una coincidencia de la transcripción: enfoca ese texto en el PDF (un solo manejador delegado, sin onclick con texto del usuario)
+      const transBoxEl = document.getElementById('ebook-transcription-content');
+      if (transBoxEl) {
+        transBoxEl.addEventListener('click', (ev) => {
+          const m = ev.target && ev.target.closest ? ev.target.closest('mark[data-pag]') : null;
+          if (m) focusTermInPdfFromTranscription(m.textContent || '', parseInt(m.getAttribute('data-pag'), 10) || currentEbookPage);
+        });
+      }
       quickSearchDemo('Decreto No. 690');
     });
   </script>

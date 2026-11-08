@@ -27,6 +27,8 @@ export interface DiarioRecord {
   seccion: string;
   titular: string;
   contenido: string;
+  /** Sumario o extracto explícito de la publicación (opcional). Solo se muestra como dato hallado si es lo que coincide. */
+  sumario?: string;
   duisEncontrados: string[];
   nitsEncontrados: string[];
   nombresClave: string[];
