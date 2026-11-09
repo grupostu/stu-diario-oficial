@@ -13,10 +13,15 @@ export interface Diario {
   paginas: number;
   /** Ruta local del PDF original (/pdf/archivo.pdf). */
   pdf: string;
+  /** Huella criptográfica SHA-256 del archivo PDF original. */
+  sha256?: string;
+  /** Lista de páginas que cuentan con reconocimiento OCR separado. */
+  paginasConOcr?: number[];
 }
 
 export const ID_DIARIO = /^\d{4}-\d{2}-\d{2}$/;
 const RUTA_PDF = /^\/pdf\/[\w.-]+\.pdf$/;
+const SHA256 = /^[0-9a-f]{64}$/;
 
 export function esDiarioValido(d: unknown): d is Diario {
   if (!d || typeof d !== 'object') return false;
@@ -27,7 +32,9 @@ export function esDiarioValido(d: unknown): d is Diario {
     Number.isInteger(x.tomo) && (x.tomo as number) > 0 &&
     Number.isInteger(x.numero) && (x.numero as number) > 0 &&
     Number.isInteger(x.paginas) && (x.paginas as number) > 0 && (x.paginas as number) < 5000 &&
-    typeof x.pdf === 'string' && RUTA_PDF.test(x.pdf)
+    typeof x.pdf === 'string' && RUTA_PDF.test(x.pdf) &&
+    (x.sha256 === undefined || (typeof x.sha256 === 'string' && SHA256.test(x.sha256))) &&
+    (x.paginasConOcr === undefined || (Array.isArray(x.paginasConOcr) && x.paginasConOcr.every((p) => Number.isInteger(p) && p > 0)))
   );
 }
 

@@ -1,22 +1,30 @@
-// Reconstruye el corpus de un Diario Oficial A PARTIR DEL PDF (nunca de datos escritos a mano).
+// Reconstruye e ingiere el corpus de Diarios Oficiales A PARTIR DEL PDF (nunca de datos escritos a mano).
 //
-// Uso:  npx tsx scripts/construir_corpus.ts public/pdf/23-10-2026.pdf
+// Soporta ingesta multi-diario: combina nuevos diarios con los ya existentes respetando su origen.
+// Valida que cada dato (tomo, número, fecha, rangos, contenido, DUI, NIT) salga literalmente del PDF.
+// Lo que no se pueda comprobar contra el PDF se rechaza y no entra al corpus.
 //
-// Genera:
-//   src/data_diario_real.json            publicaciones (edictos, decretos, acuerdos...) con su texto fiel y los
-//                                        rangos exactos (página, desde, hasta) donde viven en el PDF.
-//   public/data/paginas-<fecha>.json     texto de cada página en orden de lectura (para buscar en todo el tomo).
-//   src/diarios.json                     catálogo de diarios disponibles (tomo, número, fecha, páginas, PDF).
-//
-// Todo dato sale del texto del PDF. Si algo no puede leerse del PDF, se omite: jamás se inventa.
+// Uso:
+//   npx tsx scripts/construir_corpus.ts [rutaPdf1.pdf ...] [--reemplazar]
+//   npx tsx scripts/construir_corpus.ts public/pdf/23-10-2026.pdf
 import fs from 'node:fs';
 import path from 'node:path';
+import crypto from 'node:crypto';
 import { extraerPaginas, type PaginaExtraida } from './pdf_paginas.js';
 import { nucleo } from '../src/resaltado.js';
 import { extractDuis, extractNits, classifyLegalRecord } from '../src/parser.js';
 import type { CategoryType } from '../src/types.js';
 import { construirTitular, nombrePropio } from '../src/titles.js';
 import type { DiarioRecord } from '../src/types.js';
+import type { Diario } from '../src/diarios.js';
+import {
+  validarRegistros,
+  validarFichaDiario,
+  fusionarCorpus,
+  fusionarCatalogo,
+  verificarCorpus
+} from '../src/validacion_ingesta.js';
+import { cargarOcr } from '../src/ocr.js';
 
 interface LineaCuerpo {
   pagina: number;
@@ -40,7 +48,11 @@ interface Borrador {
   encabezado: string | null;
 }
 
-const MESES: Record<string, string> = { enero: '01', febrero: '02', marzo: '03', abril: '04', mayo: '05', junio: '06', julio: '07', agosto: '08', septiembre: '09', setiembre: '09', octubre: '10', noviembre: '11', diciembre: '12' };
+const MESES: Record<string, string> = {
+  enero: '01', febrero: '02', marzo: '03', abril: '04', mayo: '05', junio: '06',
+  julio: '07', agosto: '08', septiembre: '09', setiembre: '09', octubre: '10',
+  noviembre: '11', diciembre: '12'
+};
 
 /** Categoría por el encabezado y el arranque del texto (no por palabras sueltas como «marcadas»). */
 function categorizar(contenido: string): CategoryType {
@@ -129,27 +141,42 @@ function rangosDe(lineas: LineaCuerpo[]): Array<[number, number, number]> {
 }
 
 function limpiarEncabezado(t: string): string {
-  // Las versalitas del PDF vienen como "acEPTacioN DE HErENcia": se muestran en mayúsculas.
   return t.replace(/\s+/g, ' ').trim().toUpperCase();
 }
 
-async function main(): Promise<void> {
-  const rutaPdf = path.resolve(process.argv[2] ?? 'public/pdf/23-10-2026.pdf');
-  const paginas = await extraerPaginas(rutaPdf);
-  const n = paginas.length;
-  console.log(`[corpus] ${n} páginas leídas de ${rutaPdf}`);
+export interface ResultadoIngesta {
+  diarioId: string;
+  tomo: number;
+  numero: number;
+  fecha: string;
+  totalPaginas: number;
+  totalExtraidos: number;
+  aceptados: number;
+  rechazados: number;
+  sha256: string;
+}
 
-  // ---- Datos de la edición, leídos de la portada ----
+export async function procesarPdfDiario(rutaPdfAbsoluta: string, opts: { reemplazar?: boolean } = {}): Promise<ResultadoIngesta> {
+  const paginas = await extraerPaginas(rutaPdfAbsoluta);
+  const n = paginas.length;
+  console.log(`[ingesta] ${n} páginas leídas de ${rutaPdfAbsoluta}`);
+
+  const bytes = fs.readFileSync(rutaPdfAbsoluta);
+  const sha256Pdf = crypto.createHash('sha256').update(bytes).digest('hex');
+
+  // Datos de la edición, leídos de la portada
   const portada = nucleo.plegar(paginas[0]!.texto).plano;
   const tomo = /tomo\s*n\S*\s*(\d{2,4})/.exec(portada)?.[1];
   const numero = /numero\s*(\d{1,4})/.exec(portada)?.[1];
   const f = /(\d{1,2}) de (\w+) de ?\s*(\d{4})/.exec(portada.replace(/\bde(\d{4})/, 'de $1'));
-  if (!tomo || !numero || !f || !MESES[f[2]!]) throw new Error('No se pudo leer tomo, número y fecha de la portada del PDF');
+  if (!tomo || !numero || !f || !MESES[f[2]!]) {
+    throw new Error(`No se pudo leer tomo, número y fecha de la portada del PDF: ${rutaPdfAbsoluta}`);
+  }
   const fecha = `${f[3]}-${MESES[f[2]!]}-${f[1]!.padStart(2, '0')}`;
   const idDiario = fecha;
-  console.log(`[corpus] Tomo ${tomo} · N.° ${numero} · ${fecha}`);
+  console.log(`[ingesta] Tomo ${tomo} · N.° ${numero} · ${fecha} (sha256: ${sha256Pdf.slice(0, 16)}...)`);
 
-  // ---- Encabezados válidos de los edictos (tomados del sumario del propio PDF) ----
+  // Encabezados válidos de los edictos (tomados del sumario del propio PDF)
   const encabezados = new Set<string>();
   for (const pg of [paginas[0]!, paginas[1]!]) {
     for (const l of pg.lineas) {
@@ -174,18 +201,22 @@ async function main(): Promise<void> {
     borrador = null;
     if (!b || b.lineas.length === 0) return;
     const ls = b.lineas;
-    // El encabezado (primera línea) se conserva aparte; el resto se une en párrafos.
     const cuerpoLs = b.encabezado ? ls.slice(1) : ls;
     let contenido = textoDe(cuerpoLs);
     if (b.encabezado) contenido = contenido ? `${b.encabezado}\n${contenido}` : b.encabezado;
     if (contenido.replace(/\s/g, '').length < 20) return;
-    // El ramo que declara el propio acuerdo («EN EL RAMO DE ...») prevalece sobre el encabezado previo.
+
     const mRamo = /\bEN EL RAMO DE\s+([A-ZÁÉÍÓÚÑ ,]+?),?\s+(?:en uso|vista|en el uso)\b/.exec(contenido.slice(0, 400).replace(/\s+/g, ' '));
     if (mRamo && b.modo === 'doc') b.ramo = nombrePropio(mRamo[1]!.trim());
     const pagina = ls[0]!.pagina;
     const paginaFin = ls[ls.length - 1]!.pagina;
     const legislativo = /^(DECRETO|ACUERDO)\b/.test(contenido);
-      const categoria = b.modo === 'doc' ? (/legislativ/i.test(b.seccion) ? 'DECRETO_LEGISLATIVO' : 'ACUERDO_EJECUTIVO') : legislativo ? (/^DECRETO/.test(contenido) && /legislativ/i.test(b.seccion) ? 'DECRETO_LEGISLATIVO' : 'ACUERDO_EJECUTIVO') : categorizar(contenido);
+    const categoria = b.modo === 'doc'
+      ? (/legislativ/i.test(b.seccion) ? 'DECRETO_LEGISLATIVO' : 'ACUERDO_EJECUTIVO')
+      : legislativo
+      ? (/^DECRETO/.test(contenido) && /legislativ/i.test(b.seccion) ? 'DECRETO_LEGISLATIVO' : 'ACUERDO_EJECUTIVO')
+      : categorizar(contenido);
+
     registros.push({
       id: `${idBase}-p${pagina}-r${++seq}`,
       tomo: Number(tomo),
@@ -204,7 +235,7 @@ async function main(): Promise<void> {
       nombresClave: [],
       rangos: rangosDe(ls),
       diarioId: idDiario,
-      pdfUrlOficial: `/pdf/${path.basename(rutaPdf)}#page=${pagina}`
+      pdfUrlOficial: `/pdf/${path.basename(rutaPdfAbsoluta)}#page=${pagina}`
     } as DiarioRecord);
   };
 
@@ -212,7 +243,6 @@ async function main(): Promise<void> {
     const lineas = cuerpoDe(pag);
     for (const l of lineas) {
       if (l.k === 'c') {
-        // Referencias de registro al pie de un acuerdo: forman parte del documento.
         if (/^\(Registro No/i.test(l.texto.trim()) && borrador) (borrador as Borrador).lineas.push(l);
         continue;
       }
@@ -239,7 +269,6 @@ async function main(): Promise<void> {
           ramo = '';
           seccion = /LEGISLATIVO/.test(u) ? 'Órgano Legislativo' : /EJECUTIVO/.test(u) ? 'Órgano Ejecutivo' : /JUDICIAL/.test(u) ? 'Órgano Judicial' : /AUTONOMAS/.test(u) ? 'Instituciones Autónomas' : 'Alcaldías Municipales';
         } else {
-          // Ministerio, ramo o corte: delimita el documento anterior.
           cerrar();
           ramo = nombrePropio(txt.replace(/\s+/g, ' ').replace(/[.\s]+$/, '').trim());
         }
@@ -266,30 +295,124 @@ async function main(): Promise<void> {
   }
   cerrar();
 
-  // ---- Salida ----
+  // Validación estricta contra el texto del PDF
+  const paginasTexto = paginas.map((p) => p.texto);
+  const ocrExistente = cargarOcr(idDiario);
+  const paginasConOcr = ocrExistente ? Object.keys(ocrExistente.paginas).map(Number).sort((a, b) => a - b) : undefined;
+
+  const nuevaFicha: Diario = {
+    id: idDiario,
+    tomo: Number(tomo),
+    numero: Number(numero),
+    fecha,
+    paginas: n,
+    pdf: `/pdf/${path.basename(rutaPdfAbsoluta)}`,
+    sha256: sha256Pdf,
+    ...(paginasConOcr && paginasConOcr.length > 0 ? { paginasConOcr } : {})
+  };
+
+  const errFicha = validarFichaDiario(nuevaFicha, { paginas: n, sha256: sha256Pdf });
+  if (errFicha.length > 0) {
+    throw new Error(`Ficha de catálogo inválida: ${errFicha.join('; ')}`);
+  }
+
+  const { aceptados, rechazados } = validarRegistros(registros, paginasTexto, nuevaFicha);
+  if (rechazados.length > 0) {
+    console.warn(`[ingesta] ${rechazados.length} registro(s) rechazados por discrepancia con el PDF original:`);
+    for (const r of rechazados.slice(0, 5)) {
+      console.warn(`         [${r.id}] ${r.problemas.join('; ')}`);
+    }
+  }
+
+  // Fusión con corpus y catálogo existentes (multi-diario)
   const raiz = process.cwd();
-  fs.writeFileSync(path.join(raiz, 'src', 'data_diario_real.json'), JSON.stringify(registros, null, 1) + '\n', 'utf8');
+  const rutaCorpus = path.join(raiz, 'src', 'data_diario_real.json');
+  const rutaCatalogo = path.join(raiz, 'src', 'diarios.json');
+
+  let corpusExistente: DiarioRecord[] = [];
+  if (fs.existsSync(rutaCorpus)) {
+    try {
+      corpusExistente = JSON.parse(fs.readFileSync(rutaCorpus, 'utf8'));
+    } catch {
+      corpusExistente = [];
+    }
+  }
+
+  let catalogoExistente: Diario[] = [];
+  if (fs.existsSync(rutaCatalogo)) {
+    try {
+      catalogoExistente = JSON.parse(fs.readFileSync(rutaCatalogo, 'utf8'));
+    } catch {
+      catalogoExistente = [];
+    }
+  }
+
+  const corpusFinal = fusionarCorpus(corpusExistente, aceptados, idDiario);
+  const catalogoFinal = fusionarCatalogo(catalogoExistente, nuevaFicha, { reemplazar: opts.reemplazar });
+
   fs.mkdirSync(path.join(raiz, 'public', 'data'), { recursive: true });
   fs.writeFileSync(
     path.join(raiz, 'public', 'data', `paginas-${idDiario}.json`),
-    JSON.stringify({ id: idDiario, ancho: paginas[0]!.ancho, alto: paginas[0]!.alto, paginas: paginas.map((p) => p.texto) }),
+    JSON.stringify({ id: idDiario, ancho: paginas[0]!.ancho, alto: paginas[0]!.alto, paginas: paginasTexto }),
     'utf8'
   );
-  const catalogo = [
-    {
-      id: idDiario,
-      tomo: Number(tomo),
-      numero: Number(numero),
-      fecha,
-      paginas: n,
-      pdf: `/pdf/${path.basename(rutaPdf)}`
+  fs.writeFileSync(rutaCorpus, JSON.stringify(corpusFinal, null, 1) + '\n', 'utf8');
+  fs.writeFileSync(rutaCatalogo, JSON.stringify(catalogoFinal, null, 1) + '\n', 'utf8');
+
+  console.log(`[ingesta] Diario ${idDiario}: ${aceptados.length} aceptados, ${rechazados.length} rechazados. Corpus total: ${corpusFinal.length} publicaciones.`);
+
+  return {
+    diarioId: idDiario,
+    tomo: Number(tomo),
+    numero: Number(numero),
+    fecha,
+    totalPaginas: n,
+    totalExtraidos: registros.length,
+    aceptados: aceptados.length,
+    rechazados: rechazados.length,
+    sha256: sha256Pdf
+  };
+}
+
+async function main(): Promise<void> {
+  const args = process.argv.slice(2);
+  const reemplazar = args.includes('--reemplazar');
+  const rutasPdfs = args.filter((a) => !a.startsWith('--'));
+
+  const candidatos = rutasPdfs.length > 0
+    ? rutasPdfs
+    : ['public/pdf/23-10-2026.pdf'];
+
+  const resultados: ResultadoIngesta[] = [];
+  for (const r of candidatos) {
+    const rutaAbs = path.resolve(r);
+    if (!fs.existsSync(rutaAbs)) {
+      console.error(`[ingesta] Archivo PDF no encontrado: ${rutaAbs}`);
+      process.exit(1);
     }
-  ];
-  fs.writeFileSync(path.join(raiz, 'src', 'diarios.json'), JSON.stringify(catalogo, null, 1) + '\n', 'utf8');
-  console.log(`[corpus] ${registros.length} publicaciones escritas`);
+    const res = await procesarPdfDiario(rutaAbs, { reemplazar });
+    resultados.push(res);
+  }
+
+  // Verificación integral final del corpus y catálogo
+  const raiz = process.cwd();
+  const corpusActual = JSON.parse(fs.readFileSync(path.join(raiz, 'src', 'data_diario_real.json'), 'utf8'));
+  const catalogoActual = JSON.parse(fs.readFileSync(path.join(raiz, 'src', 'diarios.json'), 'utf8'));
+  const { problemas, sinDiario } = verificarCorpus(corpusActual, catalogoActual, (id) => {
+    const p = path.join(raiz, 'public', 'data', `paginas-${id}.json`);
+    if (!fs.existsSync(p)) return null;
+    return JSON.parse(fs.readFileSync(p, 'utf8')).paginas;
+  });
+
+  if (problemas.length > 0 || sinDiario.length > 0) {
+    console.error(`[ingesta] ERROR: Verificación integral falló. Problemas: ${problemas.length}, Sin diario: ${sinDiario.length}`);
+    process.exit(1);
+  }
+
+  console.log(`[ingesta] Multi-diario verificado: ${catalogoActual.length} diario(s) en catálogo, ${corpusActual.length} publicaciones en total.`);
 }
 
 main().catch((e) => {
-  console.error(e);
+  console.error('[ingesta] Error:', e);
   process.exit(1);
 });
