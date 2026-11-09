@@ -250,8 +250,8 @@ export class StuCabeceraController {
         <div class="stu-cabecera__inner">
           
           <!-- Bloque Marca y Plataforma -->
-          <a href="${platformUrl}" class="stu-cabecera__brand">
-            <div class="stu-cabecera__logo-mark" aria-hidden="true">GS</div>
+          <a href="${platformUrl}" class="stu-cabecera__brand" aria-label="${showSeparator ? brandName + ' ' + platformName : brandName}">
+            <div class="stu-cabecera__logo-mark" aria-hidden="true" data-mark="GS"></div>
             <span class="stu-cabecera__brand-name">${brandName}</span>
             ${showSeparator ? `
               <span class="stu-cabecera__separator" aria-hidden="true">/</span>
