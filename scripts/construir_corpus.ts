@@ -59,7 +59,7 @@ const ESTRUCTURAL = [
   /^ORGANO(LEGISLATIVO|EJECUTIVO|JUDICIAL)$/,
   /^INSTITUCIONESAUTONOMAS$/,
   /^ALCALDIASMUNICIPALES$/,
-  /^SECCION[A-Z]*$/,
+  /^SECCIONCARTELES[A-Z]*$/,
   /^DEPRIMERAPUBLICACION$/,
   /^DESEGUNDAPUBLICACION$/,
   /^DETERCERAPUBLICACION$/,
@@ -179,6 +179,9 @@ async function main(): Promise<void> {
     let contenido = textoDe(cuerpoLs);
     if (b.encabezado) contenido = contenido ? `${b.encabezado}\n${contenido}` : b.encabezado;
     if (contenido.replace(/\s/g, '').length < 20) return;
+    // El ramo que declara el propio acuerdo («EN EL RAMO DE ...») prevalece sobre el encabezado previo.
+    const mRamo = /\bEN EL RAMO DE\s+([A-ZÁÉÍÓÚÑ ,]+?),?\s+(?:en uso|vista|en el uso)\b/.exec(contenido.slice(0, 400).replace(/\s+/g, ' '));
+    if (mRamo && b.modo === 'doc') b.ramo = nombrePropio(mRamo[1]!.trim());
     const pagina = ls[0]!.pagina;
     const paginaFin = ls[ls.length - 1]!.pagina;
     const legislativo = /^(DECRETO|ACUERDO)\b/.test(contenido);
