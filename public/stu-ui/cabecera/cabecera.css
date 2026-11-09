@@ -322,7 +322,7 @@
 .stu-apps-panel {
   width: 340px;
   max-width: calc(100vw - 32px);
-  display: flex;
+  /* El display lo gobierna .stu-cabecera-panel (none) y .is-open (flex): no redefinirlo aqui. */
   flex-direction: column;
 }
 
@@ -533,7 +533,7 @@
 .stu-account-panel {
   width: 320px;
   max-width: calc(100vw - 32px);
-  display: flex;
+  /* El display lo gobierna .stu-cabecera-panel (none) y .is-open (flex). */
   flex-direction: column;
 }
 
