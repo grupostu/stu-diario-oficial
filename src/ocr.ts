@@ -1,3 +1,4 @@
+import { renderPaginaBase } from './pagina_base.js';
 // Texto reconocido automáticamente (OCR) de las páginas del PDF que no tienen capa de texto.
 //
 // REGLAS (no negociables):
@@ -136,30 +137,20 @@ export function renderVistaOcr(d: DatosVistaOcr): string {
   <pre lang="es" aria-label="Texto reconocido automáticamente de la página ${d.pagina}">${escapar(d.ocr.pagina.texto)}</pre>
   <p class="meta">Motor: ${escapar(d.ocr.motor.nombre)} ${escapar(d.ocr.motor.version)} · idioma ${escapar(d.ocr.motor.idioma)} · generado ${escapar(d.ocr.generado)}</p>`
     : `<p class="etiqueta" role="note">${d.sinCapaDeTexto ? 'Esta página es una imagen sin texto digital en el PDF y todavía no tiene texto reconocido automáticamente.' : 'Esta página tiene texto digital en el PDF; no se aplica reconocimiento automático.'}</p>`;
-  return `<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="robots" content="noindex">
-  <title>Texto reconocido automáticamente · ${escapar(titulo)}</title>
+  return renderPaginaBase({
+    titulo: `Texto reconocido automáticamente · ${titulo}`,
+    noindex: true,
+    cuerpo: `<div class="contenido">
   <style>
-    body{margin:0;background:#0f172a;color:#e2e8f0;font:16px/1.65 system-ui,sans-serif}
-    main{max-width:820px;margin:0 auto;padding:32px 16px 64px}
-    h1{font-size:1.3rem;color:#fff} a{color:#6ee7b7}
-    .etiqueta{border:1px solid #f59e0b;background:#1e293b;padding:12px 14px;border-radius:8px;color:#fde68a}
-    pre{white-space:pre-wrap;word-break:break-word;background:#020617;border:1px dashed #64748b;padding:16px;border-radius:8px;font:14px/1.6 ui-monospace,monospace}
-    .meta{color:#94a3b8;font-size:.85rem}
+    .etiqueta{border:1px solid var(--gs-warning-border);background:var(--gs-warning-soft);padding:12px 14px;border-radius:8px;color:var(--gs-warning-soft-ink)}
+    pre{white-space:pre-wrap;word-break:break-word;background:var(--gs-surface);color:var(--gs-text);border:1px dashed var(--gs-border-strong);padding:16px;border-radius:8px;font:14px/1.6 var(--gs-font-mono,ui-monospace,monospace)}
+    .meta{color:var(--gs-text-3);font-size:.85rem}
   </style>
-</head>
-<body>
-<main>
   <p><a href="/">&larr; Volver al buscador</a> · <a href="${escapar(d.pdf)}#page=${d.pagina}" rel="noopener">Abrir la página en el PDF original</a></p>
   <h1>${escapar(titulo)}</h1>
   ${cuerpo}
-</main>
-</body>
-</html>`;
+</div>`
+  });
 }
 
 /** Guarda un archivo OCR en la carpeta pública correspondiente. */

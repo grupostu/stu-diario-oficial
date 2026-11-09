@@ -8,17 +8,17 @@
 
 export const VISOR_CSS = `
     /* Barras de desplazamiento oscuras y discretas (en todo el portal) */
-    * { scrollbar-width: thin; scrollbar-color: #334155 transparent; }
+    * { scrollbar-width: thin; scrollbar-color: var(--gs-border-strong) transparent; }
     *::-webkit-scrollbar { width: 10px; height: 10px; }
     *::-webkit-scrollbar-track { background: transparent; }
-    *::-webkit-scrollbar-thumb { background: #334155; border-radius: 999px; border: 2px solid #0b1220; }
-    *::-webkit-scrollbar-thumb:hover { background: #475569; }
+    *::-webkit-scrollbar-thumb { background: var(--gs-border-strong); border-radius: 999px; border: 2px solid var(--gs-bg); }
+    *::-webkit-scrollbar-thumb:hover { background: var(--gs-text-3); }
     *::-webkit-scrollbar-corner { background: transparent; }
 
     /* Visor */
-    #vz-scroll { position: relative; background: #0b1220; overflow: auto; scroll-behavior: auto; }
+    #vz-scroll { position: relative; background: var(--gs-surface-2); overflow: auto; scroll-behavior: auto; }
     #vz-paginas { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 16px 16px 80px; min-width: min-content; }
-    .vz-pag { position: relative; background: #fff; box-shadow: 0 8px 30px rgba(0,0,0,.45); flex: none; --scale-factor: 1; }
+    .vz-pag { position: relative; background: #fff; box-shadow: 0 2px 12px rgba(15,23,42,.25); flex: none; --scale-factor: 1; }
     .vz-pag canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
     .vz-pag .vz-hl-capa { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
     .vz-pag .textLayer { position: absolute; inset: 0; overflow: hidden; line-height: 1; opacity: 1; z-index: 3; }
@@ -26,25 +26,25 @@ export const VISOR_CSS = `
     .vz-pag .textLayer ::selection { background: rgba(56,189,248,.45); }
     .vz-num { position: absolute; top: 6px; right: 8px; z-index: 4; font: 700 10px/1 'JetBrains Mono', monospace; color: #475569; background: rgba(241,245,249,.92); padding: 3px 6px; border-radius: 6px; pointer-events: none; }
     .vz-sin-texto { position: absolute; left: 50%; top: 14px; transform: translateX(-50%); z-index: 4; font: 600 11px/1.3 'Plus Jakarta Sans', sans-serif; color: #92400e; background: #fef3c7; border: 1px solid #f59e0b; padding: 5px 10px; border-radius: 8px; max-width: 80%; text-align: center; pointer-events: none; }
-    .vz-cargando { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #94a3b8; font: 600 12px 'JetBrains Mono', monospace; }
+    .vz-cargando { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--gs-text-3); font: 600 12px 'JetBrains Mono', monospace; }
     /* Búsqueda: misma convención que el navegador (amarillo; naranja la coincidencia activa) */
     .vz-hl { position: absolute; background: rgba(255, 213, 0, .55); mix-blend-mode: multiply; border-radius: 2px; }
     .vz-hl.vz-act { background: rgba(255, 138, 0, .75); outline: 2px solid #f97316; outline-offset: 0; }
     /* Publicación completa: banda esmeralda suave sobre sus líneas */
     .vz-reg { position: absolute; background: rgba(16, 185, 129, .20); mix-blend-mode: multiply; border-radius: 2px; }
     .vz-reg-borde { position: absolute; border-left: 3px solid #059669; background: transparent; }
-    #vz-panel-lista .vz-tarjeta { border: 1px solid #1e293b; background: #0b1220; border-radius: 16px; padding: 14px; transition: border-color .15s, box-shadow .15s; }
-    #vz-panel-lista .vz-tarjeta:hover { border-color: #334155; }
-    #vz-panel-lista .vz-tarjeta.vz-activa { border-color: #10b981; box-shadow: 0 0 0 1px rgba(16,185,129,.45); }
+    #vz-panel-lista .vz-tarjeta { border: 1px solid var(--gs-border); background: var(--gs-surface); border-radius: 12px; padding: 14px; transition: border-color .15s, box-shadow .15s; }
+    #vz-panel-lista .vz-tarjeta:hover { border-color: var(--gs-border-strong); }
+    #vz-panel-lista .vz-tarjeta.vz-activa { border-color: var(--gs-accent); box-shadow: 0 0 0 1px var(--gs-accent); }
     #vz-panel-lista mark.vz-m { background: #fde047; color: #0f172a; padding: 0 2px; border-radius: 3px; font-weight: 700; }
-    .vz-chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; border: 1px solid #334155; background: #0f172a; color: #cbd5e1; font: 600 11px 'JetBrains Mono', monospace; cursor: pointer; }
-    .vz-chip:hover { border-color: #10b981; color: #fff; }
-    .vz-chip b { color: #fbbf24; }
-    .vz-btn { padding: 6px 10px; border-radius: 10px; background: #1e293b; border: 1px solid #334155; color: #e2e8f0; font: 700 11px 'JetBrains Mono', monospace; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
-    .vz-btn:hover { background: #334155; }
+    .vz-chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 8px; border: 1px solid var(--gs-border); background: var(--gs-surface); color: var(--gs-text-2); font: 600 11px 'JetBrains Mono', monospace; cursor: pointer; }
+    .vz-chip:hover { border-color: var(--gs-accent); color: var(--gs-text); }
+    .vz-chip b { color: var(--gs-warning); }
+    .vz-btn { padding: 6px 10px; border-radius: 10px; background: var(--gs-surface-2); border: 1px solid var(--gs-border); color: var(--gs-text); font: 700 11px 'JetBrains Mono', monospace; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+    .vz-btn:hover { background: var(--gs-border); }
     .vz-btn[disabled] { opacity: .4; cursor: default; }
-    .vz-btn-primario { background: #10b981; border-color: #10b981; color: #022c22; }
-    .vz-btn-primario:hover { background: #34d399; }
+    .vz-btn-primario { background: var(--gs-accent); border-color: var(--gs-accent); color: var(--gs-accent-ink); }
+    .vz-btn-primario:hover { background: var(--gs-accent-hover); }
     #vz-aviso { display: none; }
 `;
 
@@ -52,36 +52,36 @@ export const VISOR_HTML = `
   <!-- ========================================================================= -->
   <!-- VISOR DEL DIARIO OFICIAL: tomo completo + transcripción sincronizada      -->
   <!-- ========================================================================= -->
-  <div id="modal-ebook" class="fixed inset-0 bg-slate-950 hidden flex-col z-50" role="dialog" aria-modal="true" aria-label="Visor del Diario Oficial">
-    <div class="bg-slate-900 border-b border-slate-800 px-3 sm:px-4 py-2 flex flex-wrap items-center gap-x-4 gap-y-2 shrink-0">
+  <div id="modal-ebook" class="fixed inset-0 bg-gs-bg hidden flex-col z-50" role="dialog" aria-modal="true" aria-label="Visor del Diario Oficial">
+    <div class="bg-gs-surface border-b border-gs-border px-3 sm:px-4 py-2 flex flex-wrap items-center gap-x-4 gap-y-2 shrink-0">
       <div class="min-w-0 mr-auto">
-        <h4 class="text-xs sm:text-sm font-black text-white tracking-tight flex items-center gap-2 flex-wrap">
+        <h4 class="text-xs sm:text-sm font-semibold text-gs-text tracking-tight flex items-center gap-2 flex-wrap">
           <span id="vz-titulo">Diario Oficial</span>
-          <span id="ebook-top-page-badge" class="text-[11px] text-slate-950 bg-amber-400 px-2 py-0.5 rounded-md font-mono font-black">Pág. 1</span>
+          <span id="ebook-top-page-badge" class="text-[11px] text-gs-ink bg-gs-warning px-2 py-0.5 rounded-md font-mono font-semibold">Pág. 1</span>
         </h4>
-        <span class="text-[10px] text-slate-400 font-mono">Documento original (PDF) con su transcripción</span>
+        <span class="text-[10px] text-gs-text2 font-mono">Documento original (PDF) con su transcripción</span>
       </div>
 
       <div class="flex flex-wrap items-center gap-1.5 font-mono text-xs">
         <button type="button" id="vz-prev" class="vz-btn" title="Página anterior" aria-label="Página anterior"><i class="fa-solid fa-chevron-up"></i></button>
-        <div class="flex items-center gap-1 bg-slate-950 px-2 py-1 rounded-lg border border-slate-700">
-          <input type="number" id="ebook-page-number" value="1" min="1" aria-label="Número de página" class="w-12 bg-slate-900 text-center text-white font-bold outline-none rounded py-0.5">
-          <span class="text-slate-500 text-[11px]">/ <span id="vz-total">–</span></span>
+        <div class="flex items-center gap-1 bg-gs-bg px-2 py-1 rounded-lg border border-gs-border">
+          <input type="number" id="ebook-page-number" value="1" min="1" aria-label="Número de página" class="w-12 bg-gs-surface text-center text-gs-text font-bold outline-none rounded py-0.5">
+          <span class="text-gs-text3 text-[11px]">/ <span id="vz-total">–</span></span>
         </div>
         <button type="button" id="vz-next" class="vz-btn" title="Página siguiente" aria-label="Página siguiente"><i class="fa-solid fa-chevron-down"></i></button>
 
-        <div class="flex items-center bg-slate-950 rounded-lg border border-slate-700 p-0.5">
-          <button type="button" id="vz-zoom-menos" class="px-2 py-1 hover:bg-slate-800 text-slate-300 rounded font-bold" title="Reducir" aria-label="Reducir zoom">−</button>
-          <span id="vz-zoom-val" class="px-1.5 text-[11px] text-slate-300 w-11 text-center">125%</span>
-          <button type="button" id="vz-zoom-mas" class="px-2 py-1 hover:bg-slate-800 text-slate-300 rounded font-bold" title="Aumentar" aria-label="Aumentar zoom">+</button>
+        <div class="flex items-center bg-gs-bg rounded-lg border border-gs-border p-0.5">
+          <button type="button" id="vz-zoom-menos" class="px-2 py-1 hover:bg-gs-surface2 text-gs-text2 rounded font-bold" title="Reducir" aria-label="Reducir zoom">−</button>
+          <span id="vz-zoom-val" class="px-1.5 text-[11px] text-gs-text2 w-11 text-center">125%</span>
+          <button type="button" id="vz-zoom-mas" class="px-2 py-1 hover:bg-gs-surface2 text-gs-text2 rounded font-bold" title="Aumentar" aria-label="Aumentar zoom">+</button>
         </div>
 
-        <div class="flex items-center bg-slate-950 border border-slate-700 focus-within:border-amber-400 rounded-lg">
-          <i class="fa-solid fa-magnifying-glass text-slate-500 text-[11px] pl-2.5"></i>
-          <input type="search" id="ebook-inline-search" placeholder="Buscar en el diario…" autocomplete="off" spellcheck="false" aria-label="Buscar en el diario" class="w-40 sm:w-52 bg-transparent px-2 py-1.5 text-[12px] text-white outline-none">
-          <span id="pdf-highlight-counter" class="text-[11px] text-slate-400 pr-1.5 whitespace-nowrap" aria-live="polite">0/0</span>
-          <button type="button" id="vz-m-prev" class="px-1.5 py-1 text-slate-300 hover:text-white" title="Coincidencia anterior (Mayús+Intro)" aria-label="Coincidencia anterior"><i class="fa-solid fa-chevron-up text-[10px]"></i></button>
-          <button type="button" id="vz-m-next" class="px-1.5 py-1 mr-0.5 text-slate-300 hover:text-white" title="Coincidencia siguiente (Intro)" aria-label="Coincidencia siguiente"><i class="fa-solid fa-chevron-down text-[10px]"></i></button>
+        <div class="flex items-center bg-gs-bg border border-gs-border focus-within:border-gs-warning rounded-lg">
+          <i class="fa-solid fa-magnifying-glass text-gs-text3 text-[11px] pl-2.5"></i>
+          <input type="search" id="ebook-inline-search" placeholder="Buscar en el diario…" autocomplete="off" spellcheck="false" aria-label="Buscar en el diario" class="w-40 sm:w-52 bg-transparent px-2 py-1.5 text-[12px] text-gs-text outline-none">
+          <span id="pdf-highlight-counter" class="text-[11px] text-gs-text2 pr-1.5 whitespace-nowrap" aria-live="polite">0/0</span>
+          <button type="button" id="vz-m-prev" class="px-1.5 py-1 text-gs-text2 hover:text-gs-text" title="Coincidencia anterior (Mayús+Intro)" aria-label="Coincidencia anterior"><i class="fa-solid fa-chevron-up text-[10px]"></i></button>
+          <button type="button" id="vz-m-next" class="px-1.5 py-1 mr-0.5 text-gs-text2 hover:text-gs-text" title="Coincidencia siguiente (Intro)" aria-label="Coincidencia siguiente"><i class="fa-solid fa-chevron-down text-[10px]"></i></button>
         </div>
       </div>
 
@@ -93,39 +93,39 @@ export const VISOR_HTML = `
     </div>
 
     <!-- Otros diarios donde aparece lo buscado + retorno -->
-    <div id="vz-otros" class="hidden bg-slate-900/70 border-b border-slate-800 px-3 sm:px-4 py-1.5 flex flex-wrap items-center gap-2 text-[11px] font-mono text-slate-400 shrink-0"></div>
-    <div id="pdf-range-notice" role="status" aria-live="polite" class="hidden shrink-0 px-4 py-1.5 bg-slate-900 border-b border-amber-500/50 text-amber-300 text-xs font-bold"></div>
+    <div id="vz-otros" class="hidden bg-gs-surface border-b border-gs-border px-3 sm:px-4 py-1.5 flex flex-wrap items-center gap-2 text-[11px] font-mono text-gs-text2 shrink-0"></div>
+    <div id="pdf-range-notice" role="status" aria-live="polite" class="hidden shrink-0 px-4 py-1.5 bg-gs-surface border-b border-gs-border text-gs-warning text-xs font-bold"></div>
 
     <div class="flex-1 flex flex-col md:flex-row overflow-hidden min-h-0">
       <div id="vz-scroll" class="flex-1 min-h-0 min-w-0">
-        <div id="vz-estado" class="p-10 text-center text-slate-400 text-xs font-mono"><i class="fa-solid fa-circle-notch fa-spin text-2xl text-brand-400 block mb-3"></i>Cargando el diario…</div>
+        <div id="vz-estado" class="p-10 text-center text-gs-text2 text-xs font-mono"><i class="fa-solid fa-circle-notch fa-spin text-2xl text-gs-accent block mb-3"></i>Cargando el diario…</div>
         <div id="vz-paginas"></div>
       </div>
 
-      <aside id="ebook-side-panel" class="w-full md:w-[400px] lg:w-[460px] max-h-[40vh] md:max-h-none bg-slate-900 border-t md:border-t-0 md:border-l border-slate-800 flex flex-col shrink-0 min-h-0">
-        <div class="px-4 py-3 border-b border-slate-800 bg-slate-950/60">
-          <h5 class="text-xs font-black text-white uppercase tracking-wider flex items-center gap-2"><i class="fa-solid fa-file-lines text-brand-400"></i> Publicaciones en esta página</h5>
-          <p class="text-[11px] text-slate-400 mt-0.5">Pulsa una publicación para resaltarla completa en el PDF, aunque continúe en otra página. <span id="sidebar-page-label" class="text-white font-bold"></span></p>
+      <aside id="ebook-side-panel" class="w-full md:w-[400px] lg:w-[460px] max-h-[40vh] md:max-h-none bg-gs-surface border-t md:border-t-0 md:border-l border-gs-border flex flex-col shrink-0 min-h-0">
+        <div class="px-4 py-3 border-b border-gs-border bg-gs-bg">
+          <h5 class="text-xs font-semibold text-gs-text uppercase tracking-wider flex items-center gap-2"><i class="fa-solid fa-file-lines text-gs-accent"></i> Publicaciones en esta página</h5>
+          <p class="text-[11px] text-gs-text2 mt-0.5">Pulsa una publicación para resaltarla completa en el PDF, aunque continúe en otra página. <span id="sidebar-page-label" class="text-gs-text font-bold"></span></p>
         </div>
-        <div id="vz-panel-lista" class="flex-1 overflow-y-auto p-3 space-y-3 text-xs leading-relaxed text-slate-300 min-h-0"></div>
-        <div class="px-4 py-2 bg-slate-950 border-t border-slate-800 text-[10px] text-slate-500 font-mono">Transcripción automática del PDF. Ante cualquier duda, el documento original manda.</div>
+        <div id="vz-panel-lista" class="flex-1 overflow-y-auto p-3 space-y-3 text-xs leading-relaxed text-gs-text2 min-h-0"></div>
+        <div class="px-4 py-2 bg-gs-bg border-t border-gs-border text-[10px] text-gs-text3 font-mono">Transcripción automática del PDF. Ante cualquier duda, el documento original manda.</div>
       </aside>
     </div>
   </div>
 
   <!-- Cómo citar -->
-  <div id="modal-certified-citation" class="fixed inset-0 bg-slate-950/85 hidden items-center justify-center p-4 z-[60]" role="dialog" aria-modal="true" aria-label="Cómo citar">
-    <div class="bg-slate-900 max-w-lg w-full p-5 sm:p-6 rounded-2xl border border-slate-700 text-left space-y-4">
+  <div id="modal-certified-citation" class="fixed inset-0 bg-gs-bg hidden items-center justify-center p-4 z-[60]" role="dialog" aria-modal="true" aria-label="Cómo citar">
+    <div class="bg-gs-surface max-w-lg w-full p-5 sm:p-6 rounded-2xl border border-gs-border text-left space-y-4">
       <div class="flex items-start justify-between gap-3">
         <div>
-          <h3 class="text-base font-black text-white">Cómo citar esta página</h3>
-          <p class="text-[11px] text-slate-400 mt-0.5">Ayuda para ubicar el texto. No es un documento oficial ni una certificación.</p>
+          <h3 class="text-base font-semibold text-gs-text">Cómo citar esta página</h3>
+          <p class="text-[11px] text-gs-text2 mt-0.5">Ayuda para ubicar el texto. No es un documento oficial ni una certificación.</p>
         </div>
-        <button type="button" id="vz-cita-cerrar" class="text-slate-400 hover:text-white text-lg" aria-label="Cerrar"><i class="fa-solid fa-xmark"></i></button>
+        <button type="button" id="vz-cita-cerrar" class="text-gs-text2 hover:text-gs-text text-lg" aria-label="Cerrar"><i class="fa-solid fa-xmark"></i></button>
       </div>
-      <p id="certified-citation-body" class="bg-slate-950 border border-slate-800 rounded-xl p-3.5 text-sm text-slate-100 leading-relaxed select-all"></p>
-      <p class="text-[11px] text-slate-400 leading-relaxed">Verifica siempre el contenido en la publicación oficial de la Imprenta Nacional.
-        <a href="https://www.diariooficial.gob.sv/" target="_blank" rel="noopener noreferrer" class="text-brand-400 hover:underline">diariooficial.gob.sv</a></p>
+      <p id="certified-citation-body" class="bg-gs-bg border border-gs-border rounded-xl p-3.5 text-sm text-gs-text leading-relaxed select-all"></p>
+      <p class="text-[11px] text-gs-text2 leading-relaxed">Verifica siempre el contenido en la publicación oficial de la Imprenta Nacional.
+        <a href="https://www.diariooficial.gob.sv/" target="_blank" rel="noopener noreferrer" class="text-gs-accent hover:underline">diariooficial.gob.sv</a></p>
       <div class="flex justify-end gap-2">
         <button type="button" id="vz-cita-copiar" class="vz-btn vz-btn-primario"><i class="fa-regular fa-copy"></i> Copiar cita</button>
       </div>
@@ -184,7 +184,7 @@ function vzCargarDiario(id) {
   vzLiberarTodo();
   VZ.diario = d; VZ.pdf = null; VZ.textos = []; VZ.busq = []; VZ.registros = []; VZ.matches = []; VZ.idx = -1; VZ.regActivo = null; VZ.sinTexto = {};
   vzEl('vz-estado').style.display = 'block';
-  vzEl('vz-estado').innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-2xl text-brand-400 block mb-3"></i>Cargando ' + gsEscapar(vzEtiquetaDiario(d)) + '…';
+  vzEl('vz-estado').innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-2xl text-gs-accent block mb-3"></i>Cargando ' + gsEscapar(vzEtiquetaDiario(d)) + '…';
   vzEl('vz-titulo').textContent = 'Diario Oficial · ' + vzEtiquetaDiario(d);
   vzEl('vz-total').textContent = d.paginas;
   vzEl('ebook-page-number').max = d.paginas;
@@ -507,7 +507,7 @@ function vzPanel() {
   var n = VZ.paginaActual;
   var regs = VZ.registros.filter(function (r) { return r.pagina <= n && (r.paginaFin || r.pagina) >= n; });
   if (!regs.length) {
-    lista.innerHTML = '<div class="p-4 rounded-2xl bg-slate-950 border border-slate-800 text-center text-slate-400"><p class="font-bold text-white mb-1">Pág. ' + n + '</p><p class="text-[11px]">' +
+    lista.innerHTML = '<div class="p-4 rounded-2xl bg-gs-bg border border-gs-border text-center text-gs-text2"><p class="font-bold text-gs-text mb-1">Pág. ' + n + '</p><p class="text-[11px]">' +
       (VZ.sinTexto[n] ? 'Esta página no tiene texto digital en el PDF, por eso no hay transcripción. Se muestra solo el documento original.' : 'No hay publicaciones indexadas en esta página. Usa el buscador del visor para localizar cualquier palabra.') + '</p></div>';
     return;
   }
@@ -515,13 +515,13 @@ function vzPanel() {
     var activa = VZ.regActivo && VZ.regActivo.id === r.id;
     var rango = (r.paginaFin && r.paginaFin !== r.pagina) ? 'Págs. ' + r.pagina + '–' + r.paginaFin : 'Pág. ' + r.pagina;
     var cuerpo = VZ.term && VZ.term.length >= 2 ? gsResaltarConsulta(r.contenido, VZ.term, 'vz-m', '') : gsEscapar(r.contenido);
-    var duis = (r.duisEncontrados || []).map(function (d) { return '<button type="button" class="vz-chip" data-vz-buscar="' + gsEscapar(d) + '"><i class="fa-solid fa-fingerprint text-amber-400"></i>' + gsEscapar(d) + '</button>'; }).join(' ');
+    var duis = (r.duisEncontrados || []).map(function (d) { return '<button type="button" class="vz-chip" data-vz-buscar="' + gsEscapar(d) + '"><i class="fa-solid fa-fingerprint text-gs-warning"></i>' + gsEscapar(d) + '</button>'; }).join(' ');
     return '<article class="vz-tarjeta' + (activa ? ' vz-activa' : '') + '" data-vz-reg="' + gsEscapar(r.id) + '">' +
-      '<div class="flex flex-wrap items-center justify-between gap-2 mb-2"><span class="text-[11px] font-mono font-bold text-emerald-300">' + gsEscapar(vzNombreClasif(r)) + '</span>' +
-      '<span class="text-[11px] font-mono font-bold text-amber-300">' + gsEscapar(rango) + '</span></div>' +
-      '<h6 class="font-bold text-white text-[12px] leading-snug mb-2">' + gsEscapar(r.titular) + '</h6>' +
-      '<div class="text-[11.5px] text-slate-300 whitespace-pre-line break-words max-h-64 overflow-y-auto pr-1">' + cuerpo + '</div>' +
-      (duis ? '<div class="flex flex-wrap items-center gap-1.5 mt-2.5 pt-2 border-t border-slate-800"><span class="text-[10px] text-slate-500 font-mono">DUI:</span>' + duis + '</div>' : '') +
+      '<div class="flex flex-wrap items-center justify-between gap-2 mb-2"><span class="text-[11px] font-mono font-bold text-gs-accent">' + gsEscapar(vzNombreClasif(r)) + '</span>' +
+      '<span class="text-[11px] font-mono font-bold text-gs-warning">' + gsEscapar(rango) + '</span></div>' +
+      '<h6 class="font-bold text-gs-text text-[12px] leading-snug mb-2">' + gsEscapar(r.titular) + '</h6>' +
+      '<div class="text-[11.5px] text-gs-text2 whitespace-pre-line break-words max-h-64 overflow-y-auto pr-1">' + cuerpo + '</div>' +
+      (duis ? '<div class="flex flex-wrap items-center gap-1.5 mt-2.5 pt-2 border-t border-gs-border"><span class="text-[10px] text-gs-text3 font-mono">DUI:</span>' + duis + '</div>' : '') +
       '<div class="mt-2.5 flex gap-2"><button type="button" class="vz-btn' + (activa ? ' vz-btn-primario' : '') + '" data-vz-resaltar="' + gsEscapar(r.id) + '"><i class="fa-solid fa-highlighter"></i> ' + (activa ? 'Quitar resaltado' : 'Resaltar en el PDF') + '</button></div></article>';
   }).join('');
   var act = lista.querySelector('.vz-activa');
@@ -624,7 +624,7 @@ function vzAbrir(o) {
   }).catch(function (e) {
     console.warn('Visor:', e);
     vzEl('vz-estado').style.display = 'block';
-    vzEl('vz-estado').innerHTML = '<p class="text-rose-300 font-bold">No se pudo cargar el diario.</p><p class="mt-1">Revisa tu conexión y vuelve a intentar.</p>';
+    vzEl('vz-estado').innerHTML = '<p class="text-gs-danger font-bold">No se pudo cargar el diario.</p><p class="mt-1">Revisa tu conexión y vuelve a intentar.</p>';
   });
 }
 

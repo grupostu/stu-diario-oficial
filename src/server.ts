@@ -8,6 +8,7 @@ import { DiarioIndex } from './indexer.js';
 import { NotifierEngine } from './notifier.js';
 import { renderPortal } from './views.js';
 import { renderPrivacidad } from './privacidad.js';
+import { renderError } from './pagina_base.js';
 import { validarParametrosBusqueda } from './busqueda_esquema.js';
 import { LimitadorTasa } from './limitador.js';
 import type { DiarioRecord } from './types.js';
@@ -218,7 +219,7 @@ app.get('/api/v1/search', limitarTasa(limiteBusqueda), (req: Request, res: Respo
 // Enlace directo desde cada resultado al folio del PDF en el Visor Ebook: /visor?id=...
 app.get('/visor', limitarTasa(limiteLecturas), (req: Request, res: Response) => {
   const destino = resolverEnlaceVisor(index, req.query.id);
-  if (!destino) return res.status(404).json({ error: 'Publicación no encontrada' });
+  if (!destino) return res.status(404).type('html').send(renderError(404, 'Publicación no encontrada', 'El enlace no corresponde a ninguna publicación del archivo. Puede que haya cambiado o que el identificador sea incorrecto.'));
   res.redirect(302, destino);
 });
 
@@ -433,12 +434,22 @@ app.post('/api/v1/alerts', limitarTasa(limiteAlertas), (req: Request, res: Respo
   res.status(201).json({ success: true, id: sub.id });
 });
 
+// 404 para rutas desconocidas: HTML con la identidad del sitio (las rutas /api y /data responden JSON)
+app.use((req: Request, res: Response, next: NextFunction) => {
+  if (req.method !== 'GET' && req.method !== 'HEAD') return next();
+  if (/^[/](api|data|pdf)[/]/.test(req.path)) return res.status(404).json({ error: 'No encontrado' });
+  res.set('Cache-Control', 'no-store');
+  res.status(404).type('html').send(renderError(404, 'Página no encontrada', 'La dirección que buscas no existe o fue movida.'));
+});
+
 // Manejador final de errores: respuesta genérica, sin trazas ni rutas internas.
 app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
   if (res.headersSent) return next(err);
   const status = Number.isInteger(err?.status) && err.status >= 400 && err.status < 600 ? err.status : 500;
   res.set('Cache-Control', 'no-store');
-  res.status(status).json({ error: status >= 500 ? 'Error interno del servidor' : 'Solicitud inválida' });
+  const msg = status >= 500 ? 'Error interno del servidor' : 'Solicitud inválida';
+  if (String(_req.headers.accept ?? '').includes('text/html') && !_req.path.startsWith('/api/')) return res.status(status).type('html').send(renderError(status, msg, status >= 500 ? 'Ocurrió un problema de nuestro lado. Inténtalo de nuevo en unos minutos.' : 'No pudimos procesar la solicitud.'));
+  res.status(status).json({ error: msg });
 });
 
 const servidor = app.listen(PORT, () => {

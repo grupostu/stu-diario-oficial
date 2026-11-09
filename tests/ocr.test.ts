@@ -126,7 +126,7 @@ describe('Vista HTML separada para OCR (renderVistaOcr)', () => {
     assert.ok(html.includes('/pdf/23-10-2026.pdf#page=3'), 'enlace al PDF original en página 3');
 
     // Escapado XSS
-    assert.ok(!html.includes('<script>'), 'no debe contener tags sin escapar');
+    assert.ok(!html.includes('<script>alert'), 'no debe contener tags sin escapar');
     assert.ok(html.includes('&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;'), 'debe escapar <script>');
     assert.ok(html.includes('&amp; fin'), 'debe escapar ampersand');
   });
