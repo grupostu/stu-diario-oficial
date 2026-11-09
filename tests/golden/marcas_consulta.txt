@@ -1,0 +1,12 @@
+HTTP 200
+content-type: application/json; charset=utf-8
+cache-control: public, max-age=120, s-maxage=600, stale-while-revalidate=3600
+cdn-cache-control: public, max-age=600, stale-while-revalidate=3600
+x-content-type-options: nosniff
+x-frame-options: SAMEORIGIN
+referrer-policy: strict-origin-when-cross-origin
+content-security-policy: base-uri 'self'; object-src 'none'; frame-ancestors 'self'
+permissions-policy: camera=(), microphone=(), geolocation=(), payment=()
+cross-origin-opener-policy: same-origin
+
+{"total":0,"marcas":[],"aviso":"Los diarios cargados no contienen avisos de marcas para este criterio."}

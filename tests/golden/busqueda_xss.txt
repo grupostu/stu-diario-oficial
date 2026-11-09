@@ -1,0 +1,13 @@
+HTTP 200
+content-type: application/json; charset=utf-8
+cache-control: public, max-age=120, s-maxage=600, stale-while-revalidate=3600
+cdn-cache-control: public, max-age=600, stale-while-revalidate=3600
+vary: Accept-Encoding
+x-content-type-options: nosniff
+x-frame-options: SAMEORIGIN
+referrer-policy: strict-origin-when-cross-origin
+content-security-policy: base-uri 'self'; object-src 'none'; frame-ancestors 'self'
+permissions-policy: camera=(), microphone=(), geolocation=(), payment=()
+cross-origin-opener-policy: same-origin
+
+{"consulta":{"texto":"<script>alert(1)</script>","criterios":[]},"total":0,"pagina":1,"porPagina":10,"totalPaginas":0,"resultados":[],"tiempoMs":0,"aviso":"No uses etiquetas ni los signos < >. Escribe solo letras, números y guiones.","entradaInvalida":true}

@@ -1,0 +1,2473 @@
+HTTP 200
+content-type: text/html; charset=utf-8
+cache-control: public, max-age=300, s-maxage=3600, stale-while-revalidate=86400
+cdn-cache-control: public, max-age=3600, stale-while-revalidate=86400
+vary: Accept-Encoding
+etag: "PnWhAocLJWWCJdx6NP2JSgayDnA"
+x-content-type-options: nosniff
+x-frame-options: SAMEORIGIN
+referrer-policy: strict-origin-when-cross-origin
+content-security-policy: base-uri 'self'; object-src 'none'; frame-ancestors 'self'
+permissions-policy: camera=(), microphone=(), geolocation=(), payment=()
+cross-origin-opener-policy: same-origin
+
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Diarios Oficiales de El Salvador · Busca edictos, marcas y leyes por DUI o nombre</title>
+  <meta name="description" content="Busca tu DUI, tu nombre o el de tu empresa en los edictos, marcas y leyes del Diario Oficial de El Salvador, lee el PDF original y recibe alertas por correo cuando aparezcas.">
+  <!-- Sistema visual Stu_UI (copia local en /stu-ui, sin dependencias externas) -->
+  <script>(function(){var t='light';try{var s=localStorage.getItem('stu-theme');if(s==='dark'||s==='light')t=s;}catch(_){}document.documentElement.setAttribute('data-theme',t);})();</script>
+  <link rel="stylesheet" href="/stu-ui/tokens.css?v=1">
+  <link rel="stylesheet" href="/stu-ui/cabecera/cabecera.css?v=1">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      // Colores desde los tokens de Stu_UI: claro por defecto, oscuro como modo
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['var(--gs-font)', 'system-ui', 'sans-serif'],
+            mono: ['var(--gs-font-mono)', 'monospace'],
+          },
+          colors: {
+            gs: {
+              bg: 'var(--gs-bg)', surface: 'var(--gs-surface)', surface2: 'var(--gs-surface-2)',
+              border: 'var(--gs-border)', strong: 'var(--gs-border-strong)',
+              text: 'var(--gs-text)', text2: 'var(--gs-text-2)', text3: 'var(--gs-text-3)',
+              accent: 'var(--gs-accent)', 'accent-hover': 'var(--gs-accent-hover)', ink: 'var(--gs-accent-ink)',
+              danger: 'var(--gs-danger)', warning: 'var(--gs-warning)'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- PDF.js Oficial (Cloudflare CDN v3.11.174) para Renderizado Hiper-Interactivo + TextLayer -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf_viewer.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <style>
+    body { font-family: var(--gs-font, system-ui, sans-serif); background: var(--gs-bg); color: var(--gs-text); }
+    html, body { max-width: 100%; overflow-x: hidden; }
+    /* Tap targets táctiles mínimos de 44px (móvil y tablet) */
+    @media (pointer: coarse) {
+      button, select, input:not([type=checkbox]):not([type=radio]), .tab-btn, summary { min-height: 44px; }
+      a.block, a.inline-flex, nav a, footer a { min-height: 44px; display: inline-flex; align-items: center; }
+    }
+    /* Superficies sobrias del sistema Stu_UI: fondo sólido y borde fino, sin degradados ni desenfoques */
+    .glass { background: var(--gs-surface); border: 1px solid var(--gs-border); }
+    .glass-card { background: var(--gs-surface); border: 1px solid var(--gs-border); }
+    /* La cabecera compartida queda fija arriba y no tapa el ancla de las secciones */
+    stu-cabecera { display: block; position: sticky; top: 0; z-index: 100; }
+    html { scroll-padding-top: 72px; }
+    /* Los paneles de la cabecera solo se ven abiertos (.stu-apps-panel declara display:flex después de display:none) */
+    stu-cabecera .stu-cabecera-panel:not(.is-open) { display: none; }
+    
+    
+    /* Barras de desplazamiento oscuras y discretas (en todo el portal) */
+    * { scrollbar-width: thin; scrollbar-color: var(--gs-border-strong) transparent; }
+    *::-webkit-scrollbar { width: 10px; height: 10px; }
+    *::-webkit-scrollbar-track { background: transparent; }
+    *::-webkit-scrollbar-thumb { background: var(--gs-border-strong); border-radius: 999px; border: 2px solid var(--gs-bg); }
+    *::-webkit-scrollbar-thumb:hover { background: var(--gs-text-3); }
+    *::-webkit-scrollbar-corner { background: transparent; }
+
+    /* Visor */
+    #vz-scroll { position: relative; background: var(--gs-surface-2); overflow: auto; scroll-behavior: auto; }
+    #vz-paginas { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 16px 16px 80px; min-width: min-content; }
+    .vz-pag { position: relative; background: #fff; box-shadow: 0 2px 12px rgba(15,23,42,.25); flex: none; --scale-factor: 1; }
+    .vz-pag canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+    .vz-pag .vz-hl-capa { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+    .vz-pag .textLayer { position: absolute; inset: 0; overflow: hidden; line-height: 1; opacity: 1; z-index: 3; }
+    .vz-pag .textLayer span, .vz-pag .textLayer br { color: transparent; }
+    .vz-pag .textLayer ::selection { background: rgba(56,189,248,.45); }
+    .vz-num { position: absolute; top: 6px; right: 8px; z-index: 4; font: 700 10px/1 'JetBrains Mono', monospace; color: #475569; background: rgba(241,245,249,.92); padding: 3px 6px; border-radius: 6px; pointer-events: none; }
+    .vz-sin-texto { position: absolute; left: 50%; top: 14px; transform: translateX(-50%); z-index: 4; font: 600 11px/1.3 'Plus Jakarta Sans', sans-serif; color: #92400e; background: #fef3c7; border: 1px solid #f59e0b; padding: 5px 10px; border-radius: 8px; max-width: 80%; text-align: center; pointer-events: none; }
+    .vz-cargando { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--gs-text-3); font: 600 12px 'JetBrains Mono', monospace; }
+    /* Búsqueda: misma convención que el navegador (amarillo; naranja la coincidencia activa) */
+    .vz-hl { position: absolute; background: rgba(255, 213, 0, .55); mix-blend-mode: multiply; border-radius: 2px; }
+    .vz-hl.vz-act { background: rgba(255, 138, 0, .75); outline: 2px solid #f97316; outline-offset: 0; }
+    /* Publicación completa: banda esmeralda suave sobre sus líneas */
+    .vz-reg { position: absolute; background: rgba(16, 185, 129, .20); mix-blend-mode: multiply; border-radius: 2px; }
+    .vz-reg-borde { position: absolute; border-left: 3px solid #059669; background: transparent; }
+    #vz-panel-lista .vz-tarjeta { border: 1px solid var(--gs-border); background: var(--gs-surface); border-radius: 12px; padding: 14px; transition: border-color .15s, box-shadow .15s; }
+    #vz-panel-lista .vz-tarjeta:hover { border-color: var(--gs-border-strong); }
+    #vz-panel-lista .vz-tarjeta.vz-activa { border-color: var(--gs-accent); box-shadow: 0 0 0 1px var(--gs-accent); }
+    #vz-panel-lista mark.vz-m { background: #fde047; color: #0f172a; padding: 0 2px; border-radius: 3px; font-weight: 700; }
+    .vz-chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 8px; border: 1px solid var(--gs-border); background: var(--gs-surface); color: var(--gs-text-2); font: 600 11px 'JetBrains Mono', monospace; cursor: pointer; }
+    .vz-chip:hover { border-color: var(--gs-accent); color: var(--gs-text); }
+    .vz-chip b { color: var(--gs-warning); }
+    .vz-btn { padding: 6px 10px; border-radius: 10px; background: var(--gs-surface-2); border: 1px solid var(--gs-border); color: var(--gs-text); font: 700 11px 'JetBrains Mono', monospace; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+    .vz-btn:hover { background: var(--gs-border); }
+    .vz-btn[disabled] { opacity: .4; cursor: default; }
+    .vz-btn-primario { background: var(--gs-accent); border-color: var(--gs-accent); color: var(--gs-accent-ink); }
+    .vz-btn-primario:hover { background: var(--gs-accent-hover); }
+    #vz-aviso { display: none; }
+
+    /* Fragmentos remarcados interactivos en la transcripción */
+    mark.highlight, mark.highlight-clickable {
+      background: #fde047;
+      color: #020617;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 4px;
+      cursor: pointer;
+      border: 1px solid #facc15;
+      transition: background-color 0.15s ease;
+      display: inline-block;
+    }
+    /* Coincidencias de la búsqueda: amarillo con texto casi negro (contraste > 12:1), sin romper el salto de línea */
+    mark.gs-mark {
+      background: #fde047;
+      color: #0f172a;
+      font-weight: 700;
+      padding: 0 3px;
+      border-radius: 4px;
+      box-shadow: 0 0 0 1px #facc15;
+    }
+    /* Las marcas fluyen en línea y parten en varias líneas (móvil): nunca desbordan el ancho de la tarjeta */
+    mark.highlight-clickable, mark.gs-mark { display: inline; overflow-wrap: anywhere; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+    mark.highlight-clickable { padding: 0 4px; }
+    mark.highlight-clickable:focus-visible, button:focus-visible, [data-ebook-pag]:focus-visible, a:focus-visible, select:focus-visible, input:focus-visible { outline: 3px solid var(--gs-accent); outline-offset: 2px; }
+    @media (forced-colors: active) { mark { background: Mark; color: MarkText; forced-color-adjust: none; } }
+    mark.highlight-clickable:hover {
+      background: #fef08a;
+    }
+
+    /* Contenedor PDF.js + Capa de Texto + Resaltados en el PDF */
+    #pdf-page-wrapper {
+      position: relative;
+      margin: 0 auto 32px auto;
+      flex-shrink: 0;
+      display: inline-block;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+      border-radius: 4px;
+      background: #ffffff;
+    }
+    #pdf-interactive-scroll-container {
+      overflow-y: auto !important;
+      overflow-x: auto !important;
+      max-height: calc(100vh - 68px);
+      scroll-behavior: smooth;
+      -webkit-overflow-scrolling: touch;
+      cursor: grab;
+    }
+    #pdf-interactive-scroll-container:active {
+      cursor: grabbing;
+    }
+    /* Móvil: el PDF ocupa ~58% de la altura y la transcripción el resto (antes el PDF quedaba en una franja de 25 px) */
+    @media (max-width: 767px) {
+      #pdf-interactive-scroll-container {
+        flex: 0 0 58%;
+        min-height: 0;
+        max-height: none;
+      }
+      #ebook-side-panel {
+        flex: 1 1 0;
+        min-height: 0;
+        overflow: hidden;
+      }
+    }
+    #pdf-canvas {
+      display: block;
+    }
+    #pdf-text-layer {
+      position: absolute;
+      left: 0;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      overflow: hidden;
+      line-height: 1.0;
+      z-index: 2;
+    }
+    #pdf-text-layer > span {
+      color: transparent;
+      position: absolute;
+      white-space: pre;
+      cursor: text;
+      transform-origin: 0% 0%;
+    }
+    /* Resaltado fluorescente directo en el PDF original */
+    /* Resaltado en el PDF original: relleno amarillo y borde, sin brillos ni animaciones */
+    .pdf-highlight-box {
+      background: rgba(250, 204, 21, 0.45) !important;
+      border: 2px solid #f59e0b !important;
+      border-radius: 3px !important;
+      cursor: pointer !important;
+      z-index: 10 !important;
+    }
+    .pdf-highlight-box.pdf-radar-focus {
+      background: rgba(250, 204, 21, 0.65) !important;
+      border: 3px solid #10b981 !important;
+    }
+    .record-card-flash {
+      border-color: #facc15 !important;
+      background: rgba(250, 204, 21, 0.08) !important;
+    }
+  </style>
+</head>
+<body class="bg-gs-bg text-gs-text min-h-screen flex flex-col antialiased selection:bg-gs-accent selection:text-gs-ink">
+
+  <!-- Cabecera institucional única de Grupo Stu (Stu_UI): menú del sitio + apps + cuenta, 60 px, siempre visible -->
+  <stu-cabecera
+    platform="diarios"
+    platform-name="Diarios Oficiales"
+    platform-url="https://diariosoficiales.grupostu.com"
+    login-url="https://cuenta.grupostu.com/login"
+    >
+    <nav slot="nav" aria-label="Secciones de Diarios Oficiales">
+      <a href="#buscador" data-tab="dui" aria-current="page">Buscador</a>
+      <a href="#marcas" data-tab="marcas">Marcas</a>
+      <a href="#edictos" data-tab="recientes">Edictos</a>
+      <a href="#decretos" data-tab="leyes">Decretos y acuerdos</a>
+      <a href="#hemeroteca" data-tab="hemeroteca">Hemeroteca</a>
+      <a href="#guia" data-tab="faq">Guía ciudadana</a>
+    </nav>
+  </stu-cabecera>
+
+  <!-- Contenedor Principal (márgenes laterales siempre visibles) -->
+  <main class="flex-1 px-4 sm:px-6 lg:px-8 py-8 sm:py-10 w-full">
+
+    <!-- Aviso de deslinde: no es publicación oficial -->
+    <div role="note" class="mb-6 px-4 py-3 rounded-lg border border-gs-border bg-gs-surface text-xs sm:text-sm text-gs-text2 flex flex-wrap items-center justify-between gap-x-6 gap-y-1">
+      <span><strong class="text-gs-text">Sitio independiente de consulta. No es el Diario Oficial ni una entidad del Estado.</strong></span>
+      <span>Fuente oficial: <a href="https://www.diariooficial.gob.sv/" target="_blank" rel="noopener noreferrer" class="text-gs-accent underline">diariooficial.gob.sv</a> · <a href="https://www.imprentanacional.gob.sv/" target="_blank" rel="noopener noreferrer" class="text-gs-accent underline">Imprenta Nacional</a></span>
+    </div>
+
+    <!-- Encabezado de la página -->
+    <section class="mb-8 text-left">
+      <h1 class="text-2xl sm:text-4xl font-bold text-gs-text tracking-tight leading-tight">Diario Oficial de El Salvador: consulta y notificaciones</h1>
+      <p class="mt-3 text-gs-text2 text-sm sm:text-base max-w-3xl leading-relaxed">
+        Verifica si tu <strong>DUI</strong> (en números o en letras notariales), <strong>nombre</strong> o <strong>sociedad</strong> figura en edictos de aceptación de herencia, emplazamientos, rebeldías, remates o marcas. Cada resultado enlaza al PDF original, con lo buscado resaltado.
+      </p>
+      <p class="mt-3 text-xs sm:text-sm text-gs-text2">
+        <strong class="text-gs-text">306</strong> publicaciones indexadas · <strong class="text-gs-text">1</strong> diario disponible · último: Tomo 453 · N.° 198 · 23-10-2026 (164 págs.) · Sin registro de tus búsquedas
+      </p>
+      <div class="mt-4 flex flex-wrap gap-3">
+        <button type="button" onclick="openEbookViewer(1, '', '2026-10-23')" class="bg-gs-surface hover:bg-gs-surface2 border border-gs-border text-gs-text font-semibold px-4 py-2 rounded-lg text-sm transition-colors flex items-center gap-2">
+          <i class="fa-solid fa-book-open-reader"></i> Abrir el diario más reciente
+        </button>
+        <button type="button" onclick="openModalAlert()" class="bg-gs-accent hover:bg-gs-accent-hover text-gs-ink font-bold px-4 py-2 rounded-lg text-sm transition-colors flex items-center gap-2">
+          <i class="fa-solid fa-bell"></i> Vigilancia por DUI
+        </button>
+      </div>
+    </section>
+
+
+    <!-- ========================================================================= -->
+    <!-- TAB 1: BUSCADOR GENERAL Y DUI -->
+    <!-- ========================================================================= -->
+    <div id="tab-content-dui" class="space-y-6">
+      <div class="glass-card p-5 sm:p-7 rounded-xl border border-gs-border">
+        <form onsubmit="searchDiario(event)" novalidate class="space-y-4">
+          <div>
+            <div class="relative">
+              <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gs-text3"></i>
+              <input type="text" id="query-input" maxlength="200" aria-label="Buscar en el Diario Oficial" enterkeyhint="search" autocomplete="off" aria-describedby="ayuda-busqueda" placeholder="Ingresa DUI (ej. 00000000-0, 000000000 o en letras), Nombre Completo o Causante..."
+                oninput="handleDuiInputPreview(this.value)"
+                class="w-full bg-gs-bg border border-gs-border focus:border-gs-accent rounded-2xl pl-11 pr-4 py-4 text-gs-text text-sm outline-none font-mono">
+            </div>
+
+            <p id="ayuda-busqueda" class="mt-2 text-[11px] sm:text-xs text-gs-text2 leading-relaxed text-left">Puedes buscar por DUI, por nombre, por número de decreto (por ejemplo «Decreto No. 690», «decreto 690» o «D. 690») o por cualquier palabra del texto. Para buscar una frase exacta, escríbela entre comillas, por ejemplo «&quot;amnistía fiscal&quot;». No importan las mayúsculas ni las tildes, y el máximo es de 200 caracteres.</p>
+
+
+            <!-- Badge dinámico de detección y normalización de DUI -->
+            <div id="dui-preview-badge" class="hidden mt-3 p-3 rounded-xl bg-gs-accent/10 border border-gs-border text-xs font-mono text-gs-accent flex flex-wrap items-center justify-between gap-2">
+              <span id="dui-preview-text"></span>
+              <span id="dui-preview-words" class="text-[11px] text-gs-warning font-bold"></span>
+            </div>
+          </div>
+          
+          <div class="flex flex-col lg:flex-row gap-3">
+            <select id="category-filter" aria-label="Filtrar por sección del Diario Oficial" class="flex-1 min-w-0 bg-gs-bg border border-gs-border rounded-2xl px-4 py-3 text-gs-text2 text-xs sm:text-sm outline-none font-medium">
+              <option value="">Todas las Secciones del Diario Oficial</option>
+              <option value="EDICTO_JUDICIAL">Edictos Judiciales y Notariales (Herencias, Emplazamientos, Rebeldías)</option>
+              <option value="REGISTRO_MARCA">Registro de Marcas y Patentes (CNR)</option>
+              <option value="DECRETO_LEGISLATIVO">Decretos de la Asamblea Legislativa</option>
+              <option value="SUBASTA_EMBARGO">Subastas, Embargos y Remates Públicos</option>
+              <option value="ACUERDO_EJECUTIVO">Acuerdos Ejecutivos y Reglamentos</option>
+              <option value="BALANCE_FINANCIERO">Balances y Estados Financieros</option>
+              <option value="GENERAL">Otras Publicaciones Oficiales</option>
+            </select>
+
+            <div class="flex items-center gap-2 bg-gs-bg px-4 py-3 rounded-2xl border border-gs-border">
+              <input type="checkbox" id="force-dui-check" class="w-5 h-5 rounded text-gs-accent focus:ring-0 bg-gs-surface border-gs-border">
+              <label for="force-dui-check" class="text-xs text-gs-text2 select-none cursor-pointer">Filtrar exclusivamente por DUI</label>
+            </div>
+
+            <button type="submit" id="btn-search" class="bg-gs-accent hover:bg-gs-accent-hover text-gs-ink font-semibold px-8 py-3.5 rounded-2xl text-xs sm:text-sm transition-all flex items-center justify-center gap-2 shrink-0">
+              <i class="fa-solid fa-bolt"></i> Consultar Archivo Oficial
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Resultados Dinámicos -->
+      <div id="search-aviso" role="alert" class="hidden mb-4 p-3 rounded-xl bg-gs-surface2 border border-gs-border text-xs text-gs-warning text-left"></div>
+      <div id="search-resumen" role="status" aria-live="polite" aria-atomic="true" class="hidden mb-4 p-4 rounded-2xl bg-gs-surface border border-gs-border text-left outline-none"></div>
+      <div id="results-container" class="space-y-4" aria-live="polite" aria-relevant="additions">
+        <!-- Renderizado por JS -->
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- TAB 2: BUSCADOR DE MARCAS REGISTRADAS (CNR) -->
+    <!-- ========================================================================= -->
+    <div id="tab-content-marcas" class="hidden space-y-6">
+      <div class="glass-card p-5 sm:p-7 rounded-xl border border-gs-border">
+        <div class="flex items-center gap-3 mb-4">
+          <img src="/assets/graphics/icono-registro-marca.svg" alt="Marcas CNR" class="w-11 h-11 rounded-xl">
+          <div>
+            <h3 class="text-lg font-bold text-gs-text">Marcas y signos distintivos</h3>
+            <p class="text-xs text-gs-text2">Solo se muestran avisos de marcas que aparezcan en los diarios cargados. Si un diario no trae avisos de marcas, no se muestra nada.</p>
+          </div>
+        </div>
+
+        <form onsubmit="searchMarcas(event)" class="space-y-4">
+          <div class="flex flex-col sm:flex-row gap-3">
+            <div class="relative flex-1">
+              <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gs-text3"></i>
+              <input type="text" id="marca-query" placeholder="Buscar por denominación de marca o titular…"
+                class="w-full bg-gs-bg border border-gs-border focus:border-gs-accent rounded-2xl pl-11 pr-4 py-3.5 text-gs-text text-sm outline-none">
+            </div>
+            <button type="submit" class="bg-gs-accent hover:bg-gs-accent-hover text-gs-ink font-semibold px-6 py-3.5 rounded-2xl text-xs sm:text-sm transition-all flex items-center justify-center gap-2">
+              <i class="fa-solid fa-magnifying-glass"></i> Buscar marcas
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div id="marcas-results-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Renderizado por JS -->
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- TAB 3: ÚLTIMOS EDICTOS JUDICIALES -->
+    <!-- ========================================================================= -->
+    <div id="tab-content-recientes" class="hidden space-y-4">
+      <div class="glass-card p-6 rounded-xl border border-gs-border flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <img src="/assets/graphics/icono-edicto-judicial.svg" alt="Edictos" class="w-11 h-11 rounded-xl">
+          <div>
+            <h3 class="text-base sm:text-lg font-bold text-gs-text flex items-center gap-2">
+              Edictos judiciales y notariales del último diario
+            </h3>
+            <p class="text-xs text-gs-text2">Publicaciones recientes con clasificación jurídica automática, número exacto de página y chips de DUI interactivos.</p>
+          </div>
+        </div>
+        <button onclick="loadRecentEdictos()" class="text-xs text-gs-accent font-bold hover:underline flex items-center gap-1">
+          <i class="fa-solid fa-rotate-right"></i> Recargar
+        </button>
+      </div>
+      <div id="edictos-recientes-container" class="space-y-4">
+        <!-- Renderizado por JS -->
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- TAB 4: LEYES Y DECRETOS OFICIALES -->
+    <!-- ========================================================================= -->
+    <div id="tab-content-leyes" class="hidden space-y-4">
+      <div class="glass-card p-6 rounded-xl border border-gs-border flex items-center gap-3">
+        <img src="/assets/graphics/icono-decreto-acuerdo.svg" alt="Decretos" class="w-11 h-11 rounded-xl">
+        <div>
+          <h3 class="text-base sm:text-lg font-bold text-gs-text flex items-center gap-2">
+            Decretos legislativos del último diario
+          </h3>
+          <p class="text-xs text-gs-text2 mt-0.5">Solo se listan decretos cuyo texto se pudo leer en el PDF.</p>
+        </div>
+      </div>
+      <div id="leyes-recientes-container" class="space-y-4">
+        <!-- Renderizado por JS -->
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- TAB 5: HEMEROTECA -->
+    <!-- ========================================================================= -->
+    <div id="tab-content-hemeroteca" class="hidden space-y-6 text-left">
+      <div class="glass-card p-6 sm:p-8 rounded-xl border border-gs-border space-y-6">
+        <div class="flex flex-wrap items-center justify-between gap-4 border-b border-gs-border pb-4">
+          <div>
+            <h3 class="text-xl font-semibold text-gs-text flex items-center gap-2.5">
+              <i class="fa-solid fa-book-journal-whills text-gs-warning"></i>
+              Hemeroteca de diarios
+            </h3>
+            <p class="text-xs text-gs-text2 mt-1">Diarios disponibles para consulta.</p>
+          </div>
+        </div>
+
+        <!-- Diarios realmente disponibles (se leen del catálogo del servidor, nunca se escriben a mano) -->
+        <div>
+          <h4 class="text-sm font-bold text-gs-text mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-book-journal-whills text-gs-warning"></i> Diarios disponibles para consulta
+          </h4>
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+            
+            <button type="button" onclick="openEbookViewer(1, '', '2026-10-23')" class="text-left bg-gs-bg p-4 rounded-2xl border border-gs-border hover:border-gs-accent transition-all">
+              <span class="text-sm font-bold text-gs-text block">Tomo 453 · N.° 198</span>
+              <span class="text-[11px] font-mono text-gs-warning block mt-0.5">23-10-2026</span>
+              <span class="text-[11px] text-gs-text2 font-mono block mt-1">164 páginas · Abrir diario</span>
+            </button>
+          </div>
+          <p class="text-[11px] text-gs-text3 mt-3">Cada diario se incorpora a partir de su PDF original. Solo se listan los diarios que realmente están cargados.</p>
+        </div>
+
+        <!-- Catálogo Visual de Clasificaciones Jurídicas -->
+        <div>
+          <h4 class="text-sm font-bold text-gs-text mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-layer-group text-gs-accent"></i> Clasificación automática (orientativa)
+          </h4>
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+            <img src="/assets/graphics/card-aceptacion-herencia.webp" alt="Aceptación de Herencia" class="w-full rounded-2xl border border-gs-border">
+            <img src="/assets/graphics/card-edicto-judicial.webp" alt="Edicto Judicial" class="w-full rounded-2xl border border-gs-border">
+            <img src="/assets/graphics/card-declaratoria-rebeldia.webp" alt="Declaratoria de Rebeldía" class="w-full rounded-2xl border border-gs-border">
+            <img src="/assets/graphics/card-titulo-supletorio.webp" alt="Título Supletorio" class="w-full rounded-2xl border border-gs-border">
+            <img src="/assets/graphics/card-subasta-publica.webp" alt="Subasta Pública" class="w-full rounded-2xl border border-gs-border">
+            <img src="/assets/graphics/card-aviso-sociedad.webp" alt="Aviso de Sociedad" class="w-full rounded-2xl border border-gs-border">
+            <img src="/assets/graphics/card-decreto-acuerdo.webp" alt="Decreto o Acuerdo" class="w-full rounded-2xl border border-gs-border">
+            <img src="/assets/graphics/card-propiedad-intelectual.webp" alt="Propiedad Intelectual" class="w-full rounded-2xl border border-gs-border">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- TAB 6: GUÍA CIUDADANA Y PREGUNTAS CLAVE -->
+    <!-- ========================================================================= -->
+    <div id="tab-content-faq" class="hidden space-y-4 text-left">
+      <div class="glass-card p-6 sm:p-8 rounded-xl border border-gs-border">
+        <h3 class="text-xl font-bold text-gs-text mb-2 flex items-center gap-2">
+          <i class="fa-solid fa-scale-balanced text-gs-accent"></i> ¿Qué preguntas debe responder la mayor plataforma de Diarios Oficiales?
+        </h3>
+        <p class="text-xs sm:text-sm text-gs-text2 leading-relaxed mb-6">
+          Los Diarios Oficiales contienen decisiones que afectan directamente la libertad, el patrimonio, las herencias y los negocios de los ciudadanos de El Salvador. Aquí respondemos las dudas jurídicas y prácticas más críticas:
+        </p>
+
+        <div class="space-y-4">
+          <div class="bg-gs-bg p-5 rounded-2xl border border-gs-border">
+            <h4 class="text-sm font-bold text-gs-text mb-1.5 flex items-center gap-2">
+              <span class="text-gs-accent">01.</span> ¿Qué consecuencias legales tiene que mi DUI aparezca en un edicto judicial?
+            </h4>
+            <p class="text-xs text-gs-text2 leading-relaxed">
+              En El Salvador, cuando un juzgado civil, mercantil o de sentencia no encuentra a una persona demandada o imputada, la ley ordena emplazarla por <strong>edicto en el Diario Oficial</strong>. Si no te presentas con tu abogado en el plazo concedido (usualmente 10 días hábiles), el tribunal te declara formalmente en <strong>calidad de rebeldía</strong> y dicta sentencia condenatoria o embargo ejecutivo sin que hayas ejercido tu derecho de defensa.
+            </p>
+          </div>
+
+          <div class="bg-gs-bg p-5 rounded-2xl border border-gs-border">
+            <h4 class="text-sm font-bold text-gs-text mb-1.5 flex items-center gap-2">
+              <span class="text-gs-accent">02.</span> ¿Cómo reclamar o verificar una herencia si vi a un familiar en un edicto?
+            </h4>
+            <p class="text-xs text-gs-text2 leading-relaxed">
+              Los edictos de aceptación de herencia (publicados por juzgados civiles y por notarios) confieren la <em>administración y representación definitiva de la sucesión</em> a los herederos declarados. Si consideras que tienes igual o mejor derecho hereditario, el edicto publicado en el Diario Oficial es la prueba legal para personarte ante el juez o notario.
+            </p>
+          </div>
+
+          <div class="bg-gs-bg p-5 rounded-2xl border border-gs-border">
+            <h4 class="text-sm font-bold text-gs-text mb-1.5 flex items-center gap-2">
+              <span class="text-gs-warning">03.</span> ¿Cómo funciona la sincronización entre la transcripción y el PDF original?
+            </h4>
+            <p class="text-xs text-gs-text2 leading-relaxed">
+              Nuestro visor utiliza <strong>PDF.js con capa vectorial de texto</strong>. Cuando buscas un DUI (incluso si el juez lo redactó en letras como <em>CERO CERO TRES CINCO SEIS DOS SIETE CUATRO - DOS</em>), el sistema remarca automáticamente los fragmentos en la columna derecha y dibuja resaltados fluorescentes sobre el PDF a la izquierda. Al hacer clic en cualquier fragmento remarcado, el PDF hace scroll y zoom directo hacia la línea exacta con un destello de radar.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Marco Legal, Términos y Condiciones y Descargo de Responsabilidad de Grupo Stu, S.A.S. -->
+    <div class="mt-8 p-6 rounded-2xl border border-gs-border bg-gs-bg text-xs text-gs-text2 leading-relaxed text-left space-y-3">
+      <div class="flex items-center justify-between flex-wrap gap-2 border-b border-gs-border pb-2.5">
+        <div class="flex items-center gap-2.5 text-gs-text font-bold">
+          <span class="w-8 h-8 rounded-lg bg-gs-accent/10 border border-gs-border flex items-center justify-center text-gs-accent">
+            <i class="fa-solid fa-scale-balanced"></i>
+          </span>
+          <span>Términos de Uso, Naturaleza Informativa y Descargo Legal de Responsabilidad — Grupo Stu, S.A.S.</span>
+        </div>
+        <span class="text-[10px] font-mono px-2.5 py-1 rounded bg-gs-surface border border-gs-border text-gs-text2">Uso informativo</span>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-[11px]">
+        <div class="bg-gs-surface p-3.5 rounded-xl border border-gs-border">
+          <strong class="text-gs-text block mb-1">1. Información Pública Oficiosa (LAIP):</strong>
+          De conformidad con los Arts. 10 y 11 de la <em>Ley de Acceso a la Información Pública</em> de El Salvador, las publicaciones del Diario Oficial son información de libre acceso y dominio público. Este portal facilita su búsqueda tecnológica.
+        </div>
+        <div class="bg-gs-surface p-3.5 rounded-xl border border-gs-border">
+          <strong class="text-gs-text block mb-1">2. No Sustitución ni Carácter Certificante:</strong>
+          <strong>Grupo Stu, S.A.S.</strong> es una entidad privada e independiente; no representa ni sustituye a la Imprenta Nacional (<code>diariooficial.gob.sv</code>) ni emite certificaciones, constancias oficiales o copias fieles con valor probatorio judicial.
+        </div>
+        <div class="bg-gs-surface p-3.5 rounded-xl border border-gs-border">
+          <strong class="text-gs-warning block mb-1">3. Limitación Total de Responsabilidad:</strong>
+          Las transcripciones se extraen automáticamente del texto del PDF y se ofrecen «tal cual» con fines orientativos. <strong>Grupo Stu, S.A.S. no es responsable de la exactitud de la información contenida ni del uso, interpretación o decisiones tomadas por el usuario.</strong>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  
+  <!-- ========================================================================= -->
+  <!-- VISOR DEL DIARIO OFICIAL: tomo completo + transcripción sincronizada      -->
+  <!-- ========================================================================= -->
+  <div id="modal-ebook" class="fixed inset-0 bg-gs-bg hidden flex-col z-50" role="dialog" aria-modal="true" aria-label="Visor del Diario Oficial">
+    <div class="bg-gs-surface border-b border-gs-border px-3 sm:px-4 py-2 flex flex-wrap items-center gap-x-4 gap-y-2 shrink-0">
+      <div class="min-w-0 mr-auto">
+        <h4 class="text-xs sm:text-sm font-semibold text-gs-text tracking-tight flex items-center gap-2 flex-wrap">
+          <span id="vz-titulo">Diario Oficial</span>
+          <span id="ebook-top-page-badge" class="text-[11px] text-gs-ink bg-gs-warning px-2 py-0.5 rounded-md font-mono font-semibold">Pág. 1</span>
+        </h4>
+        <span class="text-[10px] text-gs-text2 font-mono">Documento original (PDF) con su transcripción</span>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-1.5 font-mono text-xs">
+        <button type="button" id="vz-prev" class="vz-btn" title="Página anterior" aria-label="Página anterior"><i class="fa-solid fa-chevron-up"></i></button>
+        <div class="flex items-center gap-1 bg-gs-bg px-2 py-1 rounded-lg border border-gs-border">
+          <input type="number" id="ebook-page-number" value="1" min="1" aria-label="Número de página" class="w-12 bg-gs-surface text-center text-gs-text font-bold outline-none rounded py-0.5">
+          <span class="text-gs-text3 text-[11px]">/ <span id="vz-total">–</span></span>
+        </div>
+        <button type="button" id="vz-next" class="vz-btn" title="Página siguiente" aria-label="Página siguiente"><i class="fa-solid fa-chevron-down"></i></button>
+
+        <div class="flex items-center bg-gs-bg rounded-lg border border-gs-border p-0.5">
+          <button type="button" id="vz-zoom-menos" class="px-2 py-1 hover:bg-gs-surface2 text-gs-text2 rounded font-bold" title="Reducir" aria-label="Reducir zoom">−</button>
+          <span id="vz-zoom-val" class="px-1.5 text-[11px] text-gs-text2 w-11 text-center">125%</span>
+          <button type="button" id="vz-zoom-mas" class="px-2 py-1 hover:bg-gs-surface2 text-gs-text2 rounded font-bold" title="Aumentar" aria-label="Aumentar zoom">+</button>
+        </div>
+
+        <div class="flex items-center bg-gs-bg border border-gs-border focus-within:border-gs-warning rounded-lg">
+          <i class="fa-solid fa-magnifying-glass text-gs-text3 text-[11px] pl-2.5"></i>
+          <input type="search" id="ebook-inline-search" placeholder="Buscar en el diario…" autocomplete="off" spellcheck="false" aria-label="Buscar en el diario" class="w-40 sm:w-52 bg-transparent px-2 py-1.5 text-[12px] text-gs-text outline-none">
+          <span id="pdf-highlight-counter" class="text-[11px] text-gs-text2 pr-1.5 whitespace-nowrap" aria-live="polite">0/0</span>
+          <button type="button" id="vz-m-prev" class="px-1.5 py-1 text-gs-text2 hover:text-gs-text" title="Coincidencia anterior (Mayús+Intro)" aria-label="Coincidencia anterior"><i class="fa-solid fa-chevron-up text-[10px]"></i></button>
+          <button type="button" id="vz-m-next" class="px-1.5 py-1 mr-0.5 text-gs-text2 hover:text-gs-text" title="Coincidencia siguiente (Intro)" aria-label="Coincidencia siguiente"><i class="fa-solid fa-chevron-down text-[10px]"></i></button>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-1.5">
+        <button type="button" id="vz-cita" class="vz-btn" title="Cómo citar esta página"><i class="fa-solid fa-quote-right"></i><span class="hidden md:inline">Citar</span></button>
+        <a id="vz-descarga" href="#" download class="vz-btn hidden sm:inline-flex" title="Descargar el PDF original"><i class="fa-solid fa-download"></i> PDF</a>
+        <button type="button" id="vz-cerrar" class="vz-btn" title="Cerrar (Esc)" aria-label="Cerrar visor"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+    </div>
+
+    <!-- Otros diarios donde aparece lo buscado + retorno -->
+    <div id="vz-otros" class="hidden bg-gs-surface border-b border-gs-border px-3 sm:px-4 py-1.5 flex flex-wrap items-center gap-2 text-[11px] font-mono text-gs-text2 shrink-0"></div>
+    <div id="pdf-range-notice" role="status" aria-live="polite" class="hidden shrink-0 px-4 py-1.5 bg-gs-surface border-b border-gs-border text-gs-warning text-xs font-bold"></div>
+
+    <div class="flex-1 flex flex-col md:flex-row overflow-hidden min-h-0">
+      <div id="vz-scroll" class="flex-1 min-h-0 min-w-0">
+        <div id="vz-estado" class="p-10 text-center text-gs-text2 text-xs font-mono"><i class="fa-solid fa-circle-notch fa-spin text-2xl text-gs-accent block mb-3"></i>Cargando el diario…</div>
+        <div id="vz-paginas"></div>
+      </div>
+
+      <aside id="ebook-side-panel" class="w-full md:w-[400px] lg:w-[460px] max-h-[40vh] md:max-h-none bg-gs-surface border-t md:border-t-0 md:border-l border-gs-border flex flex-col shrink-0 min-h-0">
+        <div class="px-4 py-3 border-b border-gs-border bg-gs-bg">
+          <h5 class="text-xs font-semibold text-gs-text uppercase tracking-wider flex items-center gap-2"><i class="fa-solid fa-file-lines text-gs-accent"></i> Publicaciones en esta página</h5>
+          <p class="text-[11px] text-gs-text2 mt-0.5">Pulsa una publicación para resaltarla completa en el PDF, aunque continúe en otra página. <span id="sidebar-page-label" class="text-gs-text font-bold"></span></p>
+        </div>
+        <div id="vz-panel-lista" class="flex-1 overflow-y-auto p-3 space-y-3 text-xs leading-relaxed text-gs-text2 min-h-0"></div>
+        <div class="px-4 py-2 bg-gs-bg border-t border-gs-border text-[10px] text-gs-text3 font-mono">Transcripción automática del PDF. Ante cualquier duda, el documento original manda.</div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- Cómo citar -->
+  <div id="modal-certified-citation" class="fixed inset-0 bg-gs-bg hidden items-center justify-center p-4 z-[60]" role="dialog" aria-modal="true" aria-label="Cómo citar">
+    <div class="bg-gs-surface max-w-lg w-full p-5 sm:p-6 rounded-2xl border border-gs-border text-left space-y-4">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <h3 class="text-base font-semibold text-gs-text">Cómo citar esta página</h3>
+          <p class="text-[11px] text-gs-text2 mt-0.5">Ayuda para ubicar el texto. No es un documento oficial ni una certificación.</p>
+        </div>
+        <button type="button" id="vz-cita-cerrar" class="text-gs-text2 hover:text-gs-text text-lg" aria-label="Cerrar"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <p id="certified-citation-body" class="bg-gs-bg border border-gs-border rounded-xl p-3.5 text-sm text-gs-text leading-relaxed select-all"></p>
+      <p class="text-[11px] text-gs-text2 leading-relaxed">Verifica siempre el contenido en la publicación oficial de la Imprenta Nacional.
+        <a href="https://www.diariooficial.gob.sv/" target="_blank" rel="noopener noreferrer" class="text-gs-accent hover:underline">diariooficial.gob.sv</a></p>
+      <div class="flex justify-end gap-2">
+        <button type="button" id="vz-cita-copiar" class="vz-btn vz-btn-primario"><i class="fa-regular fa-copy"></i> Copiar cita</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Modal para Suscripción de Alertas Preventivas -->
+  <div id="modal-alert" class="fixed inset-0 bg-gs-bg hidden items-center justify-center p-4 z-50">
+    <div class="glass-card max-w-md w-full p-6 sm:p-8 rounded-xl border border-gs-border text-left">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-xl font-bold text-gs-text flex items-center gap-2">
+          <i class="fa-solid fa-bell text-gs-accent"></i> Alerta Preventiva por DUI
+        </h3>
+        <button onclick="closeModalAlert()" class="text-gs-text2 hover:text-gs-text text-lg"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <p class="text-xs text-gs-text2 mb-6 leading-relaxed">
+        Nuestro motor revisa cada nueva publicación del Diario Oficial. Si se detecta tu número de DUI, nombre o sociedad en un edicto judicial, orden de captura, embargo o registro de marca, te enviaremos una notificación inmediata.
+      </p>
+      <form onsubmit="submitAlert(event)" novalidate class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-gs-text2 mb-1">DUI o Nombre a Monitorear</label>
+          <input type="text" id="alert-criterion" placeholder="ej. 00000000-0 o Nombre Completo" required
+            class="w-full bg-gs-bg border border-gs-border rounded-xl px-4 py-3 text-gs-text text-sm outline-none font-mono focus:border-gs-accent">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gs-text2 mb-1">Correo Electrónico para Alertas</label>
+          <input type="email" id="alert-email" placeholder="correo@ejemplo.com" required
+            class="w-full bg-gs-bg border border-gs-border rounded-xl px-4 py-3 text-gs-text text-sm outline-none focus:border-gs-accent">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gs-text2 mb-1">WhatsApp de Urgencia (Opcional)</label>
+          <input type="tel" id="alert-phone" placeholder="+503 7000-0000"
+            class="w-full bg-gs-bg border border-gs-border rounded-xl px-4 py-3 text-gs-text text-sm outline-none focus:border-gs-accent">
+        </div>
+        <div class="rounded-xl border border-gs-border bg-gs-bg p-3 text-[11px] leading-relaxed text-gs-text2">
+          <p><strong class="text-gs-text">Aviso de privacidad.</strong> Grupo Stu, S.A.S. usa tu correo, tu WhatsApp (si lo das) y el DUI o nombre que escribas solo para enviarte alertas cuando aparezcan en el Diario Oficial. Los guardamos mientras la alerta siga activa y puedes pedir la baja y el borrado en cualquier momento. No los vendemos ni los usamos para otra cosa. <a href="/privacidad" target="_blank" rel="noopener" class="text-gs-accent underline">Leer el aviso completo</a>.</p>
+        </div>
+        <label class="flex items-start gap-2 text-xs text-gs-text cursor-pointer">
+          <input type="checkbox" id="alert-consent" required class="mt-0.5 h-4 w-4 accent-emerald-500">
+          <span>He leído el aviso de privacidad y autorizo a Grupo Stu, S.A.S. a tratar estos datos para enviarme las alertas.</span>
+        </label>
+        <p id="alert-msg" role="status" class="hidden text-xs rounded-xl px-3 py-2"></p>
+        <button type="submit" class="w-full bg-gs-accent hover:bg-gs-accent-hover text-gs-ink font-semibold py-3.5 rounded-xl text-sm transition-all">
+          Guardar Alerta y Proteger mi Identidad
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- FOOTER INSTITUCIONAL MAESTRO v3 — Grupo Stu · generado por identidad_marca_grupo_stu/footer/build-footers.mjs; no editar a mano -->
+<style>
+.gs-footer{--gsf-bg:#f8f9fa;--gsf-line:#dadce0;--gsf-text:#5f6368;--gsf-strong:#3c4043;--gsf-muted:#5f6368;--gsf-card:#fff;--gsf-hover:#e8eaed;--gsf-title:#202124;--gsf-accent:#1a73e8;--gsf-ok:#137333;--gsf-seal:#137333}
+[data-theme="dark"] .gs-footer{--gsf-bg:#09090b;--gsf-line:#1e293b;--gsf-text:#94a3b8;--gsf-strong:#e2e8f0;--gsf-muted:#8b98ad;--gsf-card:#0c0c10;--gsf-hover:#0f172a;--gsf-title:#fff;--gsf-accent:#4ade80;--gsf-ok:#34d399;--gsf-seal:#15803d}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .gs-footer{--gsf-bg:#09090b;--gsf-line:#1e293b;--gsf-text:#94a3b8;--gsf-strong:#e2e8f0;--gsf-muted:#8b98ad;--gsf-card:#0c0c10;--gsf-hover:#0f172a;--gsf-title:#fff;--gsf-accent:#4ade80;--gsf-ok:#34d399;--gsf-seal:#15803d}}
+.gs-footer{--gs-gutter:clamp(16px,4vw,48px);background:var(--gsf-bg);border-top:1px solid var(--gsf-line);color:var(--gsf-text);font:13px/1.65 'Plus Jakarta Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;padding:48px 0 24px;margin-top:64px;text-align:left}
+.gs-footer *{box-sizing:border-box}
+.gs-footer a{color:var(--gsf-text);text-decoration:none;transition:color .15s}
+.gs-footer a:hover,.gs-footer a:focus-visible{color:var(--gsf-accent)}
+.gs-footer a:focus-visible,.gs-footer summary:focus-visible{outline:2px solid var(--gsf-accent);outline-offset:2px;border-radius:4px}
+.gs-footer__in{width:100%;max-width:1600px;margin:0 auto;padding:0 var(--gs-gutter)}
+.gs-footer__grid{display:grid;gap:36px;grid-template-columns:1.5fr 1fr 1.2fr 1fr;padding-bottom:32px;border-bottom:1px solid var(--gsf-line)}
+@media(max-width:1100px){.gs-footer__grid{grid-template-columns:1fr 1fr}}
+.gs-footer__product{margin-bottom:24px;padding-bottom:22px;border-bottom:1px solid var(--gsf-line)}
+.gs-footer__product .gs-footer__bname{color:var(--gsf-title);text-decoration:none}
+.gs-footer__seal--product{background:var(--gsf-hover);border:1px solid var(--gsf-line);color:var(--gsf-ok)}
+.gs-footer__nav{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+.gs-footer__nav li{margin:0;padding:0}
+.gs-footer__nav a{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:8px;border-left:3px solid transparent;color:var(--gsf-strong);font-size:13px;font-weight:500;text-decoration:none}
+.gs-footer__nav a:hover{background:var(--gsf-hover);color:var(--gsf-title)}
+.gs-footer__nav a:focus-visible{outline:2px solid var(--gsf-accent);outline-offset:2px}
+.gs-footer__nav a[aria-current="page"]{background:var(--gsf-hover);border-left-color:var(--gsf-ok);color:var(--gsf-title);font-weight:700}
+.gs-footer__nav small{margin-left:auto;font-size:11px;color:var(--gsf-ok);font-weight:600;white-space:nowrap}
+@media(max-width:600px){.gs-footer__grid{grid-template-columns:1fr}}
+@media(max-width:600px),(pointer:coarse){.gs-footer__nav a{min-height:44px;box-sizing:border-box}
+.gs-footer h3{margin:0 0 14px;color:var(--gsf-strong);font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:700}
+.gs-footer ul{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.gs-footer p{margin:0 0 10px}
+.gs-footer__brand{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.gs-footer__seal{flex:none;width:40px;height:40px;border-radius:10px;background:var(--gsf-seal);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;color:#fff}
+.gs-footer__bname{display:block;color:var(--gsf-title);font-weight:700;font-size:16px;line-height:1.2}
+.gs-footer__item a,.gs-footer__item .gs-footer__cur{display:block;color:var(--gsf-strong);font-weight:600}
+.gs-footer__item small{display:block;color:var(--gsf-muted);font-size:12px;line-height:1.5;margin-top:2px;font-weight:400}
+.gs-footer__faq{padding:28px 0;border-bottom:1px solid var(--gsf-line)}
+.gs-footer__faq-grid{display:grid;gap:10px 28px;grid-template-columns:1fr 1fr;align-items:start}
+@media(max-width:800px){.gs-footer__faq-grid{grid-template-columns:1fr}}
+.gs-footer details{border:1px solid var(--gsf-line);border-radius:10px;padding:10px 14px;background:var(--gsf-card)}
+.gs-footer summary{cursor:pointer;color:var(--gsf-strong);font-weight:600;list-style:none}
+.gs-footer summary::-webkit-details-marker{display:none}
+.gs-footer summary::after{content:'+';float:right;color:var(--gsf-muted)}
+.gs-footer details[open] summary::after{content:'–'}
+.gs-footer details p{margin:10px 0 2px;color:var(--gsf-text)}
+.gs-footer__notice{margin:10px 0 12px;padding:12px 14px;border:1px solid var(--gsf-line);border-left:3px solid #f59e0b;border-radius:8px;background:var(--gsf-card);font-size:12px;color:var(--gsf-text)}
+.gs-footer__bottom{padding-top:20px;text-align:left;font-size:12px;color:var(--gsf-muted);display:flex;flex-wrap:wrap;gap:6px 24px;justify-content:space-between}
+</style>
+<footer class="gs-footer" data-gs-footer="v3" data-gs-current="diarios" role="contentinfo">
+  <div class="gs-footer__in">
+    <div class="gs-footer__grid">
+      <div>
+        <div class="gs-footer__product"><div class="gs-footer__brand"><span class="gs-footer__seal gs-footer__seal--product" aria-hidden="true">DO</span><a class="gs-footer__bname" href="https://diariosoficiales.grupostu.com">Diarios Oficiales</a></div><p>Facilita la búsqueda de edictos, avisos y normativa publicada en diarios oficiales, con alertas por correo y enlaces estables a cada documento para que puedas citarlo y conservarlo.</p></div>
+        <div class="gs-footer__brand"><span class="gs-footer__seal" aria-hidden="true">GS</span><span class="gs-footer__bname">Grupo Stu</span></div>
+        <p>Grupo Stu desarrolla productos de software desde San Salvador, El Salvador: herramientas en línea, hospedaje, constructor de aplicaciones, software de gestión, formación y clasificados, con un mismo estándar de seguridad, privacidad y soporte.</p>
+        <div class="gs-footer__notice" role="note">Servicio de consulta y seguimiento. Para efectos legales rige siempre el ejemplar publicado por la autoridad emisora, al que cada registro enlaza.</div>
+      </div>
+      <nav aria-label="Plataformas de Grupo Stu">
+        <h3>Plataformas</h3>
+        <ul class="gs-footer__nav">
+          <li><a href="https://grupostu.com">Grupo Stu</a></li> <li><a href="https://herramientas.grupostu.com">Stu Herramienta</a></li> <li><a href="https://diariosoficiales.grupostu.com" aria-current="page">Diarios Oficiales<small>Estás aquí</small></a></li> <li><a href="https://stustudioapp.grupostu.com">Stu Studio App</a></li> <li><a href="https://hosting.grupostu.com">Stu Hosting</a></li> <li><a href="https://stream.grupostu.com">Stu Streaming &amp; Radio</a></li> <li><a href="https://stuaprende.grupostu.com">Stu Aprende</a></li> <li><a href="https://crediflowerp.grupostu.com">CrediFlow ERP</a></li> <li><a href="https://erp.grupostu.com">Stu ERP</a></li> <li><a href="https://clasificados.grupostu.com">Stu Clasificados</a></li>
+        </ul>
+      </nav>
+      <div>
+        <h3>Legal y transparencia</h3>
+        <ul>
+          <li class="gs-footer__item"><a href="https://grupostu.com/es/legal/privacidad">Política de Privacidad</a><small>Qué datos recopilamos, para qué, por cuánto tiempo y cómo ejercer tus derechos, conforme a la legislación de El Salvador.</small></li>
+          <li class="gs-footer__item"><a href="https://grupostu.com/es/legal/terminos">Términos y Condiciones</a><small>Reglas de uso de los servicios, responsabilidades, pagos, cancelaciones y resolución de controversias.</small></li>
+          <li class="gs-footer__item"><a href="https://grupostu.com/es/legal/transparencia">Transparencia y Acceso a la Información</a><small>Información pública y vías de solicitud según los artículos 10 y 11 de la LAIP.</small></li>
+          <li class="gs-footer__item"><a href="mailto:soporte@grupostu.com?subject=Reporte%20de%20seguridad">Seguridad y reporte de vulnerabilidades</a><small>Canal para notificar fallos de seguridad de forma responsable.</small></li>
+        </ul>
+      </div>
+      <div>
+        <h3>Soporte y contacto</h3>
+        <ul>
+          <li class="gs-footer__item"><a href="mailto:soporte@grupostu.com">soporte@grupostu.com</a><small>Canal oficial único de soporte técnico, facturación, privacidad y avisos legales de todos los productos.</small></li>
+          <li class="gs-footer__item"><span class="gs-footer__cur">San Salvador, El Salvador</span><small>Nunca pedimos contraseñas ni códigos de verificación por correo o chat.</small></li>
+        </ul>
+      </div>
+    </div>
+    <section class="gs-footer__faq" aria-labelledby="gs-faq-h">
+      <h3 id="gs-faq-h">Preguntas frecuentes — Diarios Oficiales</h3>
+      <div class="gs-footer__faq-grid">
+        <details open><summary>¿Los documentos tienen validez legal?</summary><p>Diarios Oficiales es un servicio de consulta y seguimiento: indexa y organiza publicaciones para facilitar su búsqueda. Para efectos legales rige siempre el ejemplar publicado por la autoridad emisora; cada registro enlaza a su fuente para que puedas contrastarlo.</p></details>
+        <details><summary>¿Cómo funcionan las alertas por correo?</summary><p>Defines el término o la materia que te interesa y recibes un aviso cuando aparece una publicación coincidente. Debes confirmar tu correo para activar la alerta y puedes darte de baja desde cualquier mensaje.</p></details>
+        <details><summary>¿Cada cuánto se actualiza el contenido?</summary><p>La indexación se ejecuta de forma periódica a lo largo del día. Puede existir un desfase entre la publicación oficial y su aparición aquí; ante una urgencia, confirma siempre en el sitio de la autoridad emisora.</p></details>
+        <details><summary>¿Qué es Grupo Stu?</summary><p>Grupo Stu desarrolla y opera desde San Salvador, El Salvador, un conjunto de productos de software: herramientas en línea, hospedaje, constructor de aplicaciones, ERP, software financiero, formación, clasificados y publicaciones oficiales. Cada producto tiene su propio sitio, pero comparten identidad, estándares de seguridad y canal de soporte.</p></details>
+        <details><summary>¿Cómo contacto a soporte y cuánto tarda la respuesta?</summary><p>Escribe a soporte@grupostu.com indicando el producto, tu correo de registro y una descripción del problema (capturas de pantalla ayudan). Es el único canal oficial: no solicitamos contraseñas, códigos de verificación ni datos completos de tarjeta por ningún medio. Respondemos en orden de llegada y priorizamos incidentes que afecten pagos, acceso o seguridad.</p></details>
+        <details><summary>¿Qué leyes rigen el uso de los servicios?</summary><p>La Política de Privacidad y los Términos y Condiciones se rigen por la legislación de la República de El Salvador. Los textos vigentes están publicados en grupostu.com/es/legal, junto con la página de Transparencia y Acceso a la Información conforme a los artículos 10 y 11 de la LAIP.</p></details>
+        <details><summary>¿Cómo protegen mis datos?</summary><p>Aplicamos cifrado en tránsito (HTTPS), validación estricta de todo lo que recibe cada sistema, separación de datos entre clientes, límites de intentos y registros de auditoría que nunca guardan contraseñas, tokens ni datos completos de tarjetas. Los respaldos se prueban de forma periódica y el acceso administrativo requiere autenticación reforzada.</p></details>
+        <details><summary>¿Cómo reporto una vulnerabilidad de seguridad?</summary><p>Envía el detalle a soporte@grupostu.com con el asunto «Reporte de seguridad»: URL afectada, pasos para reproducirlo e impacto estimado. Evalúa sin acceder a datos de terceros ni degradar el servicio; confirmamos la recepción, corregimos según la gravedad y te informamos cuando esté resuelto.</p></details>
+        <details><summary>¿Una misma cuenta sirve en todos los productos?</summary><p>Estamos implementando una cuenta única de Grupo Stu para acceder a las plataformas públicas con un solo inicio de sesión. Mientras se integra cada producto, algunos pueden mantener su propio registro; lo comunicaremos en el sitio de cada producto cuando corresponda. Las áreas internas y privadas quedan fuera de esta cuenta.</p></details>
+      </div>
+    </section>
+    <div class="gs-footer__bottom"><span>© 2026 Grupo Stu. Todos los derechos reservados.</span><span>soporte@grupostu.com</span></div>
+  </div>
+</footer>
+
+
+  <script type="module" src="/stu-ui/cabecera/cabecera.js?v=1"></script>
+  <script>
+    // Menú de la cabecera compartida: delegado en el documento porque el componente vuelve a pintar su navegación
+    document.addEventListener('click', function (e) {
+      var a = e.target && e.target.closest ? e.target.closest('stu-cabecera a[data-tab]') : null;
+      if (!a) return;
+      e.preventDefault();
+      switchTab(a.getAttribute('data-tab'));
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    const DIGIT_WORDS = ['CERO', 'UNO', 'DOS', 'TRES', 'CUATRO', 'CINCO', 'SEIS', 'SIETE', 'OCHO', 'NUEVE'];
+
+    function duiToNotarialWordsJS(dui) {
+      const clean = String(dui || '').replace(/\D/g, '');
+      if (clean.length !== 9) return '';
+      const p1 = clean.slice(0, 8).split('').map(d => DIGIT_WORDS[parseInt(d, 10)]).join(' ');
+      const p2 = DIGIT_WORDS[parseInt(clean[8], 10)];
+      return p1 + ' - ' + p2;
+    }
+
+    function classifyLegalRecordJS(rec) {
+      if (rec.clasificacionJuridica) return rec.clasificacionJuridica;
+      const t = ((rec.titular || '') + ' ' + (rec.contenido || '')).toLowerCase();
+      if (t.includes('herencia') || t.includes('heredero') || t.includes('sucesión') || t.includes('causante')) return 'Aceptación de Herencia';
+      if (t.includes('rebeldía') || t.includes('ausente') || t.includes('captura')) return 'Declaratoria de Rebeldía';
+      if (t.includes('título supletorio') || t.includes('titulo supletorio') || t.includes('titulación')) return 'Título Supletorio';
+      if (t.includes('subasta') || t.includes('remate') || t.includes('embargo')) return 'Subasta Pública';
+      if (t.includes('sociedad') || t.includes('balance') || t.includes('marca') || rec.categoria === 'REGISTRO_MARCA') return 'Aviso de Sociedad';
+      if (t.includes('decreto') || t.includes('acuerdo') || rec.categoria === 'DECRETO_LEGISLATIVO') return 'Decreto/Acuerdo';
+      return 'Edicto Judicial';
+    }
+
+    function getLegalClassificationBadge(label) {
+      const map = {
+        'Aceptación de Herencia': { icon: '/assets/graphics/icono-aceptacion-herencia.svg', cls: 'bg-gs-surface2 text-gs-accent border-gs-border' },
+        'Declaratoria de Rebeldía': { icon: '/assets/graphics/icono-declaratoria-rebeldia.svg', cls: 'bg-gs-surface2 text-gs-danger border-gs-border' },
+        'Título Supletorio': { icon: '/assets/graphics/icono-titulo-supletorio.svg', cls: 'bg-gs-surface2 text-gs-accent border-gs-border' },
+        'Subasta Pública': { icon: '/assets/graphics/icono-subasta-publica.svg', cls: 'bg-gs-surface2 text-gs-warning border-gs-border' },
+        'Aviso de Sociedad': { icon: '/assets/graphics/icono-aviso-sociedad.svg', cls: 'bg-gs-surface2 text-gs-accent border-gs-border' },
+        'Decreto/Acuerdo': { icon: '/assets/graphics/icono-decreto-acuerdo.svg', cls: 'bg-indigo-500/15 text-indigo-300 border-indigo-500/40' },
+        'Edicto Judicial': { icon: '/assets/graphics/icono-edicto-judicial.svg', cls: 'bg-gs-surface2 text-gs-accent border-gs-border' }
+      };
+      const st = map[label] || map['Edicto Judicial'];
+      return `<span class="inline-flex items-center gap-1.5 text-xs font-mono font-bold px-2.5 py-1 rounded-lg border ${st.cls}">
+        <img src="${st.icon}" alt="" class="w-4 h-4"> ${escapeHtmlText(label)}
+      </span>`;
+    }
+
+    function renderDuiChipsHtml(duis, pagina) {
+      if (!duis || duis.length === 0) return '';
+      return '<div class="mt-3 pt-2.5 border-t border-gs-border flex flex-wrap items-center gap-2">' +
+        '<span class="text-[11px] font-mono text-gs-warning font-bold flex items-center gap-1"><i class="fa-solid fa-fingerprint"></i> DUIs Identificados:</span>' +
+        duis.map(dui => {
+          const words = duiToNotarialWordsJS(dui);
+          return `<button type="button" data-ebook-pag="${escapeHtmlText(parseInt(pagina, 10) || 1)}" data-term="${escapeHtmlText(dui)}" title="Clic para abrir el Visor Ebook en Pág. ${escapeHtmlText(parseInt(pagina, 10) || 1)} y localizar en el PDF: ${escapeHtmlText(words)}"
+            class="group px-2.5 py-1 rounded-lg bg-gs-surface2 hover:bg-gs-warning text-gs-warning hover:text-gs-ink border border-gs-border text-xs font-mono font-semibold transition-all flex items-center gap-1.5 shadow-sm">
+            <span>${escapeHtmlText(dui)}</span>
+            <span class="text-[10px] text-gs-warning group-hover:text-gs-ink font-normal hidden sm:inline">(${escapeHtmlText(words.split(' ').slice(0, 3).join(' '))}...)</span>
+            <i class="fa-solid fa-crosshairs text-[10px]"></i>
+          </button>`;
+        }).join('') +
+      '</div>';
+    }
+
+    // Misma validación que el servidor (src/criterio.ts): DUI completo y válido, o nombre sin etiquetas ni símbolos.
+    
+function evaluarCriterio(entrada) {
+  var texto = String(entrada == null ? '' : entrada).replace(/\s+/g, ' ').trim();
+  var fallo = function (codigo, error) { return { ok: false, codigo: codigo, error: error }; };
+  if (texto.length < 3) return fallo('corto', 'Escribe al menos 3 caracteres del DUI o nombre a vigilar.');
+  if (texto.length > 120) return fallo('largo', 'El criterio admite 120 caracteres como máximo.');
+  if (/[<>]/.test(texto)) return fallo('etiquetas', 'No uses etiquetas ni los signos < >. Escribe solo letras, números y guiones.');
+  var digitos = texto.replace(/\D/g, '');
+  var letras = (texto.match(/\p{L}/gu) || []).length;
+  if (letras === 0 && digitos.length === 0) return fallo('solo_simbolos', 'Escribe letras o números: con solo símbolos no se puede buscar ni vigilar.');
+  if (!/^[\p{L}\p{M}0-9 .,'’–-]+$/u.test(texto)) {
+    return fallo('simbolos', 'Usa solo letras, números, espacios y guiones; quita los símbolos.');
+  }
+  if (letras === 0) {
+    if (digitos.length < 9) return fallo('dui_incompleto', 'El DUI está incompleto: lleva 9 dígitos (8 más el verificador), por ejemplo 00000000-0.');
+    if (digitos.length > 9) return fallo('dui_largo', 'El DUI tiene demasiados dígitos: son 9 (8 más el verificador), por ejemplo 00000000-0.');
+    var suma = 0;
+    for (var i = 0; i < 8; i++) suma += Number(digitos.charAt(i)) * (9 - i);
+    if ((10 - (suma % 10)) % 10 !== Number(digitos.charAt(8))) {
+      return fallo('dui_verificador', 'El dígito verificador de este DUI no es válido. Revisa que lo hayas escrito bien.');
+    }
+    return { ok: true, valor: digitos.slice(0, 8) + '-' + digitos.slice(8), tipo: 'DUI' };
+  }
+  if (digitos.length > 0 && /^[\p{L}0-9]{8}\s?[–-]\s?[\p{L}0-9]$/u.test(texto)) {
+    return fallo('dui_forma', 'Un DUI solo lleva números: 8 dígitos, un guion y el dígito verificador, por ejemplo 00000000-0.');
+  }
+  if (letras < 3) return fallo('corto', 'Un nombre necesita al menos 3 letras.');
+  return { ok: true, valor: texto, tipo: 'NOMBRE' };
+}
+
+
+    // Núcleo compartido con el servidor: plegado de tildes, mapa de posiciones, coincidencias y resaltado seguro.
+    
+var GS_LIM = { maxChars: 200, maxCriterios: 8, maxTokens: 16, maxLongToken: 40 };
+var GS_PALABRAS_DIGITO = { cero: '0', uno: '1', dos: '2', tres: '3', cuatro: '4', cinco: '5', seis: '6', siete: '7', ocho: '8', nueve: '9' };
+var GS_DIGITO_PALABRA = ['cero', 'uno', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve'];
+var GS_VACIAS = { de: 1, del: 1, la: 1, las: 1, el: 1, los: 1, en: 1, y: 1, e: 1, o: 1, u: 1, a: 1, al: 1, un: 1, una: 1, que: 1, por: 1, con: 1, para: 1, se: 1, su: 1, sus: 1, lo: 1 };
+var GS_CLAVES_DOC = { decreto: 1, decr: 1, dec: 1, acuerdo: 1, acdo: 1, ley: 1, d: 1 };
+var GS_RELLENO_DOC = { no: 1, n: 1, num: 1, nro: 1, numero: 1, legislativo: 1, ejecutivo: 1 };
+var GS_COMILLAS = '"“”„«»';
+// Letras que no se descomponen por Unicode pero que el lector espera equivalentes (ß = ss, æ = ae...).
+var GS_ESPECIALES = { 'ß': 'ss', 'æ': 'ae', 'œ': 'oe', 'ø': 'o', 'đ': 'd', 'ł': 'l', 'ı': 'i', 'ð': 'd', 'þ': 'th' };
+// Abreviaturas tras las cuales un punto NO cierra la oración (una frase exacta puede cruzarlas: "No. 690").
+var GS_ABREV = { no: 1, nro: 1, num: 1, art: 1, arts: 1, sr: 1, sra: 1, srta: 1, dr: 1, dra: 1, lic: 1, licda: 1, ing: 1, inc: 1, cia: 1, pag: 1, tel: 1, ref: 1, etc: 1, vs: 1, col: 1, av: 1, cap: 1, fol: 1, tomo: 1, dec: 1, decr: 1, acdo: 1 };
+var GS_ESC_HTML = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+
+function gsEscapar(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return GS_ESC_HTML[c]; });
+}
+
+/**
+ * Pliega el texto: minúsculas, sin diacríticos y con cada racha de espacios reducida a uno.
+ * Devuelve el texto plegado y, por cada unidad UTF-16 plegada, el rango [ini, fin) del original.
+ */
+function gsPlegar(texto) {
+  texto = String(texto == null ? '' : texto);
+  var out = [], ini = [], fin = [];
+  var espera = false, eIni = 0, eFin = 0;
+  function emitir(cadena, a, b) {
+    for (var u = 0; u < cadena.length; u++) { out.push(cadena.charAt(u)); ini.push(a); fin.push(b); }
+  }
+  var i = 0;
+  while (i < texto.length) {
+    var code = texto.charCodeAt(i);
+    var largo = 1;
+    if (code >= 0xD800 && code <= 0xDBFF && i + 1 < texto.length) {
+      var lo = texto.charCodeAt(i + 1);
+      if (lo >= 0xDC00 && lo <= 0xDFFF) largo = 2;
+    }
+    var fin_i = i + largo;
+    // Camino rápido ASCII
+    if (code < 128) {
+      if (code === 32 || (code >= 9 && code <= 13)) {
+        if (!espera) { espera = true; eIni = i; }
+        eFin = fin_i;
+      } else {
+        if (espera) { if (out.length > 0) emitir(' ', eIni, eFin); espera = false; }
+        var c = code >= 65 && code <= 90 ? code + 32 : code;
+        emitir(String.fromCharCode(c), i, fin_i);
+      }
+      i = fin_i;
+      continue;
+    }
+    var ch = texto.slice(i, fin_i);
+    if (/\s/.test(ch)) {
+      if (!espera) { espera = true; eIni = i; }
+      eFin = fin_i;
+    } else if (code === 0xAD || (code >= 0x200B && code <= 0x200F) || code === 0xFEFF || code === 0x2060) {
+      // Invisibles (guion blando, ancho cero): se ignoran pero se absorben en el rango previo
+      if (fin.length > 0 && !espera) fin[fin.length - 1] = fin_i;
+    } else {
+      if (espera) { if (out.length > 0) emitir(' ', eIni, eFin); espera = false; }
+      var partes = Array.from(ch.normalize('NFKD'));
+      for (var k = 0; k < partes.length; k++) {
+        var p = partes[k];
+        if (/\p{M}/u.test(p)) { if (fin.length > 0) fin[fin.length - 1] = fin_i; continue; }
+        if (p === '’' || p === '‘' || p === '‛' || p === '´') p = "'";
+        else if (p === '“' || p === '”' || p === '„' || p === '«' || p === '»') p = '"';
+        else if (p === '–' || p === '—' || p === '−' || p === '‐' || p === '‑') p = '-';
+        var bajo = Array.from(p.toLowerCase().normalize('NFKD'));
+        for (var m = 0; m < bajo.length; m++) {
+          if (/\p{M}/u.test(bajo[m])) continue;
+          emitir(GS_ESPECIALES[bajo[m]] || bajo[m], i, fin_i);
+        }
+      }
+    }
+    i = fin_i;
+  }
+  return { plano: out.join(''), ini: ini, fin: fin };
+}
+
+function gsEsPalabra(plano, idx) {
+  var c = plano.charCodeAt(idx);
+  if ((c >= 97 && c <= 122) || (c >= 48 && c <= 57)) return true;
+  if (c < 128) return false;
+  return /[\p{L}\p{N}]/u.test(plano.charAt(idx));
+}
+
+/** Divide el texto plegado en tokens (rachas de letras o dígitos). Devuelve tokens y sus posiciones plegadas. */
+function gsTokenizar(plano) {
+  var toks = [], ta = [], tb = [];
+  var n = plano.length, i = 0;
+  while (i < n) {
+    if (!gsEsPalabra(plano, i)) { i++; continue; }
+    var j = i + 1;
+    while (j < n && gsEsPalabra(plano, j)) j++;
+    toks.push(plano.slice(i, j)); ta.push(i); tb.push(j);
+    i = j;
+  }
+  return { toks: toks, ta: ta, tb: tb };
+}
+
+/** Prepara un texto para buscar en él: plegado + mapa de posiciones + tokens. Se calcula UNA vez al indexar. */
+function gsPrepararSegmento(texto) {
+  var f = gsPlegar(texto);
+  var t = gsTokenizar(f.plano);
+  return { texto: String(texto == null ? '' : texto), plano: f.plano, ini: f.ini, fin: f.fin, toks: t.toks, ta: t.ta, tb: t.tb };
+}
+
+function gsFallo(codigo, error) { return { ok: false, codigo: codigo, error: error }; }
+
+function gsEsNumero(t) { return /^[0-9]+$/.test(t); }
+
+/** Si la consulta completa es un DUI (9 dígitos, 6-8 con dígito verificador separado, u 8-9 palabras-dígito) devuelve sus 9 dígitos. */
+function gsDuiDesdeConsulta(texto) {
+  var s = String(texto).trim().toLowerCase();
+  if (/^[0-9\s\-–—]+$/.test(s)) {
+    var d = s.replace(/\D/g, '');
+    if (d.length === 9) return d;
+    if (/^[0-9]{1,8}\s*[-–—\s]\s*[0-9]$/.test(s) && d.length >= 6 && d.length <= 8) return d.padStart(9, '0');
+    return null;
+  }
+  var ws = s.split(/[\s\-–—]+/).filter(function (w) { return w.length > 0; });
+  if (ws.length >= 8 && ws.length <= 9 && ws.every(function (w) { return GS_PALABRAS_DIGITO[w] !== undefined; })) {
+    var dd = ws.map(function (w) { return GS_PALABRAS_DIGITO[w]; }).join('');
+    return dd.length === 8 ? '0' + dd : dd;
+  }
+  return null;
+}
+
+function gsCriterioDui(d9) {
+  var palabras = d9.split('').map(function (x) { return GS_DIGITO_PALABRA[Number(x)]; });
+  return {
+    tipo: 'alt', req: true, etiqueta: 'DUI',
+    opciones: [[d9.slice(0, 8), d9.slice(8)], [d9], palabras]
+  };
+}
+
+/**
+ * Analiza la consulta del usuario. Reconoce: términos sueltos (todos deben aparecer), frases exactas
+ * entre comillas, números de decreto en cualquier formato ("Decreto No. 690", "decreto 690", "D. 690",
+ * "d690") y DUI. Aplica límites estrictos de longitud y de cantidad de términos.
+ */
+function gsAnalizarConsulta(entrada, lim, dui9) {
+  lim = lim || GS_LIM;
+  if (typeof entrada !== 'string') return gsFallo('tipo', 'La consulta debe ser un texto.');
+  if (entrada.length > lim.maxChars * 10) return gsFallo('larga', 'La consulta admite ' + lim.maxChars + ' caracteres como máximo. Acórtala y vuelve a intentar.');
+  var texto = entrada.replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim();
+  if (!texto) return gsFallo('vacia', 'Escribe un DUI, un nombre, un número de decreto o una frase para buscar en el archivo.');
+  if (texto.length > lim.maxChars) return gsFallo('larga', 'La consulta admite ' + lim.maxChars + ' caracteres como máximo. Acórtala y vuelve a intentar.');
+  if (texto.length < 3) return gsFallo('corta', 'Escribe al menos 3 caracteres para buscar.');
+
+  var d9 = dui9 || gsDuiDesdeConsulta(texto);
+  if (d9) {
+    return { ok: true, texto: texto, criterios: [gsCriterioDui(d9)], descripcion: [{ tipo: 'dui', texto: d9.slice(0, 8) + '-' + d9.slice(8) }], dui: d9 };
+  }
+
+  // 1) Separar grupos entre comillas y sin comillas
+  var grupos = [], cur = '', dentro = false;
+  for (var i = 0; i < texto.length; i++) {
+    var ch = texto.charAt(i);
+    if (GS_COMILLAS.indexOf(ch) >= 0) {
+      if (cur.trim()) grupos.push({ q: dentro, raw: cur.trim() });
+      cur = ''; dentro = !dentro;
+    } else cur += ch;
+  }
+  if (cur.trim()) grupos.push({ q: dentro, raw: cur.trim() });
+
+  var totalTokens = 0;
+  var criterios = [], descripcion = [];
+  var palabras = []; // palabras sin comillas: { raw, toks }
+  var fraseOrden = []; // todos los tokens sin comillas, en orden (para el bono de frase implícita)
+  function tokensDe(raw) {
+    var t = gsTokenizar(gsPlegar(raw).plano).toks;
+    totalTokens += t.length;
+    return t;
+  }
+  var errorToken = null;
+  function revisar(t) {
+    for (var x = 0; x < t.length; x++) if (t[x].length > lim.maxLongToken) errorToken = t[x];
+  }
+  for (var g = 0; g < grupos.length; g++) {
+    var gr = grupos[g];
+    if (gr.q) {
+      var tq = tokensDe(gr.raw); revisar(tq);
+      if (tq.length === 0) continue;
+      if (tq.length === 1) criterios.push({ tipo: 'termino', t: tq[0], pref: false, req: true });
+      else criterios.push({ tipo: 'frase', toks: tq, pref: false, req: true });
+      descripcion.push({ tipo: tq.length === 1 ? 'termino' : 'frase', texto: gr.raw });
+    } else {
+      var ps = gr.raw.split(' ');
+      for (var w = 0; w < ps.length; w++) {
+        if (!ps[w]) continue;
+        var tw = tokensDe(ps[w]); revisar(tw);
+        if (tw.length > 0) palabras.push({ raw: ps[w], toks: tw });
+      }
+    }
+    if (totalTokens > lim.maxTokens) break;
+  }
+  if (errorToken !== null) return gsFallo('token_largo', 'Una de las palabras es demasiado larga (máximo ' + lim.maxLongToken + ' letras). Revisa lo que escribiste.');
+  if (totalTokens > lim.maxTokens) return gsFallo('muchos_terminos', 'Escribiste demasiadas palabras: el máximo es ' + lim.maxTokens + '. Usa menos palabras o agrúpalas entre comillas para buscar una frase exacta.');
+
+  // 2) Números de decreto: clave (decreto, d, acuerdo, ley...) + relleno opcional (no, n°, legislativo) + número
+  var plano = []; // { t, w }
+  for (var a = 0; a < palabras.length; a++) for (var b = 0; b < palabras[a].toks.length; b++) plano.push({ t: palabras[a].toks[b], w: a, usado: false });
+  for (var p = 0; p < plano.length; p++) {
+    var tk = plano[p].t;
+    if (plano[p].usado) continue;
+    var pegado = /^(decreto|decr|dec|acuerdo|acdo|ley|d)([0-9]{1,5})$/.exec(tk);
+    if (pegado) {
+      plano[p].usado = true;
+      criterios.push({ tipo: 'decreto', numero: pegado[2], req: true });
+      descripcion.push({ tipo: 'decreto', texto: 'Decreto N.º ' + pegado[2] });
+      continue;
+    }
+    if (GS_CLAVES_DOC[tk] === 1) {
+      var q = p + 1;
+      while (q < plano.length && GS_RELLENO_DOC[plano[q].t] === 1) q++;
+      if (q < plano.length && /^[0-9]{1,5}$/.test(plano[q].t)) {
+        for (var z = p; z <= q; z++) plano[z].usado = true;
+        criterios.push({ tipo: 'decreto', numero: plano[q].t, req: true });
+        descripcion.push({ tipo: 'decreto', texto: 'Decreto N.º ' + plano[q].t });
+      }
+    } else if (GS_RELLENO_DOC[tk] === 1) {
+      // "No. 690" sin clave: se descarta el relleno y queda el número como término
+      var r = p + 1;
+      while (r < plano.length && GS_RELLENO_DOC[plano[r].t] === 1) r++;
+      if (r < plano.length && /^[0-9]{1,5}$/.test(plano[r].t)) for (var y = p; y < r; y++) plano[y].usado = true;
+    }
+  }
+  // 3) Palabras restantes: un token = término; varios tokens (p. ej. "s.a.") = frase
+  var restantes = [];
+  for (var u = 0; u < palabras.length; u++) restantes.push([]);
+  for (var v = 0; v < plano.length; v++) if (!plano[v].usado) restantes[plano[v].w].push(plano[v].t);
+  var terminosSueltos = [];
+  for (var k = 0; k < palabras.length; k++) {
+    var rt = restantes[k];
+    if (rt.length === 0) continue;
+    if (rt.length === 1) {
+      var t1 = rt[0];
+      fraseOrden.push(t1);
+      if (!gsEsNumero(t1) && t1.length < 2) continue;
+      terminosSueltos.push({ t: t1, raw: palabras[k].raw });
+    } else {
+      for (var m = 0; m < rt.length; m++) fraseOrden.push(rt[m]);
+      criterios.push({ tipo: 'frase', toks: rt, pref: !gsEsNumero(rt[rt.length - 1]) && rt[rt.length - 1].length >= 3, req: true });
+      descripcion.push({ tipo: 'frase', texto: palabras[k].raw });
+    }
+  }
+  var utiles = terminosSueltos.filter(function (x) { return GS_VACIAS[x.t] !== 1; });
+  for (var s = 0; s < utiles.length; s++) {
+    var tt = utiles[s].t;
+    criterios.push({ tipo: 'termino', t: tt, pref: !gsEsNumero(tt) && tt.length >= 3, req: true });
+    descripcion.push({ tipo: 'termino', texto: utiles[s].raw });
+  }
+  var requeridos = criterios.filter(function (c) { return c.req; }).length;
+  if (requeridos === 0) return gsFallo('sin_terminos', 'Tu consulta solo tiene palabras muy cortas o comunes (como "de" o "la"). Agrega un nombre, un número o una palabra más específica.');
+  if (requeridos > lim.maxCriterios) return gsFallo('muchos_terminos', 'Escribiste demasiados términos distintos: el máximo es ' + lim.maxCriterios + '. Quita alguno o agrúpalos entre comillas.');
+
+  // 4) Bono de frase implícita: los mismos términos juntos y en el mismo orden puntúan más (no se exigen)
+  if (fraseOrden.length >= 2 && criterios.every(function (c) { return c.tipo !== 'decreto'; })) {
+    criterios.push({ tipo: 'frase', toks: fraseOrden, pref: false, req: false });
+  }
+  return { ok: true, texto: texto, criterios: criterios, descripcion: descripcion, dui: null };
+}
+
+/**
+ * Coincidencia de palabra con tolerancia de flexión: la palabra puede llevar hasta 2 letras más que el término
+ * (plural, género: "tributaria" -> "tributarias"), pero NO es una búsqueda por prefijo libre: "tránsito" no coincide
+ * con "transitoria". Así lo remarcado es siempre la palabra completa que el usuario reconoce como coincidencia.
+ */
+function gsPrefijo(tok, t) { return tok.length >= t.length && tok.length <= t.length + 2 && tok.lastIndexOf(t, 0) === 0; }
+
+function gsSoloSeparador(plano, a, b) {
+  if (b - a > 4) return false;
+  for (var i = a; i < b; i++) {
+    if (' .-:°º,'.indexOf(plano.charAt(i)) < 0) return false;
+  }
+  return true;
+}
+
+/**
+ * Una frase exacta solo puede cruzar separadores "blandos" (espacio, coma, guion, punto de abreviatura): nunca un fin de
+ * oración ("ley. Otra"), dos puntos, punto y coma, paréntesis ni comillas. Así "ley otra" no coincide con "la ley. Otra cosa".
+ */
+function gsGapFrase(plano, a, b, previo) {
+  if (b - a > 5) return false;
+  var punto = false;
+  for (var i = a; i < b; i++) {
+    var ch = plano.charAt(i);
+    if (" .,-'/°".indexOf(ch) < 0) return false;
+    if (ch === '.') punto = true;
+  }
+  // Punto seguido de espacio = fin de oración, salvo tras abreviatura, letra suelta o número ("S.A. de", "No. 690")
+  if (punto && plano.slice(a, b).indexOf('. ') >= 0 && previo.length > 1 && GS_ABREV[previo] !== 1 && !/^[0-9]+$/.test(previo)) return false;
+  return true;
+}
+
+function gsHit(seg, c, a, b, fuerte) {
+  return { c: c, a: seg.ini[a], b: seg.fin[b - 1], fuerte: fuerte };
+}
+
+function gsSecuencia(seg, i, seq, pref) {
+  var k = seq.length;
+  if (i + k > seg.toks.length) return false;
+  for (var j = 0; j < k; j++) {
+    var tk = seg.toks[i + j];
+    if (j === k - 1 && pref) { if (!gsPrefijo(tk, seq[j])) return false; }
+    else if (tk !== seq[j]) return false;
+    if (j > 0 && !gsGapFrase(seg.plano, seg.tb[i + j - 1], seg.ta[i + j], seg.toks[i + j - 1])) return false;
+  }
+  return true;
+}
+
+/**
+ * Localiza todos los criterios dentro de un segmento preparado. Devuelve coincidencias
+ * { c: índice de criterio, a, b: rango en el texto ORIGINAL, fuerte: frase/número de decreto }.
+ */
+function gsLocalizar(seg, criterios) {
+  var hits = [];
+  var toks = seg.toks, n = toks.length;
+  for (var c = 0; c < criterios.length; c++) {
+    var cr = criterios[c];
+    if (cr.tipo === 'termino') {
+      for (var i = 0; i < n; i++) {
+        if (cr.pref ? gsPrefijo(toks[i], cr.t) : toks[i] === cr.t) {
+          hits.push(gsHit(seg, c, seg.ta[i], seg.tb[i], false));
+        }
+      }
+    } else if (cr.tipo === 'frase') {
+      var k = cr.toks.length;
+      for (var i2 = 0; i2 + k <= n; i2++) {
+        if (gsSecuencia(seg, i2, cr.toks, cr.pref)) {
+          var ult = i2 + k - 1;
+          hits.push(gsHit(seg, c, seg.ta[i2], seg.tb[ult], true));
+        }
+      }
+    } else if (cr.tipo === 'alt') {
+      for (var o = 0; o < cr.opciones.length; o++) {
+        var op = cr.opciones[o], ko = op.length;
+        for (var i3 = 0; i3 + ko <= n; i3++) {
+          if (gsSecuencia(seg, i3, op, false)) hits.push(gsHit(seg, c, seg.ta[i3], seg.tb[i3 + ko - 1], true));
+        }
+      }
+    } else if (cr.tipo === 'decreto') {
+      for (var i4 = 0; i4 < n; i4++) {
+        var tk = toks[i4];
+        if (tk === cr.numero) {
+          var j = i4 - 1;
+          while (j >= 0 && GS_RELLENO_DOC[toks[j]] === 1 && gsSoloSeparador(seg.plano, seg.tb[j], seg.ta[j + 1])) j--;
+          if (j >= 0 && GS_CLAVES_DOC[toks[j]] === 1 && gsSoloSeparador(seg.plano, seg.tb[j], seg.ta[j + 1])) {
+            hits.push(gsHit(seg, c, seg.ta[j], seg.tb[i4], true));
+          }
+        } else {
+          var m = /^(decreto|decr|dec|acuerdo|acdo|ley|d)([0-9]{1,5})$/.exec(tk);
+          if (m && m[2] === cr.numero) hits.push(gsHit(seg, c, seg.ta[i4], seg.tb[i4], true));
+        }
+      }
+    }
+  }
+  return hits;
+}
+
+/** Une SOLO rangos que se solapan o se tocan: dos apariciones separadas siguen siendo dos marcas distintas. */
+function gsUnirRangos(rangos, texto) {
+  var r = rangos.map(function (x) { return [x[0], x[1]]; }).sort(function (x, y) { return x[0] - y[0] || x[1] - y[1]; });
+  var out = [];
+  for (var i = 0; i < r.length; i++) {
+    var ult = out.length ? out[out.length - 1] : null;
+    if (ult && r[i][0] <= ult[1]) {
+      if (r[i][1] > ult[1]) ult[1] = r[i][1];
+    } else out.push(r[i]);
+  }
+  return out;
+}
+
+/** Texto -> HTML seguro: escapa SIEMPRE el texto y solo entonces inserta <mark>. */
+function gsResaltarHtml(texto, rangos, clase, atributos) {
+  texto = String(texto == null ? '' : texto);
+  var abre = '<mark class="' + gsEscapar(clase || 'gs-mark') + '"' + (atributos || '') + '>';
+  var html = '', pos = 0;
+  for (var i = 0; i < rangos.length; i++) {
+    var a = Math.max(pos, rangos[i][0]), b = Math.min(texto.length, rangos[i][1]);
+    if (b <= a) continue;
+    html += gsEscapar(texto.slice(pos, a)) + abre + gsEscapar(texto.slice(a, b)) + '</mark>';
+    pos = b;
+  }
+  return html + gsEscapar(texto.slice(pos));
+}
+
+/** Atajo para el navegador: resalta una consulta completa dentro de un texto. */
+function gsResaltarConsulta(texto, consulta, clase, atributos) {
+  var an = gsAnalizarConsulta(consulta);
+  if (!an.ok) return gsEscapar(texto);
+  var seg = gsPrepararSegmento(texto);
+  var rangos = gsLocalizar(seg, an.criterios).map(function (h) { return [h.a, h.b]; });
+  return gsResaltarHtml(texto, gsUnirRangos(rangos, texto), clase, atributos);
+}
+
+
+    // Presentación de resultados por campo y párrafo.
+    
+var gsConsultaActual = '';
+
+function gsPlural(n, uno, varios) { return n === 1 ? uno : varios; }
+
+function gsTextoCriterio(c) {
+  if (c.tipo === 'frase') return 'frase exacta «' + c.texto + '»';
+  if (c.tipo === 'decreto') return c.texto;
+  if (c.tipo === 'dui') return 'DUI ' + c.texto;
+  return 'palabra «' + c.texto + '»';
+}
+
+function gsHtmlResumen(data) {
+  var desde = (data.pagina - 1) * data.porPagina + 1;
+  var hasta = Math.min(data.total, data.pagina * data.porPagina);
+  var criterios = (data.consulta && data.consulta.criterios) || [];
+  var texto = 'Se ' + gsPlural(data.total, 'encontró ', 'encontraron ') + data.total + ' ' + gsPlural(data.total, 'publicación', 'publicaciones') +
+    ' que ' + gsPlural(data.total, 'contiene', 'contienen') + ' todo lo que buscaste. Mostrando de la ' + desde + ' a la ' + hasta +
+    ' (página ' + data.pagina + ' de ' + data.totalPaginas + '). Lo resaltado en amarillo es la coincidencia, ubicada en el campo y el párrafo exactos donde aparece.';
+  var interp = '';
+  if (criterios.length > 0) {
+    interp = '<p class="mt-1 text-[11px] text-slate-400">Así interpretamos tu búsqueda: ' +
+      criterios.map(function (c) { return '<span class="inline-block px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-slate-200 font-mono">' + gsEscapar(gsTextoCriterio(c)) + '</span>'; }).join(' ') +
+      '. Para buscar una frase tal cual, escríbela entre comillas.</p>';
+  }
+  return '<p class="text-xs sm:text-sm text-slate-200 leading-relaxed">' + gsEscapar(texto) + '</p>' + interp;
+}
+
+function gsHtmlFragmento(f, d) {
+  var pagina = d.pagina;
+  var marcas = f.rangos && f.rangos.length ? f.texto.slice(f.rangos[0][0], f.rangos[0][1]) : '';
+  var botonPdf = marcas
+    ? '<button type="button" data-gs-visor="1" data-pag="' + gsEscapar(parseInt(pagina, 10) || 1) + '" data-dia="' + gsEscapar(d.diarioId || '') + '" data-rec="' + gsEscapar(d.id) + '" data-term="' + gsEscapar(gsConsultaActual || marcas) + '" class="text-[11px] font-bold text-cyan-300 hover:text-cyan-200 underline underline-offset-2 whitespace-nowrap">Ubicar en el PDF</button>'
+    : '';
+  return '<figure class="rounded-2xl border border-slate-800/80 bg-slate-950/85 p-4">' +
+    '<figcaption class="flex flex-wrap items-center justify-between gap-2 mb-2">' +
+      '<span class="text-[11px] font-mono font-black uppercase tracking-wide text-amber-300">Coincide en: ' + gsEscapar(f.etiqueta) + '</span>' +
+      botonPdf +
+    '</figcaption>' +
+    '<blockquote class="text-xs sm:text-sm text-slate-200 leading-relaxed break-words" style="overflow-wrap:anywhere">' +
+      (f.recortadoAntes ? '<span aria-hidden="true" class="text-slate-500">&hellip; </span>' : '') + f.html +
+      (f.recortadoDespues ? '<span aria-hidden="true" class="text-slate-500"> &hellip;</span>' : '') +
+    '</blockquote></figure>';
+}
+
+function gsHtmlTarjeta(item) {
+  var d = item.diario, id = item.identificacion, cab = item.cabecera;
+  var citation = 'Diario Oficial Tomo ' + d.tomo + ', N° ' + d.numero + ', Pág. ' + d.pagina + ' (' + d.fecha + ')';
+  var cuerpo = (item.coincidencias || []).filter(function (f) { return f.ubicacion === 'cuerpo'; });
+  var cabeceraCoincide = (item.coincidencias || []).filter(function (f) { return f.ubicacion === 'cabecera' && f.rangos.length > 0; });
+  var clasif = d.clasificacionJuridica || 'Edicto Judicial';
+  var html = '<article class="glass-card p-5 sm:p-7 rounded-xl border ' + (item.coincidenciaExacta ? 'border-brand-500/50 bg-brand-950/10' : 'border-slate-800') + ' hover:border-brand-500/70 transition-all text-left">';
+
+  // 1) Identificación del documento: tipo, número, título, órgano, fecha y ubicación en el diario
+  html += '<div class="flex flex-wrap items-center justify-between gap-2 mb-3"><div class="flex flex-wrap items-center gap-2">' +
+    getLegalClassificationBadge(clasif) +
+    '<span class="text-xs font-mono font-bold px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-700 text-slate-200">' + cab.tipoHtml + '</span>' +
+    (cab.numeroHtml ? '<span class="text-xs font-mono font-black px-2.5 py-1 rounded-lg bg-indigo-500/15 border border-indigo-500/40 text-indigo-200">' + cab.numeroHtml + '</span>' : '') +
+    '<span class="text-xs font-mono font-black px-3 py-1 rounded-lg bg-amber-400 text-slate-950">Pág. ' + gsEscapar(d.pagina) + ' de 164</span>' +
+    '</div>' +
+    '<button type="button" data-gs-cita="' + gsEscapar(citation) + '" title="Copiar la cita de esta publicación" class="text-xs text-slate-400 hover:text-white font-mono flex items-center gap-1.5 bg-slate-900/80 px-2.5 py-1 rounded-lg border border-slate-800"><i class="fa-regular fa-copy text-brand-400"></i> Copiar Cita</button></div>';
+  html += '<h4 class="text-base sm:text-lg font-bold text-white mb-2 break-words">' + cab.tituloHtml + '</h4>';
+  html += '<dl class="grid grid-cols-1 sm:grid-cols-3 gap-x-4 gap-y-1 mb-3 text-[11px] sm:text-xs text-slate-300">' +
+    '<div><dt class="inline text-slate-500">Órgano emisor: </dt><dd class="inline">' + (cab.organoHtml || 'No indicado en la publicación') + '</dd></div>' +
+    '<div><dt class="inline text-slate-500">Fecha de publicación: </dt><dd class="inline">' + cab.fechaHtml + '</dd></div>' +
+    '<div><dt class="inline text-slate-500">Ubicación: </dt><dd class="inline">' + gsEscapar(id.diario) + '</dd></div></dl>';
+
+  // 2) Fragmentos coincidentes, cada uno rotulado con su campo/párrafo
+  if (cuerpo.length > 0) {
+    html += '<div class="space-y-2.5" role="group" aria-label="Fragmentos donde coincide tu búsqueda">' +
+      cuerpo.map(function (f) { return gsHtmlFragmento(f, d); }).join('') + '</div>';
+    if (item.coincidenciasOmitidas > 0) {
+      html += '<p class="mt-2 text-[11px] text-slate-400">Hay ' + item.coincidenciasOmitidas + ' ' + gsPlural(item.coincidenciasOmitidas, 'párrafo más', 'párrafos más') +
+        ' con coincidencias en esta publicación. Ábrela en el visor para recorrerlos todos.</p>';
+    }
+  } else if (cabeceraCoincide.length > 0) {
+    html += '<p class="rounded-2xl border border-slate-800/80 bg-slate-950/85 p-4 text-xs sm:text-sm text-slate-300 leading-relaxed">Tu búsqueda coincide con los datos de identificación de este documento (' +
+      gsEscapar(cabeceraCoincide.map(function (f) { return f.etiqueta.toLowerCase(); }).join(', ')) + '), que aparecen resaltados arriba.</p>';
+  } else {
+    html += '<p class="rounded-2xl border border-slate-800/80 bg-slate-950/85 p-4 text-xs sm:text-sm text-slate-300 leading-relaxed">Este registro está asociado al DUI consultado en nuestro índice, pero el número no aparece escrito de forma literal en el texto transcrito. Revísalo en el PDF original.</p>';
+  }
+
+  html += renderDuiChipsHtml(d.duisEncontrados, d.pagina);
+  html += '<div class="flex flex-wrap items-center justify-between gap-3 text-xs border-t border-slate-800/80 pt-3 mt-3"><div class="flex flex-wrap items-center gap-3">' +
+    '<button type="button" data-gs-visor="1" data-pag="' + gsEscapar(d.pagina) + '" data-dia="' + gsEscapar(d.diarioId || '') + '" data-rec="' + gsEscapar(d.id) + '" data-term="" class="bg-brand-500 hover:bg-brand-400 text-slate-950 font-black px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 transition-all"><i class="fa-solid fa-book-open-reader"></i> Abrir en el visor y resaltar en el PDF (pág. ' + gsEscapar(d.pagina) + ')</button>' +
+    '<a href="' + gsEscapar(String(d.pdfUrlOficial || '').split('#')[0]) + '" download class="text-slate-400 hover:text-white font-bold flex items-center gap-1"><i class="fa-solid fa-download"></i> PDF original</a></div>' +
+    '<a href="https://www.diariooficial.gob.sv/" target="_blank" rel="noopener noreferrer" class="text-cyan-400 hover:text-cyan-300 font-bold flex items-center gap-1.5">Fuente Estatal: diariooficial.gob.sv <i class="fa-solid fa-arrow-up-right-from-square text-[11px]"></i></a></div>';
+  return html + '</article>';
+}
+
+function gsHtmlPaginacion(data) {
+  if (data.totalPaginas <= 1) return '';
+  var pagina = Number(data.pagina) || 1, total = Number(data.totalPaginas) || 1;
+  var prev = pagina > 1, sig = pagina < total;
+  var base = 'px-4 py-2.5 rounded-xl border text-xs font-bold ';
+  return '<nav aria-label="Paginación de resultados" class="flex flex-wrap items-center justify-between gap-3 pt-2">' +
+    '<button type="button" data-gs-pagina="' + (pagina - 1) + '"' + (prev ? '' : ' disabled aria-disabled="true"') + ' class="' + base + (prev ? 'border-slate-600 text-white hover:bg-slate-800' : 'border-slate-800 text-slate-600 cursor-not-allowed') + '">&larr; Página anterior</button>' +
+    '<span class="text-xs text-slate-300 font-mono" aria-current="page">Página ' + pagina + ' de ' + total + '</span>' +
+    '<button type="button" data-gs-pagina="' + (pagina + 1) + '"' + (sig ? '' : ' disabled aria-disabled="true"') + ' class="' + base + (sig ? 'border-slate-600 text-white hover:bg-slate-800' : 'border-slate-800 text-slate-600 cursor-not-allowed') + '">Página siguiente &rarr;</button></nav>';
+}
+
+/** Pinta resumen, tarjetas y paginación. Devuelve el HTML de las tarjetas. */
+function gsRenderResultados(data) {
+  return data.resultados.map(gsHtmlTarjeta).join('') + gsHtmlPaginacion(data);
+}
+
+/** true si algún término de la consulta aparece en el texto (misma lógica de coincidencia que el servidor). */
+function gsRegistroCoincide(texto, consulta) {
+  var an = gsAnalizarConsulta(consulta);
+  if (!an.ok) return false;
+  return gsLocalizar(gsPrepararSegmento(texto), an.criterios).length > 0;
+}
+
+/** Un solo manejador delegado: sin atributos onclick con texto del usuario. */
+function gsActivarAcciones(contenedor, buscarPagina) {
+  if (contenedor.__gsActivo) return;
+  contenedor.__gsActivo = true;
+  contenedor.addEventListener('click', function (ev) {
+    var el = ev.target && ev.target.closest ? ev.target.closest('[data-gs-visor],[data-gs-cita],[data-gs-pagina],[data-gs-reintentar]') : null;
+    if (!el || el.disabled) return;
+    if (el.hasAttribute('data-gs-visor')) {
+      var t = el.getAttribute('data-term') || gsConsultaActual;
+      openEbookViewer(parseInt(el.getAttribute('data-pag'), 10) || 1, t, el.getAttribute('data-dia') || undefined, el.getAttribute('data-rec') || undefined);
+    } else if (el.hasAttribute('data-gs-cita')) {
+      copyCitation(el.getAttribute('data-gs-cita'));
+    } else if (el.hasAttribute('data-gs-reintentar')) {
+      buscarPagina(0);
+    } else if (el.hasAttribute('data-gs-pagina')) {
+      buscarPagina(parseInt(el.getAttribute('data-gs-pagina'), 10) || 1);
+    }
+  });
+}
+
+
+    function escapeHtmlText(t) {
+      return String(t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    function openModalAlert() {
+      document.getElementById('modal-alert').classList.remove('hidden');
+      document.getElementById('modal-alert').classList.add('flex');
+    }
+
+    function closeModalAlert() {
+      document.getElementById('modal-alert').classList.add('hidden');
+      document.getElementById('modal-alert').classList.remove('flex');
+    }
+
+    // Previsualizador dinámico de DUI mientras el usuario escribe
+    function handleDuiInputPreview(val) {
+      const badge = document.getElementById('dui-preview-badge');
+      const text = document.getElementById('dui-preview-text');
+      const wordsEl = document.getElementById('dui-preview-words');
+      const clean = val.replace(/[^0-9]/g, '');
+      // Solo es un DUI completo con 9 dígitos, o con el verificador separado ("356274-2")
+      const separado = /^[0-9]{1,8}[ -][0-9]$/.test(val.trim());
+
+      if (clean.length === 9 || (separado && clean.length >= 7)) {
+        const padded = clean.padStart(9, '0');
+        const formatted = padded.slice(0, 8) + '-' + padded.slice(8);
+        text.innerHTML = '<i class="fa-solid fa-fingerprint text-gs-accent mr-1.5"></i> DUI: <strong class="text-gs-text">' + formatted + '</strong>';
+        wordsEl.innerText = 'En letras: ' + duiToNotarialWordsJS(formatted);
+        badge.classList.remove('hidden');
+      } else if (clean.length >= 6 && clean.length < 9 && /^[0-9 -]+$/.test(val.trim())) {
+        text.innerHTML = '<i class="fa-solid fa-circle-info text-gs-warning mr-1.5"></i> DUI incompleto: llevas ' + clean.length + ' de 9 dígitos';
+        wordsEl.innerText = '';
+        badge.classList.remove('hidden');
+      } else {
+        badge.classList.add('hidden');
+      }
+    }
+
+    function quickSearchDemo(term) {
+      const input = document.getElementById('query-input');
+      input.value = term;
+      handleDuiInputPreview(term);
+      searchDiario();
+    }
+
+    
+var GL_GAP_RUN = 14;      // separación (pt) que parte una línea en tramos independientes
+var GL_MARGEN_CAB = 62;   // alto (pt) de la franja de cabecera y pie
+
+function glModeloPagina(items, anchoPag, altoPag) {
+  var mid = anchoPag / 2;
+  var elems = [];
+  for (var i = 0; i < items.length; i++) {
+    var it = items[i];
+    if (!it || typeof it.str !== 'string' || it.str === '') continue;
+    var t = it.transform;
+    // Texto girado (marca de agua diagonal): no forma parte del contenido.
+    if (Math.abs(t[1]) > 0.01 || Math.abs(t[2]) > 0.01) continue;
+    elems.push({ i: i, x: t[4], y: t[5], w: it.width || 0, h: Math.abs(t[3]) || 8, s: it.str });
+  }
+  // Agrupar por línea base (tolerancia pequeña) de arriba hacia abajo.
+  elems.sort(function (p, q) { return q.y - p.y || p.x - q.x; });
+  var filas = [];
+  for (var k = 0; k < elems.length; k++) {
+    var e = elems[k];
+    var f = filas.length ? filas[filas.length - 1] : null;
+    // Un superíndice (6ª, 2°) queda más arriba y con letra menor: cuenta como parte de la misma línea.
+    var tol = Math.max(1.2, 0.4 * Math.min(f ? f.h : 8, e.h));
+    if (f && Math.min(f.h, e.h) < 0.8 * Math.max(f.h, e.h)) tol = Math.min(4.5, 0.6 * Math.max(f.h, e.h));
+    if (f && Math.abs(f.y - e.y) <= tol) { f.e.push(e); if (e.h > f.h) f.h = e.h; }
+    else filas.push({ y: e.y, h: e.h, e: [e] });
+  }
+  // Cada fila se parte en tramos por separación horizontal.
+  var tramos = [];
+  for (var r = 0; r < filas.length; r++) {
+    var fila = filas[r];
+    fila.e.sort(function (p, q) { return p.x - q.x; });
+    var cur = null;
+    for (var j = 0; j < fila.e.length; j++) {
+      var el = fila.e[j];
+      var vacio = el.s.trim() === '';
+      if (cur && el.x - cur.x1 > GL_GAP_RUN && !vacio) { tramos.push(cur); cur = null; }
+      if (!cur) { if (vacio) continue; cur = { y: fila.y, h: fila.h, x0: el.x, x1: el.x + el.w, e: [] }; }
+      cur.e.push(el);
+      cur.x1 = Math.max(cur.x1, el.x + el.w);
+    }
+    if (cur) tramos.push(cur);
+  }
+  // Clasificar cada tramo.
+  for (var m = 0; m < tramos.length; m++) {
+    var tr = tramos[m];
+    var ancho = tr.x1 - tr.x0;
+    var cruza = tr.x0 < mid - 18 && tr.x1 > mid + 18;
+    tr.col = cruza ? 0 : ((tr.x0 + tr.x1) / 2 < mid ? 1 : 2);
+    var txtTramo = '';
+    for (var w = 0; w < tr.e.length; w++) txtTramo += tr.e[w].s;
+    // Cabecera de la página, o el pie con la dirección de la Imprenta (solo en la portada).
+    var cab = tr.y > altoPag - GL_MARGEN_CAB || (tr.y < 62 && /^\s*Direcci[oó]n:/.test(txtTramo));
+    // Título o franja: cruza el centro de la página y está centrado y corto. Un párrafo a todo el ancho es cuerpo.
+    var centrado = cruza && Math.abs((tr.x0 + tr.x1) / 2 - mid) < 30 && ancho < 330;
+    tr.k = cab ? 'c' : (centrado ? 'b' : 'p');
+    tr.ancho = ancho;
+  }
+  // Orden de lectura: cabecera, luego bandas delimitadas por los tramos a todo el ancho.
+  tramos.sort(function (p, q) { return q.y - p.y || p.x0 - q.x0; });
+  var orden = [];
+  var cab_ = [], pie_ = [];
+  var banda = { L: [], R: [] };
+  function volcar() {
+    for (var a = 0; a < banda.L.length; a++) orden.push(banda.L[a]);
+    for (var b = 0; b < banda.R.length; b++) orden.push(banda.R[b]);
+    banda = { L: [], R: [] };
+  }
+  for (var n = 0; n < tramos.length; n++) {
+    var t2 = tramos[n];
+    if (t2.k === 'c') { (t2.y > altoPag / 2 ? cab_ : pie_).push(t2); continue; }
+    if (t2.col === 0) { volcar(); orden.push(t2); }
+    else if (t2.col === 1) banda.L.push(t2);
+    else banda.R.push(t2);
+  }
+  volcar();
+  var todos = cab_.concat(orden, pie_);
+
+  var texto = '';
+  var ci = [], co = [], lineas = [];
+  for (var q = 0; q < todos.length; q++) {
+    var T = todos[q];
+    var a0 = texto.length;
+    var prev = null;
+    for (var z = 0; z < T.e.length; z++) {
+      var it2 = T.e[z];
+      if (prev && it2.x - (prev.x + prev.w) > 0.2 * T.h && !/\s$/.test(prev.s) && !/^\s/.test(it2.s)) {
+        texto += ' '; ci.push(-1); co.push(0);
+      }
+      for (var c = 0; c < it2.s.length; c++) { ci.push(it2.i); co.push(c); }
+      texto += it2.s;
+      prev = it2;
+    }
+    lineas.push({ a: a0, b: texto.length, k: T.k, c: T.col, x0: Math.round(T.x0 * 10) / 10, x1: Math.round(T.x1 * 10) / 10, y: Math.round(T.y * 10) / 10 });
+    if (q < todos.length - 1) { texto += '\n'; ci.push(-1); co.push(0); }
+  }
+  return { texto: texto, ci: ci, co: co, lineas: lineas };
+}
+
+/**
+ * Texto para buscar: une las palabras partidas con guion al final de línea ("ESCO-\nBAR" -> "ESCOBAR").
+ * Devuelve el texto y, por cada carácter, su posición en el texto original de la página.
+ */
+function glTextoBusqueda(texto) {
+  var out = [], mapa = [];
+  var n = texto.length;
+  for (var i = 0; i < n; i++) {
+    var ch = texto.charAt(i);
+    if (ch === '-' && texto.charAt(i + 1) === '\n' && i > 0 && /\p{L}/u.test(texto.charAt(i - 1)) && /\p{L}/u.test(texto.charAt(i + 2) || '')) { i++; continue; }
+    out.push(ch); mapa.push(i);
+  }
+  mapa.push(n);
+  return { t: out.join(''), mapa: mapa };
+}
+
+
+    
+var VZ = {
+  catalogo: null, diario: null, pdf: null, textos: [], busq: [], paginas: [], registros: [],
+  ancho1: 612, alto1: 792, escala: 1.25, ajuste: true,
+  term: '', matches: [], idx: -1, regActivo: null, pila: [], paginaActual: 1,
+  carga: 0, obsVer: null, obsSoltar: null, rafScroll: 0, sinTexto: {}, cacheOtros: {}
+};
+var VZ_GAP = 14;
+function vzEl(id) { return document.getElementById(id); }
+
+function vzCatalogo() {
+  if (VZ.catalogo) return Promise.resolve(VZ.catalogo);
+  return fetch('/api/v1/diarios').then(function (r) { return r.json(); }).then(function (d) {
+    VZ.catalogo = (d && d.diarios) || [];
+    return VZ.catalogo;
+  });
+}
+
+function vzFechaLarga(iso) {
+  var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
+  if (!m) return iso || '';
+  var meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+  return Number(m[3]) + ' de ' + meses[Number(m[2]) - 1] + ' de ' + m[1];
+}
+function vzEtiquetaDiario(d) { return 'Tomo ' + d.tomo + ' · N.° ' + d.numero + ' · ' + vzFechaLarga(d.fecha); }
+
+function vzAviso(msg) {
+  var b = vzEl('pdf-range-notice');
+  b.textContent = msg; b.classList.remove('hidden');
+  clearTimeout(window.__vzAviso);
+  window.__vzAviso = setTimeout(function () { b.classList.add('hidden'); b.textContent = ''; }, 3500);
+}
+function showPageRangeNotice(m) { vzAviso(m); }
+function showFloatingRadar(m) { vzAviso(m); }
+
+// ---------------------------------------------------------------- carga del diario
+function vzLiberarTodo() {
+  if (VZ.obsVer) { VZ.obsVer.disconnect(); VZ.obsVer = null; }
+  if (VZ.obsSoltar) { VZ.obsSoltar.disconnect(); VZ.obsSoltar = null; }
+  VZ.paginas.forEach(function (P) { if (P && P.tarea) { try { P.tarea.cancel(); } catch (_) {} } });
+  VZ.paginas = [];
+  vzEl('vz-paginas').innerHTML = '';
+}
+
+function vzCargarDiario(id) {
+  var token = ++VZ.carga;
+  var d = (VZ.catalogo || []).filter(function (x) { return x.id === id; })[0];
+  if (!d) return Promise.reject(new Error('Diario no disponible'));
+  vzLiberarTodo();
+  VZ.diario = d; VZ.pdf = null; VZ.textos = []; VZ.busq = []; VZ.registros = []; VZ.matches = []; VZ.idx = -1; VZ.regActivo = null; VZ.sinTexto = {};
+  vzEl('vz-estado').style.display = 'block';
+  vzEl('vz-estado').innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-2xl text-gs-accent block mb-3"></i>Cargando ' + gsEscapar(vzEtiquetaDiario(d)) + '…';
+  vzEl('vz-titulo').textContent = 'Diario Oficial · ' + vzEtiquetaDiario(d);
+  vzEl('vz-total').textContent = d.paginas;
+  vzEl('ebook-page-number').max = d.paginas;
+  var enlace = vzEl('vz-descarga'); enlace.href = d.pdf; enlace.setAttribute('download', 'Diario_Oficial_Tomo_' + d.tomo + '_N' + d.numero + '_' + d.fecha + '.pdf');
+  if (!window.pdfjsLib) return Promise.reject(new Error('PDF.js no disponible'));
+  window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  var pTextos = fetch('/data/paginas-' + d.id + '.json', { cache: 'no-cache' }).then(function (r) { return r.json(); });
+  var pRegs = fetch('/api/v1/diarios/' + encodeURIComponent(d.id) + '/registros').then(function (r) { return r.json(); });
+  var pPdf = window.pdfjsLib.getDocument(d.pdf).promise;
+  return Promise.all([pTextos, pRegs, pPdf]).then(function (r) {
+    if (token !== VZ.carga) return;
+    VZ.textos = r[0].paginas || [];
+    VZ.registros = (r[1] && r[1].registros) || [];
+    VZ.pdf = r[2];
+    VZ.ancho1 = r[0].ancho || 612; VZ.alto1 = r[0].alto || 792;
+    VZ.textos.forEach(function (t, i) { if (!t || !String(t).replace(/\s/g, '')) VZ.sinTexto[i + 1] = true; });
+    vzMontarPaginas();
+    vzEl('vz-estado').style.display = 'none';
+  });
+}
+
+function vzEscalaEfectiva() {
+  if (VZ.ajuste && window.innerWidth < 768) {
+    var ancho = (vzEl('vz-scroll').clientWidth || window.innerWidth) - 32;
+    return Math.max(0.3, ancho / VZ.ancho1);
+  }
+  return VZ.escala;
+}
+
+function vzMontarPaginas() {
+  var cont = vzEl('vz-paginas');
+  cont.innerHTML = '';
+  var esc = vzEscalaEfectiva();
+  var w = Math.floor(VZ.ancho1 * esc), h = Math.floor(VZ.alto1 * esc);
+  VZ.paginas = [null];
+  for (var n = 1; n <= VZ.diario.paginas; n++) {
+    var el = document.createElement('div');
+    el.className = 'vz-pag'; el.dataset.n = String(n);
+    el.style.width = w + 'px'; el.style.height = h + 'px';
+    el.style.setProperty('--scale-factor', String(esc));
+    el.innerHTML = '<span class="vz-num">' + n + '</span>' + (VZ.sinTexto[n] ? '<span class="vz-sin-texto">Esta página no tiene texto digital en el PDF: no se puede buscar ni resaltar en ella.</span>' : '');
+    cont.appendChild(el);
+    VZ.paginas.push({ n: n, el: el, estado: 0, modelo: null, divs: null, tarea: null, tareaTexto: null });
+  }
+  vzEl('vz-zoom-val').textContent = Math.round(esc * 100) + '%';
+  var raiz = vzEl('vz-scroll');
+  VZ.obsVer = new IntersectionObserver(function (es) {
+    es.forEach(function (e) { if (e.isIntersecting) vzRender(Number(e.target.dataset.n)); });
+  }, { root: raiz, rootMargin: '1400px 0px' });
+  VZ.obsSoltar = new IntersectionObserver(function (es) {
+    es.forEach(function (e) { if (!e.isIntersecting) vzSoltar(Number(e.target.dataset.n)); });
+  }, { root: raiz, rootMargin: '4500px 0px' });
+  VZ.paginas.forEach(function (P) { if (P) { VZ.obsVer.observe(P.el); VZ.obsSoltar.observe(P.el); } });
+}
+
+function vzSoltar(n) {
+  var P = VZ.paginas[n];
+  if (!P || P.estado === 0) return;
+  if (P.tarea) { try { P.tarea.cancel(); } catch (_) {} }
+  if (P.tareaTexto) { try { P.tareaTexto.cancel(); } catch (_) {} }
+  var num = '<span class="vz-num">' + n + '</span>' + (VZ.sinTexto[n] ? '<span class="vz-sin-texto">Esta página no tiene texto digital en el PDF: no se puede buscar ni resaltar en ella.</span>' : '');
+  P.el.innerHTML = num;
+  P.estado = 0; P.modelo = null; P.divs = null; P.tarea = null; P.tareaTexto = null;
+}
+
+function vzRender(n) {
+  var P = VZ.paginas[n];
+  if (!P || P.estado !== 0) return Promise.resolve();
+  P.estado = 1;
+  var token = VZ.carga;
+  var esc = vzEscalaEfectiva();
+  return VZ.pdf.getPage(n).then(function (page) {
+    if (token !== VZ.carga || P.estado !== 1) return;
+    var vp = page.getViewport({ scale: esc });
+    var vp1 = page.getViewport({ scale: 1 });
+    P.el.style.width = Math.floor(vp.width) + 'px'; P.el.style.height = Math.floor(vp.height) + 'px';
+    var dpr = window.devicePixelRatio || 1;
+    var canvas = document.createElement('canvas');
+    canvas.width = Math.floor(vp.width * dpr); canvas.height = Math.floor(vp.height * dpr);
+    var capaHl = document.createElement('div'); capaHl.className = 'vz-hl-capa';
+    var capaTxt = document.createElement('div'); capaTxt.className = 'textLayer';
+    P.el.insertBefore(canvas, P.el.firstChild);
+    P.el.appendChild(capaHl); P.el.appendChild(capaTxt);
+    P.capaHl = capaHl;
+    var ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    P.tarea = page.render({ canvasContext: ctx, viewport: vp });
+    var pRender = P.tarea.promise.catch(function () {});
+    var pTexto = page.getTextContent().then(function (tc) {
+      if (token !== VZ.carga || P.estado !== 1) return;
+      var divs = [], strs = [];
+      P.tareaTexto = window.pdfjsLib.renderTextLayer({ textContentSource: tc, container: capaTxt, viewport: vp, textDivs: divs, textContentItemsStr: strs });
+      return P.tareaTexto.promise.then(function () {
+        P.divs = divs;
+        P.modelo = glModeloPagina(tc.items, vp1.width, vp1.height);
+        // El texto de la página debe ser el mismo que el del índice; si difiere se reindexa solo esa página.
+        if (VZ.textos[n - 1] !== P.modelo.texto) { VZ.textos[n - 1] = P.modelo.texto; VZ.busq[n] = null; vzRecalcular(true); }
+      });
+    }).catch(function (e) { if (!e || e.name !== 'RenderingCancelledException') console.warn('Texto de la página ' + n, e); });
+    return Promise.all([pRender, pTexto]).then(function () {
+      if (token !== VZ.carga || P.estado !== 1) return;
+      P.estado = 2;
+      vzPintar(n);
+    });
+  });
+}
+
+// ---------------------------------------------------------------- geometría exacta de un rango de texto
+function vzRectsRango(P, a, b) {
+  var m = P.modelo, out = [];
+  if (!m || !P.divs) return out;
+  var base = P.el.getBoundingClientRect();
+  var i = a;
+  while (i < b) {
+    var ci = m.ci[i];
+    if (ci < 0) { i++; continue; }
+    var j = i;
+    while (j < b && m.ci[j] === ci) j++;
+    var div = P.divs[ci];
+    var nodo = div && div.firstChild;
+    if (nodo && nodo.nodeType === 3) {
+      var r = document.createRange();
+      var ini = Math.min(m.co[i], nodo.length), fin = Math.min(nodo.length, m.co[j - 1] + 1);
+      if (fin > ini) {
+        r.setStart(nodo, ini); r.setEnd(nodo, fin);
+        var rs = r.getClientRects();
+        for (var k = 0; k < rs.length; k++) {
+          var q = rs[k];
+          if (q.width < 0.5 || q.height < 0.5) continue;
+          out.push({ l: q.left - base.left, t: q.top - base.top, w: q.width, h: q.height });
+        }
+      }
+    }
+    i = j;
+  }
+  return out;
+}
+
+function vzFundirRects(rs) {
+  rs.sort(function (p, q) { return Math.abs(p.t - q.t) < 2 ? p.l - q.l : p.t - q.t; });
+  var out = [];
+  rs.forEach(function (r) {
+    var u = out[out.length - 1];
+    if (u && Math.abs(u.t - r.t) < 2.5 && Math.abs(u.h - r.h) < 3 && r.l - (u.l + u.w) < 4) {
+      var fin = Math.max(u.l + u.w, r.l + r.w); u.l = Math.min(u.l, r.l); u.w = fin - u.l;
+    } else out.push({ l: r.l, t: r.t, w: r.w, h: r.h });
+  });
+  return out;
+}
+
+function vzDibujar(capa, rects, clase) {
+  rects.forEach(function (r) {
+    var d = document.createElement('div');
+    d.className = clase;
+    d.style.cssText = 'left:' + r.l.toFixed(1) + 'px;top:' + r.t.toFixed(1) + 'px;width:' + r.w.toFixed(1) + 'px;height:' + r.h.toFixed(1) + 'px';
+    capa.appendChild(d);
+  });
+}
+
+function vzPintar(n) {
+  var P = VZ.paginas[n];
+  if (!P || P.estado !== 2 || !P.capaHl || !P.modelo) return;
+  P.capaHl.innerHTML = '';
+  // 1) publicación completa seleccionada (puede abarcar varias páginas)
+  if (VZ.regActivo && VZ.regActivo.rangos) {
+    var rs = [];
+    VZ.regActivo.rangos.forEach(function (g) { if (g[0] === n) rs = rs.concat(vzRectsRango(P, g[1], g[2])); });
+    var fund = vzFundirRects(rs);
+    vzDibujar(P.capaHl, fund, 'vz-reg');
+    if (fund.length) {
+      var top = Math.min.apply(null, fund.map(function (r) { return r.t; })), bot = Math.max.apply(null, fund.map(function (r) { return r.t + r.h; }));
+      var izq = Math.min.apply(null, fund.map(function (r) { return r.l; }));
+      vzDibujar(P.capaHl, [{ l: izq - 5, t: top, w: 0, h: bot - top }], 'vz-reg-borde');
+    }
+  }
+  // 2) coincidencias de la búsqueda
+  var ms = VZ.matches;
+  for (var i = 0; i < ms.length; i++) {
+    if (ms[i].p !== n) continue;
+    var fr = vzFundirRects(vzRectsRango(P, ms[i].a, ms[i].b));
+    vzDibujar(P.capaHl, fr, 'vz-hl' + (i === VZ.idx ? ' vz-act' : ''));
+    ms[i].pintado = true;
+  }
+}
+
+function vzRepintarTodo() { for (var n = 1; n < VZ.paginas.length; n++) vzPintar(n); }
+
+// ---------------------------------------------------------------- búsqueda (como la del navegador)
+function vzPrep(n) {
+  if (VZ.busq[n]) return VZ.busq[n];
+  var txt = VZ.textos[n - 1] || '';
+  var tb = glTextoBusqueda(txt);
+  VZ.busq[n] = { t: tb.t, mapa: tb.mapa, prep: gsPrepararSegmento(tb.t) };
+  return VZ.busq[n];
+}
+
+function vzAPagina(B, a, b) {
+  // [a,b) sobre el texto de búsqueda -> [A,B) sobre el texto de la página
+  return [B.mapa[a], B.mapa[b - 1] + 1];
+}
+
+function vzBuscarPagina(n, fq, an) {
+  var B = vzPrep(n), out = [];
+  if (!B.t) return out;
+  if (fq) {
+    // fq es una expresión de palabras separadas por cualquier signo: "jose alejandro rivas" encuentra "JOSÉ ALEJANDRO RIVAS."
+    var re = new RegExp(fq, 'g'), x;
+    var plano = B.prep.plano;
+    while ((x = re.exec(plano)) !== null) {
+      if (x[0].length === 0) { re.lastIndex++; continue; }
+      var a = B.prep.ini[x.index], b = B.prep.fin[x.index + x[0].length - 1];
+      var r = vzAPagina(B, a, b);
+      out.push({ p: n, a: r[0], b: r[1] });
+    }
+  } else if (an) {
+    var rangos = gsLocalizar(B.prep, an.criterios).map(function (h) { return [h.a, h.b]; });
+    gsUnirRangos(rangos, B.t).forEach(function (g) {
+      var r2 = vzAPagina(B, g[0], g[1]);
+      out.push({ p: n, a: r2[0], b: r2[1] });
+    });
+  }
+  return out;
+}
+
+function vzRecalcular(mantener) {
+  var term = (VZ.term || '').replace(/\s+/g, ' ').trim();
+  var previo = VZ.idx >= 0 && VZ.matches[VZ.idx] ? VZ.matches[VZ.idx] : null;
+  VZ.matches = [];
+  if (term.length >= 2 && VZ.diario) {
+    var d9 = (typeof gsDuiDesdeConsulta === 'function') ? gsDuiDesdeConsulta(term) : null;
+    var esDui = !!d9 || /^\d[\d\s-]{6,}$/.test(term);
+    var palabras = esDui ? [] : gsPlegar(term).plano.split(/[^a-z0-9]+/).filter(Boolean);
+    var fq = palabras.length ? palabras.join('[^a-z0-9]+') : '';
+    var an = null;
+    if (esDui) { an = gsAnalizarConsulta(term, undefined, d9 || undefined); if (!an.ok) an = null; }
+    var total = VZ.diario.paginas, n;
+    if (fq) {
+      for (n = 1; n <= total; n++) VZ.matches = VZ.matches.concat(vzBuscarPagina(n, fq, null));
+      // Sin coincidencia literal de la frase: se marcan sus palabras por separado (≥ 4 letras), nunca el diario entero.
+      if (VZ.matches.length === 0) {
+        var an2 = gsAnalizarConsulta(term);
+        if (an2.ok) for (n = 1; n <= total; n++) VZ.matches = VZ.matches.concat(vzBuscarPagina(n, '', an2));
+      }
+    } else if (an) {
+      for (n = 1; n <= total; n++) VZ.matches = VZ.matches.concat(vzBuscarPagina(n, '', an));
+    }
+  }
+  VZ.idx = -1;
+  if (mantener && previo) {
+    for (var i = 0; i < VZ.matches.length; i++) if (VZ.matches[i].p === previo.p && VZ.matches[i].a === previo.a) { VZ.idx = i; break; }
+  }
+  vzContador();
+  vzRepintarTodo();
+}
+
+function vzContador() {
+  var el = vzEl('pdf-highlight-counter');
+  el.textContent = VZ.matches.length ? ((VZ.idx >= 0 ? VZ.idx + 1 : 0) + '/' + VZ.matches.length) : '0/0';
+  var campo = vzEl('ebook-inline-search');
+  campo.style.color = (VZ.term && !VZ.matches.length) ? '#fca5a5' : '';
+}
+
+function vzIrCoincidencia(i, opts) {
+  if (!VZ.matches.length) { vzAviso(VZ.term ? 'No hay coincidencias en este diario.' : 'Escribe qué buscar en el diario.'); return Promise.resolve(); }
+  i = ((i % VZ.matches.length) + VZ.matches.length) % VZ.matches.length;
+  var viejo = VZ.idx >= 0 ? VZ.matches[VZ.idx] : null;
+  VZ.idx = i;
+  var m = VZ.matches[i];
+  vzContador();
+  if (viejo && viejo.p !== m.p) vzPintar(viejo.p);
+  return vzScrollAPagina(m.p, 0).then(function () { return vzRender(m.p); }).then(function () {
+    vzPintar(m.p);
+    var P = VZ.paginas[m.p];
+    var act = P && P.capaHl && P.capaHl.querySelector('.vz-act');
+    if (act) {
+      var cont = vzEl('vz-scroll');
+      var y = P.el.offsetTop + act.offsetTop - cont.clientHeight * 0.35;
+      cont.scrollTo({ top: Math.max(0, y), behavior: (opts && opts.suave) ? 'smooth' : 'auto' });
+    }
+  });
+}
+
+// ---------------------------------------------------------------- navegación
+function vzScrollAPagina(n, margen) {
+  var P = VZ.paginas[n];
+  if (!P) return Promise.resolve();
+  vzEl('vz-scroll').scrollTo({ top: Math.max(0, P.el.offsetTop - (margen == null ? 10 : margen)), behavior: 'auto' });
+  vzActualizarPaginaActual();
+  return Promise.resolve();
+}
+
+function vzIrPagina(n) {
+  n = Math.max(1, Math.min(VZ.diario ? VZ.diario.paginas : 1, Math.floor(Number(n) || 1)));
+  return vzScrollAPagina(n).then(function () { return vzRender(n); });
+}
+
+function vzPaginaVisible() {
+  var cont = vzEl('vz-scroll'), P1 = VZ.paginas[1];
+  if (!P1) return 1;
+  var paso = P1.el.offsetHeight + VZ_GAP;
+  var y = cont.scrollTop + cont.clientHeight * 0.3 - P1.el.offsetTop;
+  return Math.max(1, Math.min(VZ.paginas.length - 1, Math.floor(y / paso) + 1));
+}
+
+function vzActualizarPaginaActual() {
+  var n = vzPaginaVisible();
+  if (n === VZ.paginaActual && vzEl('ebook-page-number').value === String(n)) return;
+  VZ.paginaActual = n;
+  vzEl('ebook-page-number').value = n;
+  vzEl('ebook-top-page-badge').textContent = 'Pág. ' + n + ' de ' + VZ.diario.paginas;
+  vzEl('sidebar-page-label').textContent = '(Pág. ' + n + ')';
+  vzPanel();
+}
+
+// ---------------------------------------------------------------- panel de publicaciones
+function vzNombreClasif(r) { return r.clasificacionJuridica || 'Publicación'; }
+
+function vzPanel() {
+  var lista = vzEl('vz-panel-lista');
+  var n = VZ.paginaActual;
+  var regs = VZ.registros.filter(function (r) { return r.pagina <= n && (r.paginaFin || r.pagina) >= n; });
+  if (!regs.length) {
+    lista.innerHTML = '<div class="p-4 rounded-2xl bg-gs-bg border border-gs-border text-center text-gs-text2"><p class="font-bold text-gs-text mb-1">Pág. ' + n + '</p><p class="text-[11px]">' +
+      (VZ.sinTexto[n] ? 'Esta página no tiene texto digital en el PDF, por eso no hay transcripción. Se muestra solo el documento original.' : 'No hay publicaciones indexadas en esta página. Usa el buscador del visor para localizar cualquier palabra.') + '</p></div>';
+    return;
+  }
+  lista.innerHTML = regs.map(function (r) {
+    var activa = VZ.regActivo && VZ.regActivo.id === r.id;
+    var rango = (r.paginaFin && r.paginaFin !== r.pagina) ? 'Págs. ' + r.pagina + '–' + r.paginaFin : 'Pág. ' + r.pagina;
+    var cuerpo = VZ.term && VZ.term.length >= 2 ? gsResaltarConsulta(r.contenido, VZ.term, 'vz-m', '') : gsEscapar(r.contenido);
+    var duis = (r.duisEncontrados || []).map(function (d) { return '<button type="button" class="vz-chip" data-vz-buscar="' + gsEscapar(d) + '"><i class="fa-solid fa-fingerprint text-gs-warning"></i>' + gsEscapar(d) + '</button>'; }).join(' ');
+    return '<article class="vz-tarjeta' + (activa ? ' vz-activa' : '') + '" data-vz-reg="' + gsEscapar(r.id) + '">' +
+      '<div class="flex flex-wrap items-center justify-between gap-2 mb-2"><span class="text-[11px] font-mono font-bold text-gs-accent">' + gsEscapar(vzNombreClasif(r)) + '</span>' +
+      '<span class="text-[11px] font-mono font-bold text-gs-warning">' + gsEscapar(rango) + '</span></div>' +
+      '<h6 class="font-bold text-gs-text text-[12px] leading-snug mb-2">' + gsEscapar(r.titular) + '</h6>' +
+      '<div class="text-[11.5px] text-gs-text2 whitespace-pre-line break-words max-h-64 overflow-y-auto pr-1">' + cuerpo + '</div>' +
+      (duis ? '<div class="flex flex-wrap items-center gap-1.5 mt-2.5 pt-2 border-t border-gs-border"><span class="text-[10px] text-gs-text3 font-mono">DUI:</span>' + duis + '</div>' : '') +
+      '<div class="mt-2.5 flex gap-2"><button type="button" class="vz-btn' + (activa ? ' vz-btn-primario' : '') + '" data-vz-resaltar="' + gsEscapar(r.id) + '"><i class="fa-solid fa-highlighter"></i> ' + (activa ? 'Quitar resaltado' : 'Resaltar en el PDF') + '</button></div></article>';
+  }).join('');
+  var act = lista.querySelector('.vz-activa');
+  if (act) lista.scrollTop = act.offsetTop - 8;
+}
+
+function vzResaltarRegistro(id, sinScroll) {
+  var r = VZ.registros.filter(function (x) { return x.id === id; })[0];
+  var igual = VZ.regActivo && VZ.regActivo.id === id;
+  VZ.regActivo = igual && !sinScroll ? null : (r || null);
+  vzRepintarTodo();
+  vzPanel();
+  if (VZ.regActivo && !sinScroll) {
+    var P0 = VZ.regActivo.rangos && VZ.regActivo.rangos[0] ? VZ.regActivo.rangos[0][0] : VZ.regActivo.pagina;
+    var ult = VZ.regActivo.rangos && VZ.regActivo.rangos.length ? VZ.regActivo.rangos[VZ.regActivo.rangos.length - 1][0] : P0;
+    return vzScrollAPagina(P0, 10).then(function () {
+      var ps = [];
+      for (var n = P0; n <= ult; n++) ps.push(vzRender(n));
+      return Promise.all(ps);
+    }).then(function () {
+      vzRepintarTodo();
+      var Pg = VZ.paginas[P0], b = Pg && Pg.capaHl && Pg.capaHl.querySelector('.vz-reg-borde');
+      if (b) vzEl('vz-scroll').scrollTo({ top: Math.max(0, Pg.el.offsetTop + b.offsetTop - 90), behavior: 'auto' });
+      if (ult !== P0) vzAviso('Esta publicación continúa hasta la pág. ' + ult + ': se resalta completa.');
+    });
+  }
+  return Promise.resolve();
+}
+
+// ---------------------------------------------------------------- otros diarios y retorno
+function vzOtros() {
+  var cont = vzEl('vz-otros');
+  var term = (VZ.term || '').trim();
+  var back = VZ.pila.length ? VZ.pila[VZ.pila.length - 1] : null;
+  var html = '';
+  if (back) html += '<button type="button" class="vz-btn" data-vz-volver="1"><i class="fa-solid fa-arrow-left"></i> Volver al ' + gsEscapar(back.etiqueta) + ' (pág. ' + back.pagina + ')</button>';
+  var finalizar = function (lista) {
+    if (lista && lista.length) {
+      html += '<span>Esta búsqueda también aparece en:</span>' + lista.map(function (o) {
+        return '<button type="button" class="vz-chip" data-vz-diario="' + gsEscapar(o.id) + '" data-vz-pag="' + o.primeraPagina + '"><i class="fa-solid fa-book-open"></i>' + gsEscapar('Tomo ' + o.tomo + ' · N.° ' + o.numero + ' · ' + o.fecha) + ' <b>' + o.total + '</b></button>';
+      }).join(' ');
+    }
+    cont.innerHTML = html;
+    cont.classList.toggle('hidden', !html);
+    cont.style.display = html ? 'flex' : 'none';
+  };
+  if (term.length < 3) { finalizar(null); return; }
+  var clave = term.toLowerCase();
+  var usar = function (data) {
+    if (term !== (VZ.term || '').trim()) return;
+    finalizar((data || []).filter(function (o) { return VZ.diario && o.id !== VZ.diario.id && o.total > 0; }));
+  };
+  if (VZ.cacheOtros[clave]) { usar(VZ.cacheOtros[clave]); return; }
+  finalizar(null);
+  fetch('/api/v1/coincidencias?q=' + encodeURIComponent(term)).then(function (r) { return r.json(); }).then(function (d) {
+    VZ.cacheOtros[clave] = (d && d.diarios) || [];
+    usar(VZ.cacheOtros[clave]);
+  }).catch(function () {});
+}
+
+function vzCambiarDiario(id, pagina, term) {
+  if (VZ.diario && VZ.diario.id !== id) VZ.pila.push({ id: VZ.diario.id, etiqueta: vzEtiquetaDiario(VZ.diario), pagina: VZ.paginaActual, term: VZ.term });
+  return vzAbrir({ diarioId: id, pagina: pagina, termino: term, conservarPila: true });
+}
+
+function vzVolver() {
+  var b = VZ.pila.pop();
+  if (!b) return;
+  vzAbrir({ diarioId: b.id, pagina: b.pagina, termino: b.term, conservarPila: true });
+}
+
+// ---------------------------------------------------------------- apertura
+function vzAbrir(o) {
+  o = o || {};
+  var modal = vzEl('modal-ebook');
+  modal.classList.remove('hidden'); modal.classList.add('flex');
+  document.documentElement.style.overflow = 'hidden';
+  var term = o.termino != null ? String(o.termino) : (VZ.term || '');
+  return vzCatalogo().then(function (cat) {
+    if (!cat.length) { vzEl('vz-estado').style.display = 'block'; vzEl('vz-estado').textContent = 'No hay diarios disponibles.'; return; }
+    var id = o.diarioId && cat.some(function (c) { return c.id === o.diarioId; }) ? o.diarioId : (VZ.diario && !o.diarioId ? VZ.diario.id : cat[cat.length - 1].id);
+    var carga = (!VZ.diario || VZ.diario.id !== id || !VZ.paginas.length) ? vzCargarDiario(id) : Promise.resolve();
+    return carga.then(function () {
+      VZ.term = term;
+      vzEl('ebook-inline-search').value = term;
+      VZ.regActivo = null;
+      vzRecalcular();
+      vzOtros();
+      var pag = Math.max(1, Math.min(VZ.diario.paginas, Math.floor(Number(o.pagina) || 1)));
+      var rec = o.registroId ? VZ.registros.filter(function (r) { return r.id === o.registroId; })[0] : null;
+      var ini = rec ? rec.pagina : pag, fin = rec ? (rec.paginaFin || rec.pagina) : pag;
+      var objetivo = -1;
+      for (var i = 0; i < VZ.matches.length; i++) { if (VZ.matches[i].p >= ini && VZ.matches[i].p <= Math.max(fin, ini)) { objetivo = i; break; } }
+      if (objetivo < 0) for (var k = 0; k < VZ.matches.length; k++) { if (VZ.matches[k].p >= pag) { objetivo = k; break; } }
+      var listo = vzIrPagina(pag);
+      if (rec && !VZ.matches.length) listo = listo.then(function () { return vzResaltarRegistro(rec.id, false); });
+      else if (objetivo >= 0) listo = listo.then(function () { return vzIrCoincidencia(objetivo); });
+      return listo.then(function () { vzActualizarPaginaActual(); vzPanel(); });
+    });
+  }).catch(function (e) {
+    console.warn('Visor:', e);
+    vzEl('vz-estado').style.display = 'block';
+    vzEl('vz-estado').innerHTML = '<p class="text-gs-danger font-bold">No se pudo cargar el diario.</p><p class="mt-1">Revisa tu conexión y vuelve a intentar.</p>';
+  });
+}
+
+function openEbookViewer(pageNum, term, diarioId, registroId) {
+  if (VZ.diario && diarioId && diarioId !== VZ.diario.id) VZ.pila = [];
+  return vzAbrir({ pagina: parseInt(pageNum, 10) || 1, termino: term != null ? term : (document.getElementById('query-input') ? document.getElementById('query-input').value.trim() : ''), diarioId: diarioId, registroId: registroId });
+}
+
+function closeEbookViewer() {
+  var modal = vzEl('modal-ebook');
+  modal.classList.add('hidden'); modal.classList.remove('flex');
+  document.documentElement.style.overflow = '';
+}
+function focusTermInPdfFromTranscription(term) { VZ.term = String(term || ''); vzEl('ebook-inline-search').value = VZ.term; vzRecalcular(); vzOtros(); if (VZ.matches.length) vzIrCoincidencia(0); }
+
+function vzZoom(delta, fijo) {
+  var base = vzEscalaEfectiva();
+  VZ.ajuste = false;
+  VZ.escala = Math.min(3, Math.max(0.5, fijo != null ? fijo : Math.round((base + delta) * 100) / 100));
+  var pag = VZ.paginaActual;
+  VZ.paginas.forEach(function (P) { if (P && P.tarea) { try { P.tarea.cancel(); } catch (_) {} } });
+  vzMontarPaginas();
+  vzScrollAPagina(pag, 10).then(function () { vzActualizarPaginaActual(); });
+}
+
+// ---------------------------------------------------------------- cita
+function vzTextoCita() {
+  var d = VZ.diario;
+  if (!d) return '';
+  var t = 'Diario Oficial de la República de El Salvador, Tomo ' + d.tomo + ', N.° ' + d.numero + ', ' + vzFechaLarga(d.fecha) + ', pág. ' + VZ.paginaActual + '.';
+  var reg = VZ.regActivo || VZ.registros.filter(function (r) { return r.pagina <= VZ.paginaActual && (r.paginaFin || r.pagina) >= VZ.paginaActual; })[0];
+  if (VZ.regActivo && reg) t += ' Publicación: ' + reg.titular + '.';
+  return t;
+}
+function copyCitation(text) {
+  if (!navigator.clipboard) { vzAviso('Tu navegador no permite copiar automáticamente.'); return; }
+  navigator.clipboard.writeText(text).then(function () { vzAviso('Cita copiada.'); }, function () { vzAviso('No se pudo copiar.'); });
+}
+function openCertifiedCitationModal() {
+  vzEl('certified-citation-body').textContent = vzTextoCita();
+  var m = vzEl('modal-certified-citation'); m.classList.remove('hidden'); m.classList.add('flex');
+}
+function closeCertifiedCitationModal() { var m = vzEl('modal-certified-citation'); m.classList.add('hidden'); m.classList.remove('flex'); }
+function copyCurrentPageCitation() { copyCitation(vzTextoCita()); }
+
+// ---------------------------------------------------------------- eventos
+function vzIniciar() {
+  var scroll = vzEl('vz-scroll');
+  scroll.addEventListener('scroll', function () {
+    if (VZ.rafScroll) return;
+    VZ.rafScroll = requestAnimationFrame(function () { VZ.rafScroll = 0; vzActualizarPaginaActual(); });
+  }, { passive: true });
+  var campo = vzEl('ebook-inline-search');
+  var temp = 0;
+  campo.addEventListener('input', function () {
+    VZ.term = campo.value;
+    clearTimeout(temp);
+    temp = setTimeout(function () {
+      vzRecalcular();
+      vzOtros();
+      vzPanel();
+      if (VZ.matches.length) {
+        // La primera coincidencia a partir de la página que se está leyendo.
+        var i = 0; for (; i < VZ.matches.length; i++) if (VZ.matches[i].p >= VZ.paginaActual) break;
+        vzIrCoincidencia(i >= VZ.matches.length ? 0 : i, { suave: false });
+      }
+    }, 140);
+  });
+  campo.addEventListener('keydown', function (ev) {
+    if (ev.key === 'Enter') { ev.preventDefault(); vzIrCoincidencia(VZ.idx + (ev.shiftKey ? -1 : 1)); }
+  });
+  vzEl('vz-m-next').onclick = function () { vzIrCoincidencia(VZ.idx + 1); };
+  vzEl('vz-m-prev').onclick = function () { vzIrCoincidencia(VZ.idx - 1); };
+  vzEl('vz-prev').onclick = function () { vzIrPagina(VZ.paginaActual - 1); };
+  vzEl('vz-next').onclick = function () { vzIrPagina(VZ.paginaActual + 1); };
+  vzEl('ebook-page-number').addEventListener('change', function (ev) {
+    var p = parseInt(ev.target.value, 10);
+    if (p >= 1 && p <= VZ.diario.paginas) vzIrPagina(p);
+    else { ev.target.value = VZ.paginaActual; vzAviso('El tomo tiene páginas de la 1 a la ' + VZ.diario.paginas + '.'); }
+  });
+  vzEl('vz-zoom-mas').onclick = function () { vzZoom(0.2); };
+  vzEl('vz-zoom-menos').onclick = function () { vzZoom(-0.2); };
+  vzEl('vz-cerrar').onclick = closeEbookViewer;
+  vzEl('vz-cita').onclick = openCertifiedCitationModal;
+  vzEl('vz-cita-cerrar').onclick = closeCertifiedCitationModal;
+  vzEl('vz-cita-copiar').onclick = function () { copyCitation(vzEl('certified-citation-body').textContent); };
+  vzEl('vz-panel-lista').addEventListener('click', function (ev) {
+    var t = ev.target && ev.target.closest ? ev.target : null;
+    if (!t) return;
+    var b = t.closest('[data-vz-resaltar]');
+    if (b) { vzResaltarRegistro(b.getAttribute('data-vz-resaltar')); return; }
+    var c = t.closest('[data-vz-buscar]');
+    if (c) { VZ.term = c.getAttribute('data-vz-buscar'); campo.value = VZ.term; vzRecalcular(); vzOtros(); vzPanel(); if (VZ.matches.length) vzIrCoincidencia(0); }
+  });
+  vzEl('vz-otros').addEventListener('click', function (ev) {
+    var t = ev.target && ev.target.closest ? ev.target : null;
+    if (!t) return;
+    if (t.closest('[data-vz-volver]')) { vzVolver(); return; }
+    var d = t.closest('[data-vz-diario]');
+    if (d) vzCambiarDiario(d.getAttribute('data-vz-diario'), parseInt(d.getAttribute('data-vz-pag'), 10) || 1, VZ.term);
+  });
+  document.addEventListener('keydown', function (ev) {
+    var abierto = !vzEl('modal-ebook').classList.contains('hidden');
+    if (!abierto) return;
+    if (ev.key === 'Escape') {
+      var cm = vzEl('modal-certified-citation');
+      if (!cm.classList.contains('hidden')) closeCertifiedCitationModal(); else closeEbookViewer();
+    } else if ((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === 'f') { ev.preventDefault(); campo.focus(); campo.select(); }
+  });
+  window.addEventListener('resize', function () {
+    if (!VZ.ajuste || window.innerWidth >= 768 || vzEl('modal-ebook').classList.contains('hidden') || !VZ.diario) return;
+    clearTimeout(window.__vzRs);
+    window.__vzRs = setTimeout(function () { var pag = VZ.paginaActual; vzMontarPaginas(); vzScrollAPagina(pag, 10); }, 200);
+  });
+}
+
+
+    // Cambio de pestañas
+    function switchTab(tabId) {
+      const tabs = ['dui', 'marcas', 'recientes', 'leyes', 'hemeroteca', 'faq'];
+      tabs.forEach(t => {
+        const content = document.getElementById('tab-content-' + t);
+        if (!content) return;
+        content.classList.toggle('hidden', t !== tabId);
+      });
+      // El menú de la cabecera compartida marca la sección activa (aria-current)
+      document.querySelectorAll('stu-cabecera a[data-tab]').forEach(a => {
+        if (a.getAttribute('data-tab') === tabId) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+      });
+
+      if (tabId === 'marcas' && document.getElementById('marcas-results-container').children.length === 0) {
+        searchMarcas();
+      } else if (tabId === 'recientes' && document.getElementById('edictos-recientes-container').children.length === 0) {
+        loadRecentEdictos();
+      } else if (tabId === 'leyes' && document.getElementById('leyes-recientes-container').children.length === 0) {
+        loadRecentLeyes();
+      }
+    }
+
+    // Búsqueda General y DUI: resultados por campo y párrafo (ver src/busqueda_vista.ts)
+    // Cada consulta lleva un número de solicitud y su propio AbortController: una respuesta vieja jamás pisa a la nueva.
+    let gsSolicitudId = 0;
+    let gsAbortar = null;
+    let gsPaginaActual = 1;
+
+    function gsMostrarFallo(contenedor, titulo, detalle, conReintento) {
+      contenedor.innerHTML = '<div role="alert" class="glass-card p-6 rounded-xl text-center border border-gs-border">' +
+        '<h4 class="text-base font-bold text-gs-text">' + escapeHtmlText(titulo) + '</h4>' +
+        '<p class="text-xs sm:text-sm text-gs-text2 mt-1 max-w-md mx-auto">' + escapeHtmlText(detalle) + '</p>' +
+        (conReintento ? '<button type="button" data-gs-reintentar="1" class="mt-3 px-4 py-2 rounded-xl bg-gs-surface border border-gs-border text-gs-accent font-bold text-xs">Reintentar</button>' : '') +
+        '</div>';
+    }
+
+    // Dirección compartible: ?q=...&categoria=...&forceDui=1&pagina=n
+    function gsActualizarUrl(q, cat, forceDui, pag, reemplazar) {
+      try {
+        const p = new URLSearchParams();
+        if (q) p.set('q', q);
+        if (cat) p.set('categoria', cat);
+        if (forceDui) p.set('forceDui', '1');
+        if (pag > 1) p.set('pagina', String(pag));
+        const destino = location.pathname + (p.toString() ? '?' + p.toString() : '');
+        if (destino === location.pathname + location.search) return;
+        if (reemplazar) history.replaceState(null, '', destino);
+        else history.pushState(null, '', destino);
+      } catch (_) { /* historial no disponible: la búsqueda funciona igual */ }
+    }
+
+    function searchDiario(e, pagina, sinHistorial) {
+      if (e && e.preventDefault) e.preventDefault();
+      const pag = parseInt(pagina, 10) > 1 ? Math.min(parseInt(pagina, 10), 1000) : 1;
+      const q = document.getElementById('query-input').value.trim();
+      const cat = document.getElementById('category-filter').value;
+      const forceDui = document.getElementById('force-dui-check').checked;
+      const resContainer = document.getElementById('results-container');
+      const resumenEl = document.getElementById('search-resumen');
+      const btn = document.getElementById('btn-search');
+      const avisoEl = document.getElementById('search-aviso');
+      const idSolicitud = ++gsSolicitudId;
+      if (gsAbortar) { try { gsAbortar.abort(); } catch (_) { /* ya terminó */ } gsAbortar = null; }
+      avisoEl.classList.add('hidden');
+      resumenEl.classList.add('hidden');
+      resumenEl.innerHTML = '';
+      gsActivarAcciones(resContainer, function (n) { searchDiario(null, n > 0 ? n : gsPaginaActual); });
+
+      const restaurarBoton = function () {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-bolt"></i> Consultar Archivo Oficial';
+        resContainer.removeAttribute('aria-busy');
+      };
+
+      if (q.length === 0) {
+        restaurarBoton();
+        avisoEl.innerText = 'Escribe un DUI, un nombre, un número de decreto o una frase entre comillas para buscar en el archivo.';
+        avisoEl.classList.remove('hidden');
+        resContainer.innerHTML = '';
+        return;
+      }
+      gsPaginaActual = pag;
+      if (!sinHistorial) gsActualizarUrl(q, cat, forceDui, pag, false);
+
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Consultando Archivo...';
+      resContainer.setAttribute('aria-busy', 'true');
+      resContainer.innerHTML = '<div class="glass-card p-10 text-center text-gs-text2"><i class="fa-solid fa-spinner fa-spin text-3xl text-gs-accent"></i><p class="mt-3 text-sm font-mono">Buscando en los títulos, números de decreto, órganos emisores y en cada párrafo de las publicaciones oficiales...</p></div>';
+
+      const url = '/api/v1/search?v=2&q=' + encodeURIComponent(q) +
+                  (cat ? '&categoria=' + encodeURIComponent(cat) : '') +
+                  (forceDui ? '&forceDui=1' : '') +
+                  (pag > 1 ? '&pagina=' + pag : '');
+      const control = typeof AbortController === 'function' ? new AbortController() : null;
+      gsAbortar = control;
+
+      fetch(url, control ? { signal: control.signal, headers: { Accept: 'application/json' } } : { headers: { Accept: 'application/json' } })
+        .then(function (r) {
+          return r.json().catch(function () { return {}; }).then(function (cuerpo) { return { status: r.status, ok: r.ok, data: cuerpo || {} }; });
+        })
+        .then(function (res) {
+          if (idSolicitud !== gsSolicitudId) return; // llegó tarde: ya hay una consulta más reciente
+          restaurarBoton();
+          const data = res.data;
+          if (res.status === 429) {
+            gsMostrarFallo(resContainer, 'Demasiadas consultas seguidas', 'Espera unos segundos antes de volver a buscar.', true);
+            return;
+          }
+          if (res.status === 400) {
+            resContainer.innerHTML = '<div role="alert" class="glass-card p-6 rounded-xl text-center border border-gs-border"><i class="fa-solid fa-triangle-exclamation text-3xl text-gs-warning mb-2"></i><h4 class="text-base font-bold text-gs-text">Revisa lo que escribiste</h4><p class="text-xs sm:text-sm text-gs-text2 mt-1 max-w-md mx-auto">' + escapeHtmlText(data.aviso || 'La consulta no es válida.') + '</p></div>';
+            return;
+          }
+          if (!res.ok || !Array.isArray(data.resultados)) {
+            gsMostrarFallo(resContainer, 'El archivo no pudo responder', 'Hubo un problema en el servidor. Inténtalo de nuevo en unos segundos.', true);
+            return;
+          }
+          if (data.aviso) {
+            avisoEl.innerText = data.aviso;
+            avisoEl.classList.remove('hidden');
+          }
+          // Entrada inválida sin resultados: nunca se dice «sin publicaciones». Con resultados (p. ej. DUI con verificador dudoso) se muestran junto al aviso.
+          if (data.entradaInvalida && !(data.total > 0)) {
+            resContainer.innerHTML = '<div role="alert" class="glass-card p-6 rounded-xl text-center border border-gs-border"><i class="fa-solid fa-triangle-exclamation text-3xl text-gs-warning mb-2"></i><h4 class="text-base font-bold text-gs-text">Revisa lo que escribiste</h4><p class="text-xs sm:text-sm text-gs-text2 mt-1 max-w-md mx-auto">' + escapeHtmlText(data.aviso || 'La consulta no es válida.') + ' Todavía no se hizo una consulta confiable, así que no podemos decir si aparece o no en el archivo.</p></div>';
+            return;
+          }
+
+          gsConsultaActual = String(data.duiNormalized || q).replace(/["“”«»]/g, '');
+
+          if (data.resultados.length === 0) {
+            const fuera = data.total > 0 && pag > data.totalPaginas;
+            resumenEl.innerHTML = '<p class="text-xs sm:text-sm text-gs-text">' + (fuera
+              ? 'La página que pediste no existe: esta búsqueda solo tiene ' + escapeHtmlText(data.totalPaginas) + ' páginas de resultados.'
+              : 'No se encontraron publicaciones que contengan todo lo que buscaste.') + '</p>';
+            resumenEl.classList.remove('hidden');
+            resContainer.innerHTML = '<div class="glass-card p-8 sm:p-10 rounded-xl text-center text-gs-text2 border border-gs-border">' +
+              '<i class="fa-regular fa-circle-check text-4xl text-gs-accent mb-3"></i>' +
+              '<h4 class="text-base sm:text-lg font-bold text-gs-text">Sin publicaciones oficiales encontradas</h4>' +
+              '<p class="text-xs sm:text-sm text-gs-text2 mt-1 max-w-md mx-auto">El criterio «<strong>' + escapeHtmlText(q) + '</strong>» no aparece en los títulos, números de decreto, órganos emisores ni en el texto de las publicaciones de este tomo. Prueba con menos palabras, revisa la ortografía (no importan las tildes ni las mayúsculas) o quita el filtro de sección.</p>' +
+              '<div class="mt-5"><button type="button" onclick="openModalAlert()" class="px-5 py-2.5 rounded-xl bg-gs-surface border border-gs-border text-gs-accent font-bold text-xs hover:bg-gs-surface2">Crear una alerta para este criterio</button></div></div>';
+            return;
+          }
+
+          resumenEl.innerHTML = gsHtmlResumen(data);
+          resumenEl.classList.remove('hidden');
+          resContainer.innerHTML = gsRenderResultados(data);
+          if (pag > 1) {
+            resumenEl.setAttribute('tabindex', '-1');
+            resumenEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            resumenEl.focus({ preventScroll: true });
+          }
+        })
+        .catch(function (err) {
+          if (idSolicitud !== gsSolicitudId) return;
+          if (err && err.name === 'AbortError') return;
+          restaurarBoton();
+          gsMostrarFallo(resContainer, 'No pudimos conectar con el archivo oficial', 'Revisa tu conexión a internet y vuelve a intentarlo.', true);
+        });
+    }
+
+    // Marcas: solo avisos de marcas que existan en los diarios cargados (nunca datos de ejemplo)
+    function searchMarcas(e) {
+      if (e) e.preventDefault();
+      const q = document.getElementById('marca-query')?.value?.trim() || '';
+      const container = document.getElementById('marcas-results-container');
+      container.innerHTML = '<div class="col-span-2 p-8 text-center text-gs-text2"><i class="fa-solid fa-spinner fa-spin text-2xl text-gs-accent"></i></div>';
+      fetch('/api/v1/marcas?q=' + encodeURIComponent(q))
+        .then(r => { if (!r.ok) throw new Error('http'); return r.json(); })
+        .then(data => {
+          if (!data.marcas || data.marcas.length === 0) {
+            container.innerHTML = '<div class="col-span-2 glass-card p-8 rounded-xl text-center text-gs-text2 text-sm">' + escapeHtmlText(data.aviso || 'No hay avisos de marcas para este criterio en los diarios cargados.') + '</div>';
+            return;
+          }
+          container.innerHTML = data.marcas.map(m => `
+            <div class="glass-card p-5 rounded-xl border border-gs-border hover:border-gs-strong transition-all text-left">
+              <div class="flex flex-wrap items-center justify-between gap-2 mb-2.5 text-xs font-mono">
+                <span class="font-bold text-gs-text2">Tomo ${escapeHtmlText(m.tomo)} · N.° ${escapeHtmlText(m.numero)} · ${escapeHtmlText(m.fecha)}</span>
+                <span class="font-semibold px-2.5 py-0.5 rounded bg-gs-warning text-gs-ink">Pág. ${escapeHtmlText(m.pagina)}</span>
+              </div>
+              <h4 class="text-sm font-bold text-gs-text mb-2 break-words">${escapeHtmlText(m.titular)}</h4>
+              <p class="text-xs text-gs-text2 line-clamp-4 leading-relaxed font-mono break-words">${escapeHtmlText(m.contenido)}</p>
+              <div class="text-right mt-2">
+                <button type="button" data-ebook-pag="${escapeHtmlText(parseInt(m.pagina, 10) || 1)}" data-dia="${escapeHtmlText(m.diarioId)}" data-rec="${escapeHtmlText(m.id)}" data-term="" class="text-xs text-gs-accent hover:underline font-bold">Ver en el PDF (pág. ${escapeHtmlText(m.pagina)}) &rarr;</button>
+              </div>
+            </div>
+          `).join('');
+        })
+        .catch(() => {
+          container.innerHTML = '<div class="col-span-2 p-4 text-center text-gs-danger">No pudimos cargar las marcas.</div>';
+        });
+    }
+
+    // Cargar últimos edictos con badges completos y chips de DUI
+    function loadRecentEdictos() {
+      const container = document.getElementById('edictos-recientes-container');
+      container.innerHTML = '<div class="p-8 text-center text-gs-text2"><i class="fa-solid fa-spinner fa-spin text-2xl text-gs-accent"></i></div>';
+      fetch('/api/v1/edictos-recientes')
+        .then(r => r.json())
+        .then(data => {
+          if (!data.edictos || data.edictos.length === 0) {
+            container.innerHTML = '<div class="glass-card p-6 text-center text-gs-text2">No hay edictos disponibles.</div>';
+            return;
+          }
+          container.innerHTML = data.edictos.map(e => {
+            const clasif = classifyLegalRecordJS(e);
+            const firstDui = (e.duisEncontrados && e.duisEncontrados[0]) || '';
+            return `
+            <div class="glass-card p-5 rounded-2xl border border-gs-border hover:border-gs-border transition-all text-left">
+              <div class="flex flex-wrap justify-between items-center gap-2 text-xs text-gs-text2 font-mono mb-2">
+                <div class="flex flex-wrap items-center gap-2">
+                  ${getLegalClassificationBadge(clasif)}
+                  <button type="button" data-ebook-pag="${escapeHtmlText(parseInt(e.pagina, 10) || 1)}" data-dia="${escapeHtmlText(e.diarioId || '')}" data-rec="${escapeHtmlText(e.id)}" data-term="" class="cursor-pointer px-2.5 py-0.5 rounded bg-gs-warning text-gs-ink font-semibold">
+                    Pág. ${escapeHtmlText(e.pagina)}
+                  </button>
+                </div>
+                <span class="font-bold text-gs-text2">Tomo ${escapeHtmlText(e.tomo)} · N° ${escapeHtmlText(e.numero)} · ${escapeHtmlText(e.fecha)}</span>
+              </div>
+              <h4 class="text-sm font-bold text-gs-text mb-1.5 break-words">${escapeHtmlText(e.titular)}</h4>
+              <p class="text-xs text-gs-text2 line-clamp-3 leading-relaxed font-mono bg-gs-bg p-3 rounded-xl border border-gs-border break-words">${escapeHtmlText(e.contenido)}</p>
+              ${renderDuiChipsHtml(e.duisEncontrados, e.pagina)}
+              <div class="mt-3 text-right">
+                <button type="button" data-ebook-pag="${escapeHtmlText(parseInt(e.pagina, 10) || 1)}" data-dia="${escapeHtmlText(e.diarioId || '')}" data-rec="${escapeHtmlText(e.id)}" data-term="" class="text-xs text-gs-accent hover:underline font-bold inline-flex items-center gap-1.5">
+                  <i class="fa-solid fa-book-open-reader"></i> Abrir en el visor (pág. ${escapeHtmlText(e.pagina)}) &rarr;
+                </button>
+              </div>
+            </div>`;
+          }).join('');
+        })
+        .catch(() => {
+          container.innerHTML = '<div role="alert" class="glass-card p-6 text-center text-gs-danger">No pudimos cargar los edictos. Inténtalo de nuevo en unos segundos.</div>';
+        });
+    }
+
+    // Cargar decretos y leyes con badges completos
+    function loadRecentLeyes() {
+      const container = document.getElementById('leyes-recientes-container');
+      container.innerHTML = '<div class="p-8 text-center text-gs-text2"><i class="fa-solid fa-spinner fa-spin text-2xl text-gs-accent"></i></div>';
+      fetch('/api/v1/leyes-recientes')
+        .then(r => r.json())
+        .then(data => {
+          if (!data.leyes || data.leyes.length === 0) {
+            container.innerHTML = '<div class="glass-card p-6 text-center text-gs-text2">No hay leyes disponibles.</div>';
+            return;
+          }
+          container.innerHTML = data.leyes.map(l => {
+            const clasif = classifyLegalRecordJS(l);
+            return `
+            <div class="glass-card p-5 rounded-2xl border border-gs-border text-left">
+              <div class="flex flex-wrap justify-between items-center gap-2 text-xs text-gs-text2 font-mono mb-2">
+                <div class="flex items-center gap-2">
+                  ${getLegalClassificationBadge(clasif)}
+                  <span class="px-2.5 py-0.5 rounded bg-gs-warning text-gs-ink font-semibold">Pág. ${escapeHtmlText(l.pagina)}</span>
+                </div>
+                <span class="font-bold text-gs-text2">Tomo ${escapeHtmlText(l.tomo)} · N° ${escapeHtmlText(l.numero)} · ${escapeHtmlText(l.fecha)}</span>
+              </div>
+              <h4 class="text-sm font-bold text-gs-text mb-2 break-words">${escapeHtmlText(l.titular)}</h4>
+              <p class="text-xs text-gs-text2 line-clamp-4 leading-relaxed bg-gs-bg p-3 rounded-xl border border-gs-border mb-2 font-mono break-words">${escapeHtmlText(l.contenido)}</p>
+              <div class="text-right">
+                <button type="button" data-ebook-pag="${escapeHtmlText(parseInt(l.pagina, 10) || 1)}" data-dia="${escapeHtmlText(l.diarioId || '')}" data-rec="${escapeHtmlText(l.id)}" data-term="" class="text-xs text-gs-accent hover:underline font-bold inline-flex items-center gap-1.5">
+                  <i class="fa-solid fa-book-open-reader"></i> Abrir en el visor (pág. ${escapeHtmlText(l.pagina)}) &rarr;
+                </button>
+              </div>
+            </div>`;
+          }).join('');
+        })
+        .catch(() => {
+          container.innerHTML = '<div role="alert" class="glass-card p-6 text-center text-gs-danger">No pudimos cargar las leyes. Inténtalo de nuevo en unos segundos.</div>';
+        });
+    }
+
+    function showAlertMsg(ok, text) {
+      const el = document.getElementById('alert-msg');
+      el.innerText = text;
+      el.className = 'text-xs rounded-xl px-3 py-2 ' + (ok ? 'bg-gs-surface2 text-gs-accent border border-gs-border' : 'bg-gs-surface2 text-gs-danger border border-gs-border');
+    }
+
+    function submitAlert(e) {
+      e.preventDefault();
+      const crit = document.getElementById('alert-criterion').value.trim();
+      const email = document.getElementById('alert-email').value.trim();
+      const phone = document.getElementById('alert-phone').value.trim();
+
+      const evaluado = evaluarCriterio(crit);
+      if (!evaluado.ok) return showAlertMsg(false, evaluado.error);
+      if (!document.getElementById('alert-consent').checked) return showAlertMsg(false, 'Para guardar la alerta debes aceptar el aviso de privacidad.');
+      if (!/^[^@ ]+@[^@ ]+[.][^@ ]{2,}$/.test(email)) return showAlertMsg(false, 'Escribe un correo electrónico válido.');
+      if (phone && !/^[+]?[0-9 ()-]{8,20}$/.test(phone)) return showAlertMsg(false, 'El teléfono solo admite números, espacios y el signo +.');
+
+      fetch('/api/v1/alerts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          criterioBusqueda: evaluado.valor,
+          tipoCriterio: evaluado.tipo,
+          usuarioEmail: email,
+          telefonoWhatsapp: phone,
+          consentimiento: true
+        })
+      })
+      .then(async (r) => {
+        const body = await r.json().catch(() => ({}));
+        if (!r.ok) return showAlertMsg(false, body.error || 'No se pudo registrar la alerta. Revisa los datos.');
+        showAlertMsg(true, 'Alerta registrada para «' + evaluado.valor + '».');
+        setTimeout(closeModalAlert, 2500);
+      })
+      .catch(() => showAlertMsg(false, 'No pudimos conectar. Inténtalo de nuevo en unos segundos.'));
+    }
+
+    // Ejecutar una búsqueda inicial demostrativa al cargar para mostrar las tarjetas enriquecidas de inmediato
+    window.addEventListener('DOMContentLoaded', () => {
+      vzIniciar();
+      document.addEventListener('click', (ev) => {
+        const t = ev.target && ev.target.closest ? ev.target : null;
+        if (!t) return;
+        const ab = t.closest('[data-ebook-pag]');
+        if (ab) { openEbookViewer(parseInt(ab.getAttribute('data-ebook-pag'), 10) || 1, ab.getAttribute('data-term') || '', ab.getAttribute('data-dia') || undefined, ab.getAttribute('data-rec') || undefined); return; }
+        const fb = t.closest('[data-focus-term]');
+        if (fb) openEbookViewer(parseInt(fb.getAttribute('data-pag'), 10) || 1, fb.getAttribute('data-focus-term') || '', fb.getAttribute('data-dia') || undefined);
+      });
+      // La búsqueda se puede compartir por enlace (?q=...&categoria=...&forceDui=1&pagina=2) y el botón «atrás» la restaura.
+      const aplicarUrl = (primera) => {
+        let p;
+        try { p = new URLSearchParams(location.search); } catch (_) { p = null; }
+        const q = p ? (p.get('q') || '').slice(0, 200) : '';
+        if (!q) { return; }
+        document.getElementById('query-input').value = q;
+        const cat = p.get('categoria') || '';
+        const sel = document.getElementById('category-filter');
+        sel.value = Array.from(sel.options).some((o) => o.value === cat) ? cat : '';
+        document.getElementById('force-dui-check').checked = p.get('forceDui') === '1';
+        handleDuiInputPreview(q);
+        searchDiario(null, p.get('pagina'), true);
+      };
+      window.addEventListener('popstate', () => aplicarUrl(false));
+      aplicarUrl(true);
+    });
+  </script>
+</body>
+</html>

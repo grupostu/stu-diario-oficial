@@ -1,0 +1,11 @@
+HTTP 400
+content-type: application/json; charset=utf-8
+cache-control: no-store
+x-content-type-options: nosniff
+x-frame-options: SAMEORIGIN
+referrer-policy: strict-origin-when-cross-origin
+content-security-policy: base-uri 'self'; object-src 'none'; frame-ancestors 'self'
+permissions-policy: camera=(), microphone=(), geolocation=(), payment=()
+cross-origin-opener-policy: same-origin
+
+{"error":"Parámetros de búsqueda inválidos","errores":[{"campo":"pagina","mensaje":"Debe estar entre 1 y 1000."}],"aviso":"Debe estar entre 1 y 1000.","entradaInvalida":true}

@@ -1,0 +1,11 @@
+HTTP 200
+content-type: application/json; charset=utf-8
+cache-control: no-store
+x-content-type-options: nosniff
+x-frame-options: SAMEORIGIN
+referrer-policy: strict-origin-when-cross-origin
+content-security-policy: base-uri 'self'; object-src 'none'; frame-ancestors 'self'
+permissions-policy: camera=(), microphone=(), geolocation=(), payment=()
+cross-origin-opener-policy: same-origin
+
+{"status":"ok","service":"stu-diario-oficial","uptimeSeconds":0,"indexedRecords":306,"diarios":1,"marcasCatalogadas":0}

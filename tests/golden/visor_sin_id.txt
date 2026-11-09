@@ -1,0 +1,138 @@
+HTTP 404
+content-type: text/html; charset=utf-8
+x-content-type-options: nosniff
+x-frame-options: SAMEORIGIN
+referrer-policy: strict-origin-when-cross-origin
+content-security-policy: base-uri 'self'; object-src 'none'; frame-ancestors 'self'
+permissions-policy: camera=(), microphone=(), geolocation=(), payment=()
+cross-origin-opener-policy: same-origin
+
+<!DOCTYPE html>
+<html lang="es" data-error="404" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Publicación no encontrada · Diarios Oficiales de El Salvador</title>
+  
+  <meta name="robots" content="noindex">
+  <script>(function(){var t='light';try{var s=localStorage.getItem('stu-theme');if(s==='dark'||s==='light')t=s;}catch(_){}document.documentElement.setAttribute('data-theme',t);})();</script>
+  <link rel="stylesheet" href="/stu-ui/tokens.css?v=1">
+  <link rel="stylesheet" href="/stu-ui/cabecera/cabecera.css?v=1">
+  <style>
+    body { margin: 0; min-height: 100vh; display: flex; flex-direction: column; background: var(--gs-bg); color: var(--gs-text); font: 16px/1.65 var(--gs-font, system-ui, sans-serif); }
+    stu-cabecera { display: block; position: sticky; top: 0; z-index: 100; }
+    stu-cabecera .stu-cabecera-panel:not(.is-open) { display: none; }
+    main { flex: 1; width: 100%; box-sizing: border-box; padding: 48px var(--gs-gutter, 16px) 64px; }
+    main.centrado { display: flex; align-items: center; justify-content: center; text-align: center; }
+    .contenido { max-width: 760px; margin: 0 auto; }
+    h1 { font-size: 1.75rem; font-weight: 600; margin: 0 0 8px; }
+    h2 { font-size: 1.15rem; font-weight: 600; margin: 2rem 0 .5rem; }
+    p { color: var(--gs-text-2); }
+    a { color: var(--gs-accent); }
+    li { margin: .3rem 0; color: var(--gs-text-2); }
+    .btn { display: inline-block; background: var(--gs-accent); color: var(--gs-accent-ink); padding: 10px 20px; border-radius: 8px; font-weight: 500; text-decoration: none; }
+    .btn:hover { background: var(--gs-accent-hover); }
+    @media (max-width: 420px) { stu-cabecera .stu-cabecera__brand-name, stu-cabecera .stu-cabecera__separator { display: none; } }
+  </style>
+</head>
+<body>
+  <stu-cabecera platform="diarios" platform-name="Diarios Oficiales" platform-url="https://diariosoficiales.grupostu.com" login-url="https://cuenta.grupostu.com/login"></stu-cabecera>
+  <main class="centrado"><div><h1>Publicación no encontrada</h1><p>El enlace no corresponde a ninguna publicación del archivo. Puede que haya cambiado o que el identificador sea incorrecto.</p><a class="btn" href="/">Volver al buscador</a></div></main>
+  <!-- FOOTER INSTITUCIONAL MAESTRO v3 — Grupo Stu · generado por identidad_marca_grupo_stu/footer/build-footers.mjs; no editar a mano -->
+<style>
+.gs-footer{--gsf-bg:#f8f9fa;--gsf-line:#dadce0;--gsf-text:#5f6368;--gsf-strong:#3c4043;--gsf-muted:#5f6368;--gsf-card:#fff;--gsf-hover:#e8eaed;--gsf-title:#202124;--gsf-accent:#1a73e8;--gsf-ok:#137333;--gsf-seal:#137333}
+[data-theme="dark"] .gs-footer{--gsf-bg:#09090b;--gsf-line:#1e293b;--gsf-text:#94a3b8;--gsf-strong:#e2e8f0;--gsf-muted:#8b98ad;--gsf-card:#0c0c10;--gsf-hover:#0f172a;--gsf-title:#fff;--gsf-accent:#4ade80;--gsf-ok:#34d399;--gsf-seal:#15803d}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .gs-footer{--gsf-bg:#09090b;--gsf-line:#1e293b;--gsf-text:#94a3b8;--gsf-strong:#e2e8f0;--gsf-muted:#8b98ad;--gsf-card:#0c0c10;--gsf-hover:#0f172a;--gsf-title:#fff;--gsf-accent:#4ade80;--gsf-ok:#34d399;--gsf-seal:#15803d}}
+.gs-footer{--gs-gutter:clamp(16px,4vw,48px);background:var(--gsf-bg);border-top:1px solid var(--gsf-line);color:var(--gsf-text);font:13px/1.65 'Plus Jakarta Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;padding:48px 0 24px;margin-top:64px;text-align:left}
+.gs-footer *{box-sizing:border-box}
+.gs-footer a{color:var(--gsf-text);text-decoration:none;transition:color .15s}
+.gs-footer a:hover,.gs-footer a:focus-visible{color:var(--gsf-accent)}
+.gs-footer a:focus-visible,.gs-footer summary:focus-visible{outline:2px solid var(--gsf-accent);outline-offset:2px;border-radius:4px}
+.gs-footer__in{width:100%;max-width:1600px;margin:0 auto;padding:0 var(--gs-gutter)}
+.gs-footer__grid{display:grid;gap:36px;grid-template-columns:1.5fr 1fr 1.2fr 1fr;padding-bottom:32px;border-bottom:1px solid var(--gsf-line)}
+@media(max-width:1100px){.gs-footer__grid{grid-template-columns:1fr 1fr}}
+.gs-footer__product{margin-bottom:24px;padding-bottom:22px;border-bottom:1px solid var(--gsf-line)}
+.gs-footer__product .gs-footer__bname{color:var(--gsf-title);text-decoration:none}
+.gs-footer__seal--product{background:var(--gsf-hover);border:1px solid var(--gsf-line);color:var(--gsf-ok)}
+.gs-footer__nav{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+.gs-footer__nav li{margin:0;padding:0}
+.gs-footer__nav a{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:8px;border-left:3px solid transparent;color:var(--gsf-strong);font-size:13px;font-weight:500;text-decoration:none}
+.gs-footer__nav a:hover{background:var(--gsf-hover);color:var(--gsf-title)}
+.gs-footer__nav a:focus-visible{outline:2px solid var(--gsf-accent);outline-offset:2px}
+.gs-footer__nav a[aria-current="page"]{background:var(--gsf-hover);border-left-color:var(--gsf-ok);color:var(--gsf-title);font-weight:700}
+.gs-footer__nav small{margin-left:auto;font-size:11px;color:var(--gsf-ok);font-weight:600;white-space:nowrap}
+@media(max-width:600px){.gs-footer__grid{grid-template-columns:1fr}}
+@media(max-width:600px),(pointer:coarse){.gs-footer__nav a{min-height:44px;box-sizing:border-box}
+.gs-footer h3{margin:0 0 14px;color:var(--gsf-strong);font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:700}
+.gs-footer ul{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.gs-footer p{margin:0 0 10px}
+.gs-footer__brand{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.gs-footer__seal{flex:none;width:40px;height:40px;border-radius:10px;background:var(--gsf-seal);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;color:#fff}
+.gs-footer__bname{display:block;color:var(--gsf-title);font-weight:700;font-size:16px;line-height:1.2}
+.gs-footer__item a,.gs-footer__item .gs-footer__cur{display:block;color:var(--gsf-strong);font-weight:600}
+.gs-footer__item small{display:block;color:var(--gsf-muted);font-size:12px;line-height:1.5;margin-top:2px;font-weight:400}
+.gs-footer__faq{padding:28px 0;border-bottom:1px solid var(--gsf-line)}
+.gs-footer__faq-grid{display:grid;gap:10px 28px;grid-template-columns:1fr 1fr;align-items:start}
+@media(max-width:800px){.gs-footer__faq-grid{grid-template-columns:1fr}}
+.gs-footer details{border:1px solid var(--gsf-line);border-radius:10px;padding:10px 14px;background:var(--gsf-card)}
+.gs-footer summary{cursor:pointer;color:var(--gsf-strong);font-weight:600;list-style:none}
+.gs-footer summary::-webkit-details-marker{display:none}
+.gs-footer summary::after{content:'+';float:right;color:var(--gsf-muted)}
+.gs-footer details[open] summary::after{content:'–'}
+.gs-footer details p{margin:10px 0 2px;color:var(--gsf-text)}
+.gs-footer__notice{margin:10px 0 12px;padding:12px 14px;border:1px solid var(--gsf-line);border-left:3px solid #f59e0b;border-radius:8px;background:var(--gsf-card);font-size:12px;color:var(--gsf-text)}
+.gs-footer__bottom{padding-top:20px;text-align:left;font-size:12px;color:var(--gsf-muted);display:flex;flex-wrap:wrap;gap:6px 24px;justify-content:space-between}
+</style>
+<footer class="gs-footer" data-gs-footer="v3" data-gs-current="diarios" role="contentinfo">
+  <div class="gs-footer__in">
+    <div class="gs-footer__grid">
+      <div>
+        <div class="gs-footer__product"><div class="gs-footer__brand"><span class="gs-footer__seal gs-footer__seal--product" aria-hidden="true">DO</span><a class="gs-footer__bname" href="https://diariosoficiales.grupostu.com">Diarios Oficiales</a></div><p>Facilita la búsqueda de edictos, avisos y normativa publicada en diarios oficiales, con alertas por correo y enlaces estables a cada documento para que puedas citarlo y conservarlo.</p></div>
+        <div class="gs-footer__brand"><span class="gs-footer__seal" aria-hidden="true">GS</span><span class="gs-footer__bname">Grupo Stu</span></div>
+        <p>Grupo Stu desarrolla productos de software desde San Salvador, El Salvador: herramientas en línea, hospedaje, constructor de aplicaciones, software de gestión, formación y clasificados, con un mismo estándar de seguridad, privacidad y soporte.</p>
+        <div class="gs-footer__notice" role="note">Servicio de consulta y seguimiento. Para efectos legales rige siempre el ejemplar publicado por la autoridad emisora, al que cada registro enlaza.</div>
+      </div>
+      <nav aria-label="Plataformas de Grupo Stu">
+        <h3>Plataformas</h3>
+        <ul class="gs-footer__nav">
+          <li><a href="https://grupostu.com">Grupo Stu</a></li> <li><a href="https://herramientas.grupostu.com">Stu Herramienta</a></li> <li><a href="https://diariosoficiales.grupostu.com" aria-current="page">Diarios Oficiales<small>Estás aquí</small></a></li> <li><a href="https://stustudioapp.grupostu.com">Stu Studio App</a></li> <li><a href="https://hosting.grupostu.com">Stu Hosting</a></li> <li><a href="https://stream.grupostu.com">Stu Streaming &amp; Radio</a></li> <li><a href="https://stuaprende.grupostu.com">Stu Aprende</a></li> <li><a href="https://crediflowerp.grupostu.com">CrediFlow ERP</a></li> <li><a href="https://erp.grupostu.com">Stu ERP</a></li> <li><a href="https://clasificados.grupostu.com">Stu Clasificados</a></li>
+        </ul>
+      </nav>
+      <div>
+        <h3>Legal y transparencia</h3>
+        <ul>
+          <li class="gs-footer__item"><a href="https://grupostu.com/es/legal/privacidad">Política de Privacidad</a><small>Qué datos recopilamos, para qué, por cuánto tiempo y cómo ejercer tus derechos, conforme a la legislación de El Salvador.</small></li>
+          <li class="gs-footer__item"><a href="https://grupostu.com/es/legal/terminos">Términos y Condiciones</a><small>Reglas de uso de los servicios, responsabilidades, pagos, cancelaciones y resolución de controversias.</small></li>
+          <li class="gs-footer__item"><a href="https://grupostu.com/es/legal/transparencia">Transparencia y Acceso a la Información</a><small>Información pública y vías de solicitud según los artículos 10 y 11 de la LAIP.</small></li>
+          <li class="gs-footer__item"><a href="mailto:soporte@grupostu.com?subject=Reporte%20de%20seguridad">Seguridad y reporte de vulnerabilidades</a><small>Canal para notificar fallos de seguridad de forma responsable.</small></li>
+        </ul>
+      </div>
+      <div>
+        <h3>Soporte y contacto</h3>
+        <ul>
+          <li class="gs-footer__item"><a href="mailto:soporte@grupostu.com">soporte@grupostu.com</a><small>Canal oficial único de soporte técnico, facturación, privacidad y avisos legales de todos los productos.</small></li>
+          <li class="gs-footer__item"><span class="gs-footer__cur">San Salvador, El Salvador</span><small>Nunca pedimos contraseñas ni códigos de verificación por correo o chat.</small></li>
+        </ul>
+      </div>
+    </div>
+    <section class="gs-footer__faq" aria-labelledby="gs-faq-h">
+      <h3 id="gs-faq-h">Preguntas frecuentes — Diarios Oficiales</h3>
+      <div class="gs-footer__faq-grid">
+        <details open><summary>¿Los documentos tienen validez legal?</summary><p>Diarios Oficiales es un servicio de consulta y seguimiento: indexa y organiza publicaciones para facilitar su búsqueda. Para efectos legales rige siempre el ejemplar publicado por la autoridad emisora; cada registro enlaza a su fuente para que puedas contrastarlo.</p></details>
+        <details><summary>¿Cómo funcionan las alertas por correo?</summary><p>Defines el término o la materia que te interesa y recibes un aviso cuando aparece una publicación coincidente. Debes confirmar tu correo para activar la alerta y puedes darte de baja desde cualquier mensaje.</p></details>
+        <details><summary>¿Cada cuánto se actualiza el contenido?</summary><p>La indexación se ejecuta de forma periódica a lo largo del día. Puede existir un desfase entre la publicación oficial y su aparición aquí; ante una urgencia, confirma siempre en el sitio de la autoridad emisora.</p></details>
+        <details><summary>¿Qué es Grupo Stu?</summary><p>Grupo Stu desarrolla y opera desde San Salvador, El Salvador, un conjunto de productos de software: herramientas en línea, hospedaje, constructor de aplicaciones, ERP, software financiero, formación, clasificados y publicaciones oficiales. Cada producto tiene su propio sitio, pero comparten identidad, estándares de seguridad y canal de soporte.</p></details>
+        <details><summary>¿Cómo contacto a soporte y cuánto tarda la respuesta?</summary><p>Escribe a soporte@grupostu.com indicando el producto, tu correo de registro y una descripción del problema (capturas de pantalla ayudan). Es el único canal oficial: no solicitamos contraseñas, códigos de verificación ni datos completos de tarjeta por ningún medio. Respondemos en orden de llegada y priorizamos incidentes que afecten pagos, acceso o seguridad.</p></details>
+        <details><summary>¿Qué leyes rigen el uso de los servicios?</summary><p>La Política de Privacidad y los Términos y Condiciones se rigen por la legislación de la República de El Salvador. Los textos vigentes están publicados en grupostu.com/es/legal, junto con la página de Transparencia y Acceso a la Información conforme a los artículos 10 y 11 de la LAIP.</p></details>
+        <details><summary>¿Cómo protegen mis datos?</summary><p>Aplicamos cifrado en tránsito (HTTPS), validación estricta de todo lo que recibe cada sistema, separación de datos entre clientes, límites de intentos y registros de auditoría que nunca guardan contraseñas, tokens ni datos completos de tarjetas. Los respaldos se prueban de forma periódica y el acceso administrativo requiere autenticación reforzada.</p></details>
+        <details><summary>¿Cómo reporto una vulnerabilidad de seguridad?</summary><p>Envía el detalle a soporte@grupostu.com con el asunto «Reporte de seguridad»: URL afectada, pasos para reproducirlo e impacto estimado. Evalúa sin acceder a datos de terceros ni degradar el servicio; confirmamos la recepción, corregimos según la gravedad y te informamos cuando esté resuelto.</p></details>
+        <details><summary>¿Una misma cuenta sirve en todos los productos?</summary><p>Estamos implementando una cuenta única de Grupo Stu para acceder a las plataformas públicas con un solo inicio de sesión. Mientras se integra cada producto, algunos pueden mantener su propio registro; lo comunicaremos en el sitio de cada producto cuando corresponda. Las áreas internas y privadas quedan fuera de esta cuenta.</p></details>
+      </div>
+    </section>
+    <div class="gs-footer__bottom"><span>© 2026 Grupo Stu. Todos los derechos reservados.</span><span>soporte@grupostu.com</span></div>
+  </div>
+</footer>
+
+  <script type="module" src="/stu-ui/cabecera/cabecera.js?v=1"></script>
+</body>
+</html>
