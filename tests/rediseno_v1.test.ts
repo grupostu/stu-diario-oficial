@@ -5,7 +5,8 @@ import { renderPaginaBase, renderError, THEME_BOOT } from '../src/pagina_base.js
 import { renderPrivacidad } from '../src/privacidad.js';
 
 const leer = (r: string) => readFileSync(new URL(`../${r}`, import.meta.url), 'utf8');
-const views = leer('src/views.ts');
+// La portada se compone de views.ts (HTML), portada_css.ts y portada_js.ts (antes en línea): se revisan juntos.
+const views = leer('src/views.ts') + leer('src/portada_css.ts') + leer('src/portada_js.ts');
 const visor = leer('src/visor_cliente.ts');
 
 describe('Rediseño V1: identidad compartida', () => {
