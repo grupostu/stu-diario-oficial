@@ -786,4 +786,6 @@
 @media (max-width: 480px), (pointer: coarse) {
   .stu-apps-panel__tab { min-height: 44px; padding: 0 12px; }
   .stu-account-panel a, .stu-account-panel button { min-height: 44px; }
+  .stu-cabecera__brand { min-height: 44px; }
+  .stu-cabecera__nav-slot a { min-height: 44px; display: inline-flex; align-items: center; }
 }
