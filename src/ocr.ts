@@ -13,6 +13,7 @@ import { fileURLToPath } from 'node:url';
 import { execFile, spawn } from 'node:child_process';
 import { promisify } from 'node:util';
 import crypto from 'node:crypto';
+import { escapeHtml } from './html.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -115,7 +116,7 @@ export function cargarOcr(diarioId: string, carpeta?: string): ArchivoOcr | null
   }
 }
 
-const escapar = (s: string): string => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
+const escapar = escapeHtml;
 
 export interface DatosVistaOcr {
   diarioId: string;

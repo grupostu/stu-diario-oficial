@@ -2,6 +2,7 @@ import { CRITERIO_CLIENT_JS } from './criterio.js';
 import { MASTER_FOOTER_HTML } from './master-footer.js';
 import { RESALTADO_CLIENT_JS } from './resaltado.js';
 import { LECTURA_CLIENT_JS } from './lectura.js';
+import { escapeHtml as esc } from './html.js';
 import { THEME_BOOT } from './pagina_base.js';
 import { VISOR_CSS, VISOR_HTML, VISOR_JS } from './visor_cliente.js';
 import type { Diario } from './diarios.js';
@@ -10,7 +11,6 @@ import { BUSQUEDA_CLIENT_JS } from './busqueda_vista.js';
 export function renderPortal(stats: { totalDocumentos: number; totalAlertas: number; diarios: Diario[] }): string {
   const diarios = stats.diarios;
   const ultimo = diarios.length ? diarios[diarios.length - 1]! : null;
-  const esc = (t: unknown): string => String(t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string));
   const etiquetaDiario = (d: Diario): string => `Tomo ${d.tomo} · N.° ${d.numero} · ${d.fecha.split('-').reverse().join('-')}`;
   return `<!DOCTYPE html>
 <html lang="es" data-theme="light">

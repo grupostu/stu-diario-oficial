@@ -1,10 +1,10 @@
+import { escapeHtml as esc } from './html.js';
 import { MASTER_FOOTER_HTML } from './master-footer.js';
 
 /** Tema: claro por defecto; el oscuro es un modo conmutable que se recuerda en localStorage ('stu-theme'). */
 export const THEME_BOOT =
   "(function(){var t='light';try{var s=localStorage.getItem('stu-theme');if(s==='dark'||s==='light')t=s;}catch(_){}document.documentElement.setAttribute('data-theme',t);})();";
 
-const esc = (t: string): string => t.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string));
 
 /**
  * Página sencilla con la identidad compartida (404, errores, privacidad, vista OCR):
