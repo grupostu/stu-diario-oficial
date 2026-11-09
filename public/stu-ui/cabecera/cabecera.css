@@ -721,11 +721,34 @@
     font-size: 12px;
   }
 
-  /* Ajuste de posición de los paneles para que no desborden la pantalla de 375px */
+  /* La barra no debe ensancharse: sin sello textual «Grupo Stu», sin separador y sin margen del slot de navegación */
+  .stu-cabecera__brand-name,
+  .stu-cabecera__separator {
+    display: none;
+  }
+
+  .stu-cabecera__brand {
+    min-width: 0;
+  }
+
+  .stu-cabecera__nav-slot {
+    margin: 0;
+  }
+
+  /* Paneles anclados al borde de la barra (no al botón), para que nunca desborden los 375 px */
+  .stu-cabecera__inner {
+    position: relative;
+  }
+
+  .stu-cabecera__anchor {
+    position: static;
+  }
+
   .stu-apps-panel,
   .stu-account-panel {
-    right: -8px;
-    width: calc(100vw - 20px);
+    top: calc(100% + 4px);
+    right: 8px;
+    width: calc(100vw - 16px);
     max-width: 350px;
   }
 
