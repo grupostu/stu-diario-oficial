@@ -13,6 +13,7 @@ import { LimitadorTasa } from './limitador.js';
 import type { DiarioRecord } from './types.js';
 import { cargarCatalogo, ID_DIARIO, type Diario } from './diarios.js';
 import { cargarOcr, renderVistaOcr, ETIQUETA_OCR } from './ocr.js';
+import { CacheTTL, enviarPrecomprimida, precomprimir, type Precomprimida } from './respuesta_cache.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -100,10 +101,15 @@ const cachedLeyes = { total: leyesLista.length, leyes: leyesLista };
 
 let cachedPortalKey = '';
 let cachedPortalHtml = '';
+let cachedPortalPre: Precomprimida | null = null;
+let portalRenderizadoEn = 0;
+// El contador de alertas cambia con cada suscripción: la portada se vuelve a renderizar como máximo una vez cada 5 s.
+const PORTAL_REFRESCO_MS = 5_000;
 
 export function invalidatePortalCache(): void {
   cachedPortalKey = '';
   cachedPortalHtml = '';
+  cachedPortalPre = null;
 }
 
 function getPortalHtml(): string {
@@ -113,11 +119,22 @@ function getPortalHtml(): string {
   if (key !== cachedPortalKey || !cachedPortalHtml) {
     cachedPortalHtml = renderPortal({ totalDocumentos: docs, totalAlertas: alerts, diarios: catalogo });
     cachedPortalKey = key;
+    cachedPortalPre = null;
   }
   return cachedPortalHtml;
 }
+
+/** Portada ya renderizada y comprimida (gzip/br) con ETag: se recalcula solo si cambian los contadores (máx. cada 5 s). */
+function getPortalPre(): Precomprimida {
+  const ahora = Date.now();
+  if (!cachedPortalPre || (ahora - portalRenderizadoEn > PORTAL_REFRESCO_MS && cachedPortalKey !== `${index.count()}:${notifier.getSubscriptionsCount()}`)) {
+    cachedPortalPre = precomprimir(getPortalHtml(), 'text/html; charset=utf-8', 5);
+    portalRenderizadoEn = ahora;
+  }
+  return cachedPortalPre;
+}
 // Pre-calentar el HTML del portal en arranque
-getPortalHtml();
+getPortalPre();
 
 const EDGE_HTML_HEADERS = {
   'Content-Type': 'text/html; charset=utf-8',
@@ -147,15 +164,14 @@ app.get(['/health', '/api/health'], (_req: Request, res: Response) => {
   });
 });
 
-app.get('/', (_req: Request, res: Response) => {
-  res.set(EDGE_HTML_HEADERS);
-  res.send(getPortalHtml());
+app.get('/', (req: Request, res: Response) => {
+  enviarPrecomprimida(req, res, getPortalPre(), EDGE_HTML_HEADERS);
 });
 
 // Mapa del sitio y robots para buscadores (la portada es la única página pública indexable).
-app.get('/privacidad', (_req: Request, res: Response) => {
-  res.set(EDGE_HTML_HEADERS);
-  res.send(renderPrivacidad());
+const PRIVACIDAD_PRE = precomprimir(renderPrivacidad(), 'text/html; charset=utf-8', 9);
+app.get('/privacidad', (req: Request, res: Response) => {
+  enviarPrecomprimida(req, res, PRIVACIDAD_PRE, EDGE_HTML_HEADERS);
 });
 
 app.get('/robots.txt', (_req: Request, res: Response) => {
@@ -183,6 +199,7 @@ const MAX_SUSCRIPCIONES = Number(process.env.MAX_SUSCRIPCIONES) || 50_000;
 const limiteAlertas = new LimitadorTasa(Number(process.env.RATE_LIMIT_ALERTS_MAX) || 5, 10 * 60_000);
 const limiteLecturas = new LimitadorTasa(Number(process.env.RATE_LIMIT_READS_MAX) || 120, 60_000);
 
+const cacheBusqueda = new CacheTTL<Precomprimida>(1000, 60_000);
 app.get('/api/v1/search', limitarTasa(limiteBusqueda), (req: Request, res: Response) => {
   const v = validarParametrosBusqueda(req.query as Record<string, unknown>);
   if (!v.ok) {
@@ -191,9 +208,11 @@ app.get('/api/v1/search', limitarTasa(limiteBusqueda), (req: Request, res: Respo
     return res.status(400).json({ error: 'Parámetros de búsqueda inválidos', errores: v.errores, aviso, entradaInvalida: true });
   }
   const { q, categoria, soloDui, pagina, porPagina } = v.valor;
-  const result = index.buscar({ q, categoria, soloDui, pagina, porPagina });
-  res.set(EDGE_API_HEADERS);
-  res.json(result);
+  // El índice es de solo lectura tras el arranque: el resultado de una consulta validada se reutiliza 60 s (tope 1.000 consultas).
+  const clave = JSON.stringify([q, categoria, soloDui, pagina, porPagina]);
+  let pre = cacheBusqueda.get(clave);
+  if (!pre) pre = cacheBusqueda.set(clave, precomprimir(JSON.stringify(index.buscar({ q, categoria, soloDui, pagina, porPagina })), 'application/json; charset=utf-8', 4));
+  enviarPrecomprimida(req, res, pre, EDGE_API_HEADERS);
 });
 
 // Enlace directo desde cada resultado al folio del PDF en el Visor Ebook: /visor?id=...
@@ -204,18 +223,20 @@ app.get('/visor', limitarTasa(limiteLecturas), (req: Request, res: Response) => 
 });
 
 // Catálogo de diarios disponibles (lo que el visor puede abrir).
-app.get('/api/v1/diarios', (_req: Request, res: Response) => {
-  res.set('Cache-Control', 'no-cache');
-  res.json({ diarios: catalogo });
+const DIARIOS_PRE = precomprimir(JSON.stringify({ diarios: catalogo }), 'application/json; charset=utf-8', 9);
+app.get('/api/v1/diarios', (req: Request, res: Response) => {
+  enviarPrecomprimida(req, res, DIARIOS_PRE, { 'Cache-Control': 'no-cache' });
 });
 
 // Publicaciones de un diario con su texto y los rangos exactos que ocupan en el PDF (el visor las resalta).
+const registrosPre = new Map<string, Precomprimida>();
 app.get('/api/v1/diarios/:id/registros', (req: Request, res: Response) => {
   const id = String(req.params.id);
   if (!ID_DIARIO.test(id) || !catalogo.some((d) => d.id === id)) return res.status(404).json({ error: 'Diario no encontrado' });
+  const cacheado = registrosPre.get(id);
+  if (cacheado) return enviarPrecomprimida(req, res, cacheado, { 'Cache-Control': 'no-cache' });
   const lista = registrosPorDiario.get(id) ?? [];
-  res.set('Cache-Control', 'no-cache');
-  res.json({
+  const cuerpo = {
     diario: id,
     registros: lista.map((r) => ({
       id: r.id,
@@ -227,13 +248,20 @@ app.get('/api/v1/diarios/:id/registros', (req: Request, res: Response) => {
       duisEncontrados: r.duisEncontrados,
       rangos: r.rangos ?? []
     }))
-  });
+  };
+  // Los registros de un diario no cambian tras el arranque: se serializan y comprimen una sola vez.
+  const pre = precomprimir(JSON.stringify(cuerpo), 'application/json; charset=utf-8', 6);
+  registrosPre.set(id, pre);
+  enviarPrecomprimida(req, res, pre, { 'Cache-Control': 'no-cache' });
 });
 
 // Dónde más aparece lo buscado: coincidencias por diario (para saltar de un diario a otro).
+const cacheCoincidencias = new CacheTTL<Precomprimida>(500, 60_000);
 app.get('/api/v1/coincidencias', limitarTasa(limiteBusqueda), (req: Request, res: Response) => {
   const v = validarParametrosBusqueda({ q: req.query.q } as Record<string, unknown>);
   if (!v.ok) return res.status(400).json({ error: 'Parámetros de búsqueda inválidos', diarios: [] });
+  const cacheada = cacheCoincidencias.get(v.valor.q);
+  if (cacheada) return enviarPrecomprimida(req, res, cacheada, { 'Cache-Control': 'no-cache' });
   const r = index.buscar({ q: v.valor.q, pagina: 1, porPagina: 5000 });
   const por = new Map<string, { total: number; primeraPagina: number }>();
   for (const x of r.resultados) {
@@ -245,25 +273,44 @@ app.get('/api/v1/coincidencias', limitarTasa(limiteBusqueda), (req: Request, res
       if (x.diario.pagina < u.primeraPagina) u.primeraPagina = x.diario.pagina;
     }
   }
-  res.set('Cache-Control', 'no-cache');
-  res.json({
-    diarios: catalogo.map((d) => ({ id: d.id, tomo: d.tomo, numero: d.numero, fecha: d.fecha, total: por.get(d.id)?.total ?? 0, primeraPagina: por.get(d.id)?.primeraPagina ?? 1 }))
-  });
+  const pre = cacheCoincidencias.set(
+    v.valor.q,
+    precomprimir(
+      JSON.stringify({ diarios: catalogo.map((d) => ({ id: d.id, tomo: d.tomo, numero: d.numero, fecha: d.fecha, total: por.get(d.id)?.total ?? 0, primeraPagina: por.get(d.id)?.primeraPagina ?? 1 })) }),
+      'application/json; charset=utf-8',
+      4
+    )
+  );
+  enviarPrecomprimida(req, res, pre, { 'Cache-Control': 'no-cache' });
 });
 
+// El JSON de páginas (varios MB) se leía y parseaba de forma síncrona en CADA petición: se conserva 10 min en memoria.
+const cachePaginasTexto = new CacheTTL<string[] | null>(16, 10 * 60_000);
 function obtenerPaginaTexto(diarioId: string, pagina: number): string | null {
-  for (const p of possiblePublicPaths) {
-    const arch = path.join(p, 'data', `paginas-${diarioId}.json`);
-    if (fs.existsSync(arch)) {
-      try {
-        const j = JSON.parse(fs.readFileSync(arch, 'utf8'));
-        if (Array.isArray(j.paginas) && j.paginas[pagina - 1] !== undefined) {
-          return String(j.paginas[pagina - 1]);
-        }
-      } catch {}
+  let paginas = cachePaginasTexto.get(diarioId);
+  if (paginas === undefined) {
+    paginas = null;
+    for (const p of possiblePublicPaths) {
+      const arch = path.join(p, 'data', `paginas-${diarioId}.json`);
+      if (fs.existsSync(arch)) {
+        try {
+          const j = JSON.parse(fs.readFileSync(arch, 'utf8'));
+          if (Array.isArray(j.paginas)) {
+            paginas = j.paginas.map((x: unknown) => String(x));
+            break;
+          }
+        } catch {}
+      }
     }
+    cachePaginasTexto.set(diarioId, paginas ?? null);
   }
-  return null;
+  return paginas && paginas[pagina - 1] !== undefined ? paginas[pagina - 1] : null;
+}
+const cacheOcr = new CacheTTL<ReturnType<typeof cargarOcr>>(16, 10 * 60_000);
+function cargarOcrCacheado(id: string): ReturnType<typeof cargarOcr> {
+  const c = cacheOcr.get(id);
+  if (c !== undefined) return c;
+  return cacheOcr.set(id, cargarOcr(id));
 }
 
 // Vista aparte de OCR (reconocido automáticamente, puede contener errores).
@@ -278,7 +325,7 @@ app.get('/diarios/:id/paginas/:pagina/ocr', limitarTasa(limiteLecturas), (req: R
     return res.status(400).send('Número de página inválido');
   }
 
-  const ocrData = cargarOcr(id);
+  const ocrData = cargarOcrCacheado(id);
   const pagOcr = ocrData?.paginas[String(pagina)];
   const textoPagina = obtenerPaginaTexto(id, pagina);
   const charsCuerpo = (textoPagina ?? '').replace(/DIARIO OFICIAL.*|Tomo Nº \d+|^\d+\s*$/g, '').trim().length;
@@ -310,7 +357,7 @@ app.get('/api/v1/diarios/:id/paginas/:pagina/ocr', limitarTasa(limiteLecturas), 
     return res.status(400).json({ error: 'Número de página fuera de rango' });
   }
 
-  const ocrData = cargarOcr(id);
+  const ocrData = cargarOcrCacheado(id);
   const pagOcr = ocrData?.paginas[String(pagina)];
   const textoPagina = obtenerPaginaTexto(id, pagina);
   const charsCuerpo = (textoPagina ?? '').replace(/DIARIO OFICIAL.*|Tomo Nº \d+|^\d+\s*$/g, '').trim().length;
@@ -351,15 +398,15 @@ app.get('/api/v1/marcas', limitarTasa(limiteBusqueda), (req: Request, res: Respo
 });
 
 // Endpoint para los últimos edictos judiciales
-app.get('/api/v1/edictos-recientes', (_req: Request, res: Response) => {
-  res.set(EDGE_API_HEADERS);
-  res.json(cachedEdictos);
+const EDICTOS_PRE = precomprimir(JSON.stringify(cachedEdictos), 'application/json; charset=utf-8', 9);
+app.get('/api/v1/edictos-recientes', (req: Request, res: Response) => {
+  enviarPrecomprimida(req, res, EDICTOS_PRE, EDGE_API_HEADERS);
 });
 
 // Endpoint para decretos y resoluciones oficiales
-app.get('/api/v1/leyes-recientes', (_req: Request, res: Response) => {
-  res.set(EDGE_API_HEADERS);
-  res.json(cachedLeyes);
+const LEYES_PRE = precomprimir(JSON.stringify(cachedLeyes), 'application/json; charset=utf-8', 9);
+app.get('/api/v1/leyes-recientes', (req: Request, res: Response) => {
+  enviarPrecomprimida(req, res, LEYES_PRE, EDGE_API_HEADERS);
 });
 
 app.post('/api/v1/alerts', limitarTasa(limiteAlertas), (req: Request, res: Response) => {
@@ -394,7 +441,11 @@ app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
   res.status(status).json({ error: status >= 500 ? 'Error interno del servidor' : 'Solicitud inválida' });
 });
 
-app.listen(PORT, () => {
+const servidor = app.listen(PORT, () => {
   console.log(`[stu-diario-oficial] Servidor escuchando en puerto ${PORT}`);
   console.log(`[stu-diario-oficial] ${index.count()} publicaciones indexadas en ${catalogo.length} diario(s).`);
 });
+// Detrás de Caddy/Cloudflare: el keep-alive del origen debe ser MAYOR que el del proxy (evita 502 por conexiones reutilizadas ya cerradas).
+servidor.keepAliveTimeout = 65_000;
+servidor.headersTimeout = 66_000;
+servidor.requestTimeout = 30_000;
