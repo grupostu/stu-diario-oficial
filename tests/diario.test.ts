@@ -14,6 +14,7 @@ import {
 import { DiarioIndex } from '../src/indexer.js';
 import { NotifierEngine } from '../src/notifier.js';
 import { renderPortal } from '../src/views.js';
+import { cargarCatalogo } from '../src/diarios.js';
 
 describe('Stu Diario Oficial — Motor de Búsqueda, Clasificación Jurídica, PDF.js Sync y Alertas Ciudadanas SV', () => {
   describe('Parser, Extractor de Identificadores y Normalización Bipartita (Números ↔ Letras)', () => {
@@ -94,11 +95,13 @@ describe('Stu Diario Oficial — Motor de Búsqueda, Clasificación Jurídica, P
 
   describe('Visor Ebook Hiper-Interactivo PDF.js y Activos Gráficos (40+ SVG/WEBP)', () => {
     it('renderiza el portal con PDF.js, sincronización bidireccional y controles avanzados', () => {
-      const html = renderPortal({ totalDocumentos: 542, totalAlertas: 12 });
+      const html = renderPortal({ totalDocumentos: 542, totalAlertas: 12, diarios: cargarCatalogo() });
       assert.match(html, /cdnjs\.cloudflare\.com\/ajax\/libs\/pdf\.js\/3\.11\.174\/pdf\.min\.js/);
       assert.match(html, /pdf-highlight-box/);
       assert.match(html, /focusTermInPdfFromTranscription/);
-      assert.match(html, /syncPdfClickToTranscription/);
+      // Visor nuevo: transcripción por registro sincronizada con el PDF (resaltado de la publicación en la página)
+      assert.match(html, /vzResaltarRegistro/);
+      assert.match(html, /id="vz-scroll"/);
       assert.match(html, /openCertifiedCitationModal/);
     });
 

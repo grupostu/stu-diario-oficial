@@ -5,12 +5,21 @@
   "main": "dist/server.js",
   "type": "module",
   "scripts": {
-    "build": "tsc && node -e \"const fs=require('fs'); fs.copyFileSync('src/data_diario_real.json', 'dist/data_diario_real.json'); fs.copyFileSync('src/data_marcas.json', 'dist/data_marcas.json');\"",
+    "build": "tsc && node -e \"const fs=require('fs'); fs.copyFileSync('src/data_diario_real.json', 'dist/data_diario_real.json'); fs.copyFileSync('src/diarios.json', 'dist/diarios.json');\"",
     "start": "node dist/server.js",
     "dev": "tsx watch src/server.ts",
-    "test": "tsx --test tests/*.test.ts"
+    "test": "tsx --test tests/*.test.ts",
+    "corpus": "tsx scripts/construir_corpus.ts public/pdf/23-10-2026.pdf"
   },
-  "keywords": ["diario-oficial", "el-salvador", "laip", "edictos", "dui", "alertas", "grupo-stu"],
+  "keywords": [
+    "diario-oficial",
+    "el-salvador",
+    "laip",
+    "edictos",
+    "dui",
+    "alertas",
+    "grupo-stu"
+  ],
   "author": "Grupo Stu, S.A.S.",
   "license": "UNLICENSED",
   "dependencies": {
@@ -19,6 +28,7 @@
   "devDependencies": {
     "@types/express": "^5.0.0",
     "@types/node": "^22.13.1",
+    "pdfjs-dist": "3.11.174",
     "tsx": "^4.19.3",
     "typescript": "^5.7.3"
   }

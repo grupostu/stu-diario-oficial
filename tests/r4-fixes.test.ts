@@ -4,6 +4,7 @@ import { evaluarCriterio } from '../src/criterio.js';
 import { validarAlerta } from '../src/alert_validation.js';
 import { DiarioIndex } from '../src/indexer.js';
 import { renderPortal } from '../src/views.js';
+import { cargarCatalogo } from '../src/diarios.js';
 
 const base = { usuarioEmail: 'a@b.com', consentimiento: true };
 
@@ -28,7 +29,7 @@ describe('Ronda 4: alertas rechazan criterios basura (R3-002)', () => {
     assert.ok(nombre.ok && nombre.value.tipoCriterio === 'NOMBRE');
   });
   it('el navegador usa la misma función que el servidor', () => {
-    const html = renderPortal({ totalDocumentos: 1, totalAlertas: 0 });
+    const html = renderPortal({ totalDocumentos: 1, totalAlertas: 0, diarios: cargarCatalogo() });
     assert.ok(html.includes('function evaluarCriterio(entrada)'));
     assert.ok(html.includes('const evaluado = evaluarCriterio(crit);'));
     assert.ok(html.includes('escapeHtmlText(q)'));

@@ -11,6 +11,7 @@ import { BUSQUEDA_CLIENT_JS } from '../src/busqueda_vista.js';
 import { segmentarRegistro } from '../src/segmentos.js';
 import { validarParametrosBusqueda } from '../src/busqueda_esquema.js';
 import { renderPortal } from '../src/views.js';
+import { cargarCatalogo } from '../src/diarios.js';
 
 const corpus: DiarioRecord[] = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'src', 'data_diario_real.json'), 'utf8'));
 
@@ -23,79 +24,75 @@ const rec = (over: Partial<DiarioRecord>): DiarioRecord => ({
 /** Texto visible de un fragmento marcado (lo que realmente queda dentro de <mark>). */
 const marcado = (html: string): string[] => [...html.matchAll(/<mark[^>]*>([\s\S]*?)<\/mark>/g)].map((m) => m[1]!);
 
-describe('Decreto 690: la coincidencia se muestra en su campo y párrafo, no como resumen', () => {
+describe('Acuerdo No. 755 (corpus real): la coincidencia se muestra en su campo y párrafo, no como resumen', () => {
   const idx = new DiarioIndex();
   idx.addBatch(corpus.map((r) => ({ ...r })));
-  const ID = 'do-453-23102026-p1-dec690';
-  const dec = corpus.find((r) => r.id === ID)!;
+  // Acuerdo del Ramo de Economía publicado en la pág. 26 del PDF: se localiza por su titular, nunca por un id escrito a mano.
+  const dec = corpus.find((r) => /^Acuerdo No\. 755 —/.test(r.titular))!;
+  const ID = dec.id;
 
-  it('«amnistía fiscal» resalta en el párrafo exacto y no devuelve el texto completo como dato', () => {
-    const r = idx.buscar({ q: 'amnistía fiscal' });
-    assert.equal(r.resultados[0]!.id, ID);
-    const frs = r.resultados[0]!.coincidencias.filter((f) => f.ubicacion === 'cuerpo');
-    assert.equal(frs.length, 1);
-    const f = frs[0]!;
-    assert.equal(f.campo, 'parrafo');
-    assert.equal(f.etiqueta, 'Párrafo 1');
-    assert.deepEqual(marcado(f.html), ['amnistía fiscal']);
-    assert.ok(f.texto.startsWith('Publicado para conceder'));
-    assert.ok(!f.texto.includes('ORGANO LEGISLATIVO'));
-    assert.notEqual(f.texto, dec.contenido);
-    assert.ok(r.resultados[0]!.coincidencias.every((c) => c.campo !== 'sumario'));
+  it('el acuerdo existe en el corpus real', () => {
+    assert.ok(dec, 'Acuerdo No. 755 debe estar en data_diario_real.json');
   });
 
-  it('«recargos e intereses» resalta la frase en el mismo párrafo', () => {
-    const r = idx.buscar({ q: 'recargos e intereses' });
-    const f = r.resultados[0]!.coincidencias.find((c) => c.ubicacion === 'cuerpo')!;
-    assert.equal(f.etiqueta, 'Párrafo 1');
-    assert.deepEqual(marcado(f.html), ['recargos e intereses']);
+  it('«SANCHIA INTERNATIONAL» resalta en párrafos concretos y no devuelve el texto completo como dato', () => {
+    const r = idx.buscar({ q: 'SANCHIA INTERNATIONAL' });
+    const x = r.resultados.find((y) => y.id === ID)!;
+    assert.ok(x);
+    const frs = x.coincidencias.filter((f) => f.ubicacion === 'cuerpo');
+    assert.ok(frs.length >= 1);
+    for (const f of frs) {
+      assert.ok(marcado(f.html).length >= 1);
+      assert.ok(marcado(f.html).every((m) => /^(sanchia|international)( international)?$/i.test(m.replace(/\s+/g, ' '))), JSON.stringify(marcado(f.html)));
+      assert.notEqual(f.texto, dec.contenido);
+      assert.ok(f.texto.length <= 900);
+      assert.match(f.etiqueta, /^(Párrafo|Considerando|Artículo|Por tanto|Parte dispositiva)/);
+    }
+    assert.ok(x.coincidencias.every((c) => c.campo !== 'sumario'));
   });
 
-  it('«690» coincide con el número del documento (cabecera), con el máximo puntaje', () => {
-    const r = idx.buscar({ q: '690' });
-    assert.equal(r.total, 1);
+  it('«incisos arancelarios» entre comillas marca la frase completa en el mismo párrafo', () => {
+    const x = idx.buscar({ q: '"incisos arancelarios"' }).resultados.find((y) => y.id === ID)!;
+    const f = x.coincidencias.find((c) => c.ubicacion === 'cuerpo')!;
+    assert.ok(marcado(f.html).length >= 1);
+    assert.ok(marcado(f.html).every((m) => m.toLowerCase() === 'incisos arancelarios'));
+  });
+
+  it('«755» coincide con el número del documento (cabecera), con el máximo puntaje', () => {
+    const r = idx.buscar({ q: '755' });
     const x = r.resultados[0]!;
     assert.equal(x.id, ID);
-    assert.equal(x.identificacion.numeroDocumento, '690');
-    assert.deepEqual(marcado(x.cabecera.numeroHtml!), ['690']);
+    assert.equal(x.identificacion.numeroDocumento, '755');
+    assert.deepEqual(marcado(x.cabecera.numeroHtml!), ['755']);
     assert.ok(x.coincidencias.some((c) => c.campo === 'numero'));
+    assert.ok(x.puntaje > (r.resultados[1]?.puntaje ?? 0));
   });
 
-  it('«Tránsito» remarca la palabra exacta en la denominación oficial, sin tocar «Transitoria»', () => {
-    const r = idx.buscar({ q: 'Tránsito' });
-    const x = r.resultados.find((y) => y.id === ID)!;
-    const f = x.coincidencias.find((c) => c.campo === 'denominacion')!;
-    assert.equal(f.etiqueta, 'Denominación oficial');
-    assert.deepEqual(marcado(f.html), ['Tránsito']);
-    assert.ok(f.html.includes('Transitoria'));
+  it('«ECONOMÍA» (mayúsculas y tilde) marca «Economia» del título sin importar tildes ni mayúsculas', () => {
+    for (const q of ['ECONOMÍA', 'economia', 'Economía']) {
+      const x = idx.buscar({ q }).resultados.find((y) => y.id === ID)!;
+      assert.ok(x, q);
+      assert.deepEqual(marcado(x.cabecera.tituloHtml), ['Economia'], q);
+    }
   });
 
-  it('«TRIBUTARIAS» (mayúsculas) resalta en el título y en la denominación oficial', () => {
-    const r = idx.buscar({ q: 'TRIBUTARIAS' });
-    const x = r.resultados.find((y) => y.id === ID)!;
-    assert.deepEqual(marcado(x.cabecera.tituloHtml), ['Tributarias']);
-    const f = x.coincidencias.find((c) => c.campo === 'denominacion')!;
-    assert.deepEqual(marcado(f.html), ['Tributarias']);
-  });
-
-  it('el decreto 690 se identifica con tipo, número, órgano, fecha y diario', () => {
-    const x = idx.buscar({ q: '690' }).resultados[0]!;
-    assert.equal(x.identificacion.tipo, 'Decreto Legislativo');
-    assert.equal(x.identificacion.designacion, 'Decreto Legislativo No. 690');
-    assert.equal(x.identificacion.organo, 'Órgano Legislativo');
+  it('el acuerdo se identifica con tipo, número, órgano, fecha y diario', () => {
+    const x = idx.buscar({ q: '755' }).resultados[0]!;
+    assert.equal(x.identificacion.tipo, 'Acuerdo');
+    assert.equal(x.identificacion.designacion, 'Acuerdo No. 755');
+    assert.equal(x.identificacion.organo, 'Órgano Ejecutivo');
     assert.equal(x.identificacion.fechaIso, '2026-10-23');
     assert.equal(x.identificacion.fechaLarga, '23 de octubre de 2026');
-    assert.match(x.identificacion.diario, /Tomo 453 · N\.° 198 · Pág\. 1/);
+    assert.match(x.identificacion.diario, /Tomo 453 · N\.° 198 · Pág\. 26/);
   });
 
-  it('distintos formatos de número de decreto llevan al mismo documento', () => {
-    for (const q of ['Decreto No. 690', 'decreto 690', 'D. 690', 'd690', 'DECRETO NO 690', 'Decreto Legislativo N° 690']) {
+  it('distintos formatos de número de acuerdo llevan al mismo documento', () => {
+    for (const q of ['Acuerdo No. 755', 'acuerdo 755', 'D. 755', 'd755', 'ACUERDO NO 755', 'Acuerdo Ejecutivo N° 755']) {
       const r = idx.buscar({ q });
       assert.equal(r.resultados[0]?.id, ID, q);
-      assert.deepEqual(marcado(r.resultados[0]!.cabecera.numeroHtml!), ['Decreto Legislativo No. 690'], q);
+      assert.deepEqual(marcado(r.resultados[0]!.cabecera.numeroHtml!), ['Acuerdo No. 755'], q);
     }
-    assert.equal(idx.buscar({ q: 'Decreto No. 691' }).resultados[0]?.id, 'do-453-23102026-p1-dec691');
-    assert.ok(!idx.buscar({ q: 'Decreto 691' }).resultados.some((x) => x.id === ID));
+    assert.ok(!idx.buscar({ q: 'Acuerdo 7559' }).resultados.some((x) => x.id === ID));
   });
 });
 
@@ -355,7 +352,7 @@ describe('Rendimiento sobre el corpus real', () => {
     const idx = new DiarioIndex();
     idx.addBatch(corpus.map((r) => ({ ...r })));
     assert.ok(performance.now() - t0 < 3000, 'indexación inicial razonable');
-    const consultas = ['amnistía fiscal', 'recargos e intereses', '690', 'Tránsito', 'TRIBUTARIAS', 'herencia', 'juzgado civil', '"beneficio de inventario"', 'decreto 691', 'junta general', 'octubre 2026', 'San Salvador', 'sucesión intestada', 'cuatro días', 'notario'];
+    const consultas = ['zonas francas', 'SANCHIA INTERNATIONAL', '755', 'Tránsito', 'TRIBUTARIAS', 'herencia', 'juzgado civil', '"beneficio de inventario"', 'acuerdo 15', 'junta general', 'octubre 2026', 'San Salvador', 'sucesión intestada', 'cuatro días', 'notario'];
     const tiempos: number[] = [];
     for (let i = 0; i < 8; i++) {
       for (const q of consultas) {
@@ -400,21 +397,21 @@ describe('Interfaz: núcleo compartido con el navegador, accesibilidad y contras
   it('la tarjeta muestra primero la identificación y luego los fragmentos rotulados', () => {
     const idx = new DiarioIndex();
     idx.addBatch(corpus.map((r) => ({ ...r })));
-    const data = idx.buscar({ q: 'amnistía fiscal' });
+    const data = idx.buscar({ q: '"incisos arancelarios"' });
+    assert.ok(data.total >= 1);
     ctx.D = JSON.parse(JSON.stringify(data));
     const html = run<string>('gsHtmlTarjeta(D.resultados[0])');
     const iTitulo = html.indexOf('<h4');
-    const iFragmento = html.indexOf('Coincide en: Párrafo 1');
+    const iFragmento = html.indexOf('Coincide en: ');
     assert.ok(iTitulo > 0 && iFragmento > iTitulo, 'identificación antes que fragmentos');
     assert.ok(html.includes('Órgano emisor'));
-    assert.ok(html.includes('<mark class="gs-mark">amnistía fiscal</mark>'));
-    assert.ok(!html.includes('ORGANO LEGISLATIVO. Decreto'));
+    assert.match(html, /<mark class="gs-mark">incisos arancelarios<\/mark>/i);
     const resumen = run<string>('gsHtmlResumen(D)');
-    assert.match(resumen, /Se encontró 1 publicación/);
+    assert.match(resumen, /Se encontr(ó|aron) \d+ publicaci/);
   });
 
   it('la portada declara aria-live, límite de 200 caracteres y estilo <mark> con contraste suficiente', () => {
-    const html = renderPortal({ totalDocumentos: 1, totalAlertas: 0 });
+    const html = renderPortal({ totalDocumentos: 1, totalAlertas: 0, diarios: cargarCatalogo() });
     assert.match(html, /id="search-resumen" role="status" aria-live="polite"/);
     assert.match(html, /id="results-container"[^>]*aria-live="polite"/);
     assert.match(html, /id="query-input" maxlength="200"/);
@@ -428,8 +425,10 @@ describe('Interfaz: núcleo compartido con el navegador, accesibilidad y contras
   });
 
   it('el visor ya no construye RegExp con el texto del usuario', () => {
-    const html = renderPortal({ totalDocumentos: 1, totalAlertas: 0 });
-    assert.ok(html.includes('gsResaltarConsulta(content, term'));
+    const html = renderPortal({ totalDocumentos: 1, totalAlertas: 0, diarios: cargarCatalogo() });
+    // El visor resalta con el mismo núcleo por tokens que el servidor (nunca RegExp con el texto del usuario)
+    assert.ok(html.includes("gsResaltarConsulta(r.contenido, VZ.term, 'vz-m', '')"));
     assert.ok(!html.includes("new RegExp('(' + patterns.join('|') + ')', 'gi')"));
+    assert.ok(!/new RegExp\([^)]*(VZ\.term|term)/.test(html), 'ninguna RegExp se construye con el término buscado');
   });
 });

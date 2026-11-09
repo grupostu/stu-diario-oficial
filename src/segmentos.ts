@@ -3,6 +3,7 @@
 // párrafos del cuerpo y entidades). La búsqueda opera sobre estos segmentos, no sobre un resumen
 // concatenado, así cada coincidencia indica el campo y el párrafo exactos donde ocurre.
 import type { DiarioRecord } from './types.js';
+import { dehyphenate } from './text_clean.js';
 
 export type CampoBusqueda =
   | 'tipo'
@@ -134,6 +135,10 @@ export function dividirOraciones(texto: string): string[] {
 
 const MAX_PARRAFO = 900;
 const OBJETIVO_PARTE = 600;
+/** Palabras que se repiten entre dos partes consecutivas de una oración muy larga (≥ máximo de palabras de una frase de búsqueda). */
+const SOLAPE_PALABRAS = 16;
+/** Tope de caracteres del solape (debe ser mucho menor que MAX_PARRAFO / 2 para garantizar que el bucle avance). */
+const SOLAPE_MAX_CHARS = 200;
 
 /** Parte un párrafo demasiado largo en trozos de oraciones completas (nunca a mitad de palabra). */
 export function trocear(parrafo: string): string[] {
@@ -150,8 +155,15 @@ export function trocear(parrafo: string): string[] {
       let corte = o.lastIndexOf(' ', MAX_PARRAFO);
       if (corte < MAX_PARRAFO / 2) corte = MAX_PARRAFO;
       empujar();
-      partes.push(o.slice(0, corte).trim());
-      o = o.slice(corte).trim();
+      const parte = o.slice(0, corte).trim();
+      partes.push(parte);
+      // Solape: la parte siguiente repite las últimas palabras de la anterior, así una frase exacta que cae
+      // justo en el corte sigue encontrándose (la búsqueda no cruza partes).
+      let palabrasCola = parte.split(' ').slice(-SOLAPE_PALABRAS);
+      while (palabrasCola.length > 0 && palabrasCola.join(' ').length > SOLAPE_MAX_CHARS) palabrasCola = palabrasCola.slice(1);
+      // Sin espacios (cadena larga sin cortes) no hay solape: así el resto siempre es más corto y el bucle termina.
+      const cola = palabrasCola.length > 1 || parte.includes(' ') ? palabrasCola.join(' ') : '';
+      o = `${cola} ${o.slice(corte).trim()}`.trim();
     }
     if (actual && actual.length + 1 + o.length > OBJETIVO_PARTE) empujar();
     actual = actual ? `${actual} ${o}` : o;
@@ -178,7 +190,9 @@ const ORGANOS: Record<string, string> = { LEGISLATIVO: 'Órgano Legislativo', EJ
 export function segmentarRegistro(rec: DiarioRecord): DocumentoSegmentado {
   const segmentos: SegmentoDoc[] = [];
   const titular = compactar(rec.titular ?? '');
-  let cuerpo = String(rec.contenido ?? '').replace(/\r\n?/g, '\n');
+  // El texto del corpus es transcripción fiel del PDF (con sus guiones de fin de línea). Para BUSCAR se reconstruyen las
+  // palabras partidas ("MAR-\nTÍNEZ" -> "MARTÍNEZ"); el visor del PDF resalta sobre el texto original de la página.
+  let cuerpo = dehyphenate(String(rec.contenido ?? '').replace(/\r\n?/g, '\n'));
 
   // --- Identificación -------------------------------------------------------------------------
   let organo: string | null = null;

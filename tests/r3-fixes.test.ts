@@ -2,6 +2,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { DiarioIndex } from '../src/indexer.js';
 import { renderPortal } from '../src/views.js';
+import { cargarCatalogo } from '../src/diarios.js';
 
 describe('Ronda 3: entrada inválida nunca se presenta como «sin publicaciones» (R2-004)', () => {
   const idx = new DiarioIndex();
@@ -25,13 +26,16 @@ describe('Ronda 3: entrada inválida nunca se presenta como «sin publicaciones�
 });
 
 describe('Ronda 3: portal (R2-005, R2-006)', () => {
-  const html = renderPortal({ totalDocumentos: 1, totalAlertas: 0 });
+  const html = renderPortal({ totalDocumentos: 1, totalAlertas: 0, diarios: cargarCatalogo() });
   it('el formulario principal no usa validación nativa en inglés', () => {
     assert.match(html, /<form onsubmit="searchDiario\(event\)" novalidate/);
   });
   it('el visor ajusta la página al ancho y el aviso no tapa la barra', () => {
-    assert.ok(html.includes('pdfAjusteAncho'));
-    assert.ok(html.includes('bottom-4 md:bottom-auto'));
+    // El visor ajusta la página al ancho en móvil (vzEscalaEfectiva) y su aviso vive en una franja propia, no flotante.
+    assert.ok(html.includes('function vzEscalaEfectiva'));
+    assert.match(html, /VZ\.ajuste && window\.innerWidth < 768/);
+    const franja = html.match(/<div id="pdf-range-notice"[^>]*>/)?.[0] ?? '';
+    assert.doesNotMatch(franja, /(fixed|absolute)/);
     assert.ok(html.includes('data.entradaInvalida'));
   });
 });

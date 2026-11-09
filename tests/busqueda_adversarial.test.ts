@@ -8,9 +8,11 @@ import { spawn, type ChildProcess } from 'node:child_process';
 import type { DiarioRecord } from '../src/types.js';
 import { DiarioIndex, type Fragmento } from '../src/indexer.js';
 import { nucleo } from '../src/resaltado.js';
+import { dehyphenate } from '../src/text_clean.js';
 import { segmentarRegistro } from '../src/segmentos.js';
 import { LimitadorTasa } from '../src/limitador.js';
 import { renderPortal } from '../src/views.js';
+import { cargarCatalogo } from '../src/diarios.js';
 
 const corpus: DiarioRecord[] = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'src', 'data_diario_real.json'), 'utf8'));
 
@@ -151,7 +153,7 @@ describe('Adversarial: oráculo de fuerza bruta sobre el corpus real', () => {
   const textoOraculo = new Map<string, string[]>();
   for (const r of idx.getAllRecords()) {
     const s = segmentarRegistro(r);
-    const partes = [r.titular, r.contenido, r.seccion, ...(r.nombresClave ?? []), ...s.segmentos.filter((x) => x.cabecera).map((x) => x.texto)];
+    const partes = [r.titular, dehyphenate(r.contenido), r.seccion, ...(r.nombresClave ?? []), ...s.segmentos.filter((x) => x.cabecera).map((x) => x.texto)];
     textoOraculo.set(r.id, partes.map((p) => String(p ?? '')));
   }
   const palabrasDe = (t: string): string[] => plegar(t).split(/[^\p{L}\p{N}]+/u).filter(Boolean);
@@ -401,7 +403,7 @@ describe('Adversarial: XSS con datos hostiles del corpus', () => {
   });
 
   function navegador(respuestas: (url: string, init?: any) => Promise<{ status: number; body: unknown }> | { status: number; body: unknown }) {
-    const html = renderPortal({ totalDocumentos: 1, totalAlertas: 0 });
+    const html = renderPortal({ totalDocumentos: 1, totalAlertas: 0, diarios: cargarCatalogo() });
     const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]!);
     const codigo = scripts.sort((a, b) => b.length - a.length)[0]!;
     class Elemento {
@@ -417,6 +419,7 @@ describe('Adversarial: XSS con datos hostiles del corpus', () => {
       scrollIntoView() {}
       focus() {}
       closest() { return null; }
+      querySelector() { return null; }
       querySelectorAll() { return []; }
     }
     const elementos = new Map<string, Elemento>();
@@ -478,19 +481,22 @@ describe('Adversarial: XSS con datos hostiles del corpus', () => {
     assert.ok(!/onclick/.test(chips) && !/onmouseover='/.test(chips), chips);
   });
 
-  it('la transcripción del visor escapa registros hostiles y resalta con marcas operables con teclado', () => {
+  it('el panel de transcripción del visor escapa registros hostiles, resalta con <mark> y no pone datos en atributos on*', () => {
     const mal = '<img src=x onerror=alert(1)>';
     const b = navegador(() => ({ status: 200, body: {} }));
-    b.run(`currentHighlightedTerm = 'fiscal'; currentEbookPage = 4;`);
-    b.run(`renderTranscriptionCards([{ tomo: ${JSON.stringify(mal)}, numero: 1, pagina: ${JSON.stringify("4' onmouseover='x")}, titular: ${JSON.stringify(mal)}, contenido: ${JSON.stringify('texto ' + mal + ' fiscal <script>x()</script>')}, duisEncontrados: [${JSON.stringify("1'2")}] }])`);
-    const h = b.el('ebook-transcription-content').innerHTML;
+    b.run(`VZ.term = 'fiscal'; VZ.paginaActual = 4; VZ.regActivo = null; VZ.sinTexto = {}; VZ.registros = [{ id: ${JSON.stringify("h' onmouseover='x")}, tomo: ${JSON.stringify(mal)}, numero: 1, pagina: 4, titular: ${JSON.stringify(mal)}, clasificacionJuridica: ${JSON.stringify(mal)}, contenido: ${JSON.stringify('texto ' + mal + ' fiscal <script>x()</script>')}, duisEncontrados: [${JSON.stringify("1'2")}] }];`);
+    b.run('vzPanel()');
+    const h = b.el('vz-panel-lista').innerHTML;
+    assert.ok(h.length > 100, 'el panel debe renderizar la tarjeta');
     assert.ok(!/<img src=x/i.test(h) && !/<script>/i.test(h), h);
-    assert.match(h, /<mark class="highlight-clickable"[^>]*tabindex="0"[^>]*role="button"[^>]*>fiscal<\/mark>/);
-    assert.ok(!/onclick="[^"]*(onmouseover|alert)/.test(h));
+    assert.match(h, /<mark class="vz-m">fiscal<\/mark>/);
+    // Sin atributos on* reales: se vacían los valores entre comillas (donde el dato hostil queda inerte y escapado)
+    assert.ok(!/\son\w+=/i.test(h.replace(/"[^"]*"/g, '""').replace(/&lt;[^>]*?&gt;/g, '')), 'sin manejadores en línea con datos del corpus');
+    assert.match(h, /<button type="button" class="vz-btn" data-vz-resaltar="h&#39; onmouseover=&#39;x"/);
   });
 
   it('el HTML de la portada no incrusta datos dinámicos ni JSON en <script> con valores del corpus', () => {
-    const h = renderPortal({ totalDocumentos: 5, totalAlertas: 2 });
+    const h = renderPortal({ totalDocumentos: 5, totalAlertas: 2, diarios: cargarCatalogo() });
     assert.ok(!/<script[^>]*>[^<]*(titular|contenido)\s*:\s*['"`]/.test(h));
     assert.ok(!/\$\{(e|l|m|rec|d)\.(titular|contenido|denominacion)\}/.test(h.replace(/escapeHtmlText\([^)]*\)/g, '')), 'quedan interpolaciones sin escapar');
   });
@@ -499,7 +505,7 @@ describe('Adversarial: XSS con datos hostiles del corpus', () => {
 // ------------------------------------------------------------------------------------------------
 describe('Adversarial: interfaz de búsqueda (carreras, errores HTTP, historial)', () => {
   function entorno(respuestas: (url: string, init?: any) => Promise<{ status: number; body: unknown }> | { status: number; body: unknown }) {
-    const html = renderPortal({ totalDocumentos: 1, totalAlertas: 0 });
+    const html = renderPortal({ totalDocumentos: 1, totalAlertas: 0, diarios: cargarCatalogo() });
     const codigo = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]!).sort((a, b) => b.length - a.length)[0]!;
     class E {
       innerHTML = ''; innerText = ''; textContent = ''; value = ''; checked = false; disabled = false; options = [{ value: '' }, { value: 'EDICTO_JUDICIAL' }];
@@ -601,7 +607,7 @@ describe('Adversarial: interfaz de búsqueda (carreras, errores HTTP, historial)
   });
 
   it('el HTML trae etiquetas accesibles y una región aria-live para resultados', () => {
-    const h = renderPortal({ totalDocumentos: 1, totalAlertas: 0 });
+    const h = renderPortal({ totalDocumentos: 1, totalAlertas: 0, diarios: cargarCatalogo() });
     assert.match(h, /id="query-input"[^>]*aria-label=/);
     assert.match(h, /id="category-filter"[^>]*aria-label=/);
     assert.match(h, /id="search-resumen"[^>]*aria-live="polite"/);
@@ -671,9 +677,10 @@ describe('Adversarial: servidor HTTP real', () => {
   };
 
   it('consulta válida: JSON con resultados, caché por URL y cabeceras de endurecimiento', async () => {
-    const { r, json } = await get('/api/v1/search?q=' + encodeURIComponent('amnistía fiscal'));
+    const { r, json } = await get('/api/v1/search?q=' + encodeURIComponent('Acuerdo No. 755'));
     assert.equal(r.status, 200);
-    assert.equal(json.total, 1);
+    assert.ok(json.total >= 1);
+    assert.match(json.resultados[0].diario.titular, /^Acuerdo No\. 755/);
     assert.equal(r.headers.get('x-content-type-options'), 'nosniff');
     assert.ok(r.headers.get('content-security-policy')?.includes("object-src 'none'"));
     assert.match(r.headers.get('cache-control') ?? '', /public/);
@@ -751,22 +758,28 @@ describe('Adversarial: servidor HTTP real', () => {
 describe('Adversarial: consultas reales sobre el corpus real, verificadas a mano', () => {
   const idx = new DiarioIndex();
   idx.addBatch(corpus.map((r) => ({ ...r })));
-  const ID = 'do-453-23102026-p1-dec690';
+  // Acuerdo real del PDF (pág. 26): se localiza por su titular, nunca por un id escrito a mano.
+  const acuerdo = corpus.find((r) => /^Acuerdo No\. 755 —/.test(r.titular))!;
+  const ID = acuerdo.id;
   const todo = (q: string) => idx.buscar({ q, porPagina: 50 });
 
-  it('el decreto 690 aparece primero con 690, D.690, Dec. 690/2026 y decreto nº 690', () => {
-    for (const q of ['690', 'D.690', 'Dec. 690/2026', 'decreto nº 690', 'Decreto No. 690.-', 'decreto N° 690', 'DECRETO LEGISLATIVO 690']) {
+  it('el acuerdo 755 aparece primero con 755, D.755, Dec. 755/2026, acuerdo nº 755 y ACUERDO EJECUTIVO 755', () => {
+    assert.ok(acuerdo, 'el acuerdo 755 debe existir en el corpus real');
+    for (const q of ['755', 'D.755', 'Dec. 755/2026', 'acuerdo nº 755', 'Acuerdo No. 755.-', 'acuerdo N° 755', 'ACUERDO EJECUTIVO 755']) {
       assert.equal(todo(q).resultados[0]?.id, ID, q);
     }
   });
 
-  it('la sumario/denominación no se presenta como dato: «recargos e intereses» muestra solo el párrafo que lo contiene', () => {
-    const x = todo('recargos e intereses').resultados[0]!;
-    assert.equal(x.id, ID);
+  it('el cuerpo no se presenta como dato: «incisos arancelarios» muestra solo el párrafo que lo contiene', () => {
+    const x = todo('"incisos arancelarios"').resultados.find((y) => y.id === ID)!;
+    assert.ok(x, 'debe hallar el acuerdo 755');
     const cuerpo = x.coincidencias.filter((c) => c.ubicacion === 'cuerpo');
-    assert.equal(cuerpo.length, 1);
-    assert.deepEqual(marcado(cuerpo[0]!.html), ['recargos e intereses']);
-    assert.ok(cuerpo[0]!.texto.length < corpus.find((d) => d.id === ID)!.contenido.length);
+    assert.ok(cuerpo.length >= 1);
+    for (const c of cuerpo) {
+      assert.ok(marcado(c.html).length >= 1);
+      assert.ok(marcado(c.html).every((m) => plegar(m) === 'incisos arancelarios'));
+      assert.ok(c.texto.length < acuerdo.contenido.length, 'el fragmento es un párrafo, no el texto completo');
+    }
   });
 
   it('«ley especial» y «"ley especial"» marcan solo esas palabras y las marcas son literales del texto', () => {
@@ -796,7 +809,7 @@ describe('Adversarial: consultas reales sobre el corpus real, verificadas a mano
   });
 
   it('toda consulta del corpus devuelve marcas que son subcadenas literales del texto mostrado', () => {
-    for (const q of ['amnistía fiscal', 'recargos e intereses', 'Tránsito', 'TRIBUTARIAS', 'juzgado', 'san salvador', 'herencia', 'sociedad', 'notario', 'señor', '"ley especial"']) {
+    for (const q of ['zonas francas', 'incisos arancelarios', 'Tránsito', 'TRIBUTARIAS', 'juzgado', 'san salvador', 'herencia', 'sociedad', 'notario', 'señor', '"ley especial"']) {
       for (const x of todo(q).resultados) {
         for (const f of x.coincidencias) {
           assert.ok(f.rangos.every(([a, b]) => a >= 0 && b <= f.texto.length && a < b), q);
@@ -807,7 +820,7 @@ describe('Adversarial: consultas reales sobre el corpus real, verificadas a mano
   });
 
   it('rendimiento concurrente: p95 < 150 ms con consultas variadas', async () => {
-    const qs = ['ley', 'ley especial', 'amnistía fiscal', 'juzgado civil', 'señor', 'san salvador', 'herencia intestada', '690', 'Tránsito', 'sociedad anónima'];
+    const qs = ['ley', 'ley especial', 'zonas francas', 'juzgado civil', 'señor', 'san salvador', 'herencia intestada', '755', 'Tránsito', 'sociedad anónima'];
     const tiempos: number[] = [];
     await Promise.all(Array.from({ length: 20 }, async (_, w) => {
       for (let i = 0; i < 30; i++) {

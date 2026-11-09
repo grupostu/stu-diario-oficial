@@ -31,10 +31,11 @@ function gsHtmlResumen(data) {
   return '<p class="text-xs sm:text-sm text-slate-200 leading-relaxed">' + gsEscapar(texto) + '</p>' + interp;
 }
 
-function gsHtmlFragmento(f, pagina) {
+function gsHtmlFragmento(f, d) {
+  var pagina = d.pagina;
   var marcas = f.rangos && f.rangos.length ? f.texto.slice(f.rangos[0][0], f.rangos[0][1]) : '';
   var botonPdf = marcas
-    ? '<button type="button" data-gs-visor="1" data-pag="' + gsEscapar(parseInt(pagina, 10) || 1) + '" data-term="' + gsEscapar(marcas) + '" class="text-[11px] font-bold text-cyan-300 hover:text-cyan-200 underline underline-offset-2 whitespace-nowrap">Ubicar en el PDF</button>'
+    ? '<button type="button" data-gs-visor="1" data-pag="' + gsEscapar(parseInt(pagina, 10) || 1) + '" data-dia="' + gsEscapar(d.diarioId || '') + '" data-rec="' + gsEscapar(d.id) + '" data-term="' + gsEscapar(gsConsultaActual || marcas) + '" class="text-[11px] font-bold text-cyan-300 hover:text-cyan-200 underline underline-offset-2 whitespace-nowrap">Ubicar en el PDF</button>'
     : '';
   return '<figure class="rounded-2xl border border-slate-800/80 bg-slate-950/85 p-4">' +
     '<figcaption class="flex flex-wrap items-center justify-between gap-2 mb-2">' +
@@ -49,7 +50,7 @@ function gsHtmlFragmento(f, pagina) {
 
 function gsHtmlTarjeta(item) {
   var d = item.diario, id = item.identificacion, cab = item.cabecera;
-  var citation = 'Diario Oficial Tomo ' + d.tomo + ', N° ' + d.numero + ', Pág. ' + d.pagina + ' de 164 (' + d.fecha + ')';
+  var citation = 'Diario Oficial Tomo ' + d.tomo + ', N° ' + d.numero + ', Pág. ' + d.pagina + ' (' + d.fecha + ')';
   var cuerpo = (item.coincidencias || []).filter(function (f) { return f.ubicacion === 'cuerpo'; });
   var cabeceraCoincide = (item.coincidencias || []).filter(function (f) { return f.ubicacion === 'cabecera' && f.rangos.length > 0; });
   var clasif = d.clasificacionJuridica || 'Edicto Judicial';
@@ -72,10 +73,10 @@ function gsHtmlTarjeta(item) {
   // 2) Fragmentos coincidentes, cada uno rotulado con su campo/párrafo
   if (cuerpo.length > 0) {
     html += '<div class="space-y-2.5" role="group" aria-label="Fragmentos donde coincide tu búsqueda">' +
-      cuerpo.map(function (f) { return gsHtmlFragmento(f, d.pagina); }).join('') + '</div>';
+      cuerpo.map(function (f) { return gsHtmlFragmento(f, d); }).join('') + '</div>';
     if (item.coincidenciasOmitidas > 0) {
       html += '<p class="mt-2 text-[11px] text-slate-400">Hay ' + item.coincidenciasOmitidas + ' ' + gsPlural(item.coincidenciasOmitidas, 'párrafo más', 'párrafos más') +
-        ' con coincidencias en esta publicación. Ábrela en el Visor Ebook para recorrerlos todos.</p>';
+        ' con coincidencias en esta publicación. Ábrela en el visor para recorrerlos todos.</p>';
     }
   } else if (cabeceraCoincide.length > 0) {
     html += '<p class="rounded-2xl border border-slate-800/80 bg-slate-950/85 p-4 text-xs sm:text-sm text-slate-300 leading-relaxed">Tu búsqueda coincide con los datos de identificación de este documento (' +
@@ -86,8 +87,8 @@ function gsHtmlTarjeta(item) {
 
   html += renderDuiChipsHtml(d.duisEncontrados, d.pagina);
   html += '<div class="flex flex-wrap items-center justify-between gap-3 text-xs border-t border-slate-800/80 pt-3 mt-3"><div class="flex flex-wrap items-center gap-3">' +
-    '<button type="button" data-gs-visor="1" data-pag="' + gsEscapar(d.pagina) + '" data-term="" class="bg-brand-500 hover:bg-brand-400 text-slate-950 font-black px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 transition-all shadow-lg shadow-brand-500/20"><i class="fa-solid fa-book-open-reader"></i> Abrir en Visor Ebook y Remarcar en PDF (Pág. ' + gsEscapar(d.pagina) + ')</button>' +
-    '<a href="/pdf/23-10-2026.pdf#page=' + gsEscapar(d.pagina) + '" download="Diario_Oficial_23_Octubre_2026_GrupoStu.pdf" class="text-slate-400 hover:text-white font-bold flex items-center gap-1"><i class="fa-solid fa-download"></i> PDF Original</a></div>' +
+    '<button type="button" data-gs-visor="1" data-pag="' + gsEscapar(d.pagina) + '" data-dia="' + gsEscapar(d.diarioId || '') + '" data-rec="' + gsEscapar(d.id) + '" data-term="" class="bg-brand-500 hover:bg-brand-400 text-slate-950 font-black px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 transition-all shadow-lg shadow-brand-500/20"><i class="fa-solid fa-book-open-reader"></i> Abrir en el visor y resaltar en el PDF (pág. ' + gsEscapar(d.pagina) + ')</button>' +
+    '<a href="' + gsEscapar(String(d.pdfUrlOficial || '').split('#')[0]) + '" download class="text-slate-400 hover:text-white font-bold flex items-center gap-1"><i class="fa-solid fa-download"></i> PDF original</a></div>' +
     '<a href="https://www.diariooficial.gob.sv/" target="_blank" rel="noopener noreferrer" class="text-cyan-400 hover:text-cyan-300 font-bold flex items-center gap-1.5">Fuente Estatal: diariooficial.gob.sv <i class="fa-solid fa-arrow-up-right-from-square text-[11px]"></i></a></div>';
   return html + '</article>';
 }
@@ -124,7 +125,7 @@ function gsActivarAcciones(contenedor, buscarPagina) {
     if (!el || el.disabled) return;
     if (el.hasAttribute('data-gs-visor')) {
       var t = el.getAttribute('data-term') || gsConsultaActual;
-      openEbookViewer(parseInt(el.getAttribute('data-pag'), 10) || 1, t);
+      openEbookViewer(parseInt(el.getAttribute('data-pag'), 10) || 1, t, el.getAttribute('data-dia') || undefined, el.getAttribute('data-rec') || undefined);
     } else if (el.hasAttribute('data-gs-cita')) {
       copyCitation(el.getAttribute('data-gs-cita'));
     } else if (el.hasAttribute('data-gs-reintentar')) {

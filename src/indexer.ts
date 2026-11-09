@@ -51,6 +51,8 @@ export interface DiarioPublico {
   numero: number;
   fecha: string;
   pagina: number;
+  paginaFin?: number;
+  diarioId?: string;
   categoria: CategoryType;
   clasificacionJuridica?: DiarioRecord['clasificacionJuridica'];
   seccion: string;
@@ -322,8 +324,10 @@ export class DiarioIndex {
         if (sp >= 0 && sp < ancla.a) ini = sp + 1;
       }
       if (fin < texto.length) {
+        // Cierra la ventana al final de la palabra; si no queda ningún espacio, al final del texto (nunca a mitad de palabra).
         const sp = texto.indexOf(' ', fin);
-        fin = sp >= 0 && sp - fin < 40 ? sp : fin;
+        const cierre = sp >= 0 ? sp : texto.length;
+        fin = cierre - fin < 40 ? cierre : fin;
       }
     }
     const rangos: Array<[number, number]> = [];
@@ -379,6 +383,8 @@ export class DiarioIndex {
       numero: rec.numero,
       fecha: rec.fecha,
       pagina: rec.pagina,
+      paginaFin: rec.paginaFin,
+      diarioId: rec.diarioId ?? rec.fecha,
       categoria: rec.categoria,
       clasificacionJuridica: rec.clasificacionJuridica,
       seccion: rec.seccion,

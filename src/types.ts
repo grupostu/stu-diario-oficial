@@ -22,6 +22,14 @@ export interface DiarioRecord {
   numero: number;
   fecha: string; // YYYY-MM-DD
   pagina: number;
+  /** Última página en la que continúa la publicación (si ocupa más de una). */
+  paginaFin?: number;
+  /** Identificador del diario (fecha ISO). */
+  diarioId?: string;
+  /** Primera, segunda o tercera publicación (solo edictos). */
+  publicacion?: string;
+  /** Rangos exactos [página, desde, hasta) del texto de la página (orden de lectura) que ocupa la publicación. */
+  rangos?: Array<[number, number, number]>;
   categoria: CategoryType;
   clasificacionJuridica?: LegalClassification;
   seccion: string;

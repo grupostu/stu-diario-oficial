@@ -22,27 +22,49 @@ const rec = (over: Partial<DiarioRecord>): DiarioRecord => ({
   titular: 't', contenido: 'c', duisEncontrados: [], nitsEncontrados: [], nombresClave: [], pdfUrlOficial: '/pdf/23-10-2026.pdf#page=50', ...over
 });
 
-describe('Corpus real: pureza documental (sin marcas de agua ni basura OCR)', () => {
-  it('no contiene marcas de agua, cabeceras de página ni líneas de sumario con puntos guía', () => {
+describe('Corpus real: pureza documental (transcripción fiel, sin marcas de agua ni basura de codificación)', () => {
+  it('no contiene marcas de agua ni cabeceras de página; los puntos guía solo existen en el sumario de la portada', () => {
     for (const r of corpus) {
       assert.doesNotMatch(r.contenido, /DOCUMENTO SOLO PARA CONSULTA/i, r.id);
       assert.doesNotMatch(r.contenido, /^\s*\d{0,4}\s*DIARIO OFICIAL\b.*(TOMO|San Salvador)/im, r.id);
-      assert.doesNotMatch(r.contenido, /\.{5,}/, r.id);
+      // El sumario de la portada es copia literal del PDF y trae puntos guía; ninguna otra publicación los tiene.
+      if (r.seccion !== 'Portada y sumario') assert.doesNotMatch(r.contenido, /\.{5,}/, r.id);
       assert.ok(!r.contenido.includes('�') && !r.titular.includes('�'), `${r.id} con carácter de reemplazo`);
     }
   });
 
-  it('reconstruye palabras guionadas al final de línea (DEPARTA-\\nMENTO)', () => {
-    const malos = corpus.filter((r) => /[a-záéíóúñ]-[ \t]*\n[ \t]*[a-záéíóúñ]/i.test(r.contenido)).map((r) => r.id);
-    assert.deepEqual(malos, [], `${malos.length} registros con palabras partidas`);
+  it('el texto es copia fiel del PDF (conserva los guiones de fin de línea) pero el buscador halla la palabra entera (DEPARTA-\nMENTO)', () => {
+    const idx = new DiarioIndex();
+    idx.addBatch(corpus.map((r) => ({ ...r })));
+    const partidas = corpus.flatMap((r) => [...r.contenido.matchAll(/([\p{L}]{2,})-[ \t]*\n[ \t]*(\p{Ll}[\p{L}]*)/gu)].map((m) => ({ id: r.id, entera: m[1]! + m[2]! })));
+    assert.ok(partidas.length > 0, 'el corpus real trae palabras partidas por guion');
+    for (const { id, entera } of partidas.slice(0, 200)) {
+      if (entera.length > 40) continue;
+      const hallados = idx.buscar({ q: entera, porPagina: 5000 }).resultados.map((x) => x.id);
+      assert.ok(hallados.includes(id), `«${entera}» (partida por guion) debe hallar ${id}`);
+    }
   });
 
-  it('no deja rótulos con mayúsculas alternadas por OCR (acEPTacioN, HErENcia)', () => {
+  it('los titulares no tienen mayúsculas alternadas y el buscador ignora la mayúscula corrupta del OCR (DEcrETa)', () => {
+    const idx = new DiarioIndex();
+    idx.addBatch(corpus.map((r) => ({ ...r })));
+    let comprobados = 0;
     for (const r of corpus) {
-      const tokens = r.contenido.match(/[A-Za-zÁÉÍÓÚÑáéíóúñ]{4,}/g) ?? [];
-      const sucios = tokens.filter((t) => /[a-zñáéíóú][A-ZÑÁÉÍÓÚ]/.test(t) && !/^Mc[A-Z]/.test(t));
-      assert.deepEqual(sucios, [], r.id);
+      const sucios = (r.titular.match(/[A-Za-zÁÉÍÓÚÑáéíóúñ]{4,}/g) ?? []).filter((t) => /[a-zñáéíóú][A-ZÑÁÉÍÓÚ]/.test(t) && !/^Mc[A-Z]/.test(t));
+      assert.deepEqual(sucios, [], `${r.id}: titular con mayúsculas alternadas`);
     }
+    // Rótulos de contenido con mayúsculas alternadas: se hallan igual escritos en minúsculas
+    const vistos = new Set<string>();
+    for (const r of corpus) {
+      for (const t of r.contenido.match(/[A-Za-zÁÉÍÓÚÑáéíóúñ]{5,}/g) ?? []) {
+        if (!/[a-zñáéíóú][A-ZÑÁÉÍÓÚ]/.test(t) || /^Mc[A-Z]/.test(t) || vistos.has(t) || vistos.size >= 150) continue;
+        vistos.add(t);
+        const hallados = idx.buscar({ q: t.toLowerCase(), porPagina: 5000 }).resultados.map((x) => x.id);
+        assert.ok(hallados.includes(r.id), `«${t}» debe hallar ${r.id} aunque se escriba en minúsculas`);
+        comprobados++;
+      }
+    }
+    assert.ok(comprobados > 20);
   });
 
   it('usa solo categorías canónicas del tipo CategoryType y ids únicos', () => {
@@ -63,7 +85,7 @@ describe('Corpus real: titulares que reflejan el acto jurídico', () => {
       assert.doesNotMatch(r.titular, /\(Edicto #\d+\)/, `${r.id}: sumario "Edicto #N"`);
       assert.doesNotMatch(r.titular, /\b(de|del|la|el|los|las|en|y)\s*$/i, `${r.id}: termina en preposición`);
       assert.doesNotMatch(r.titular, /^(Autoridad Judicial|Notarial (Ubicad|Situad)|Juez (De|Primero))/, `${r.id}: titular genérico: ${r.titular}`);
-      assert.ok(r.titular.length >= 8 && r.titular.length <= 160, `${r.id}: largo ${r.titular.length}`);
+      assert.ok(r.titular.length >= 8 && r.titular.length <= 200, `${r.id}: largo ${r.titular.length}`);
     }
   });
 

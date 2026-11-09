@@ -25,7 +25,7 @@ const OMITIR = new Set([
   'el', 'la', 'los', 'las', 'de', 'del', 'a', 'su', 'defunción', 'defuncion', 'causante', 'señor', 'señora',
   'señorita', 'sr.', 'sra.', 'doña', 'don', 'licenciado', 'licenciada', 'doctor', 'doctora', 'dejó', 'dejo',
   'dejara', 'por', 'que', 'sucesión', 'sucesion', 'herencia', 'intestada', 'testamentaria', 'yacente', 'conocido',
-  'conocida', 'definitiva', 'definitivo', 'interina', 'interino', 'con', 'beneficio', 'inventario', 'ab-intestato'
+  'conocida', 'hace', 'saber', 'definitiva', 'definitivo', 'interina', 'interino', 'con', 'beneficio', 'inventario', 'ab-intestato'
 ]);
 const TOKEN_NOMBRE = /^[A-ZÁÉÍÓÚÑ][A-Za-zÁÉÍÓÚÑáéíóúñ'’-]*[,.;:]?$/;
 

@@ -6,12 +6,12 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { DiarioIndex } from './indexer.js';
 import { NotifierEngine } from './notifier.js';
-import { parseRawEntry } from './parser.js';
 import { renderPortal } from './views.js';
 import { renderPrivacidad } from './privacidad.js';
 import { validarParametrosBusqueda } from './busqueda_esquema.js';
 import { LimitadorTasa } from './limitador.js';
 import type { DiarioRecord } from './types.js';
+import { cargarCatalogo, ID_DIARIO, type Diario } from './diarios.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -40,6 +40,7 @@ const possiblePublicPaths = [
 ];
 for (const p of possiblePublicPaths) {
   if (fs.existsSync(p)) {
+    app.use('/data', express.static(path.join(p, 'data'), { maxAge: 0, etag: true, setHeaders: (res) => res.setHeader('Cache-Control', 'no-cache') }));
     app.use(express.static(p, { maxAge: '30d', immutable: true }));
     console.log(`[stu-diario-oficial] Sirviendo archivos estáticos desde: ${p}`);
     break;
@@ -50,12 +51,11 @@ const index = new DiarioIndex();
 const notifier = new NotifierEngine();
 
 // ------------------------------------------------------------------------------
-// CARGA DE DATOS OFICIALES REALES Y MARCAS
+// CARGA DEL CORPUS: todo sale de los PDF (scripts/construir_corpus.ts). Nunca hay datos de ejemplo.
 // ------------------------------------------------------------------------------
-let marcasData: any[] = [];
+const catalogo: Diario[] = cargarCatalogo();
 let allRealRecords: DiarioRecord[] = [];
 
-// 1. Cargar registros extraídos del Diario Oficial real
 const possibleRealPaths = [
   path.join(__dirname, 'data_diario_real.json'),
   path.join(__dirname, '../src/data_diario_real.json'),
@@ -65,77 +65,25 @@ const possibleRealPaths = [
 const realDataPath = possibleRealPaths.find(p => fs.existsSync(p));
 if (realDataPath) {
   try {
-    const raw = fs.readFileSync(realDataPath, 'utf8');
-    allRealRecords = JSON.parse(raw);
+    allRealRecords = JSON.parse(fs.readFileSync(realDataPath, 'utf8'));
     index.addBatch(allRealRecords);
-    console.log(`[stu-diario-oficial] Base de datos enriquecida con ${allRealRecords.length} publicaciones oficiales reales desde ${realDataPath}.`);
+    console.log(`[stu-diario-oficial] ${allRealRecords.length} publicaciones indexadas desde ${realDataPath}.`);
   } catch (err) {
     console.error('[stu-diario-oficial] Error al leer data_diario_real.json:', err);
   }
 }
-
-// 2. Cargar catálogo de marcas registradas del CNR
-const possibleMarcasPaths = [
-  path.join(__dirname, 'data_marcas.json'),
-  path.join(__dirname, '../src/data_marcas.json'),
-  path.join(process.cwd(), 'src/data_marcas.json'),
-  path.join(process.cwd(), 'dist/data_marcas.json')
-];
-const marcasPath = possibleMarcasPaths.find(p => fs.existsSync(p));
-if (marcasPath) {
-  try {
-    const rawMarcas = fs.readFileSync(marcasPath, 'utf8');
-    marcasData = JSON.parse(rawMarcas);
-
-    // Convertir marcas a registros indexables de DiarioRecord
-    const marcasDiario: DiarioRecord[] = marcasData.map((m: any) => ({
-      id: m.id,
-      tomo: m.tomo,
-      numero: 198,
-      fecha: m.fechaPublicacion,
-      pagina: m.pagina,
-      categoria: 'REGISTRO_MARCA',
-      seccion: 'Registro de la Propiedad Intelectual (CNR)',
-      titular: `SOLICITUD DE MARCA: ${m.denominacion} (Clase ${m.claseNiza})`,
-      contenido: `REGISTRO DE LA PROPIEDAD INTELECTUAL. Solicitud de registro de signo distintivo. Denominación: "${m.denominacion}". Tipo: ${m.tipoSigno}. Clase Internacional de Niza: ${m.claseNiza}. Cobertura: ${m.claseDescripcion}. Solicitante / Titular: ${m.titular}. Número de Expediente: ${m.expediente}. Tomo ${m.tomo}, Página ${m.pagina}. Publicación oficial para efectos de oposición de terceros conforme a la Ley de Marcas.`,
-      duisEncontrados: [],
-      nitsEncontrados: [],
-      nombresClave: [m.denominacion, m.titular],
-      pdfUrlOficial: `/pdf/23-10-2026.pdf#page=${m.pagina}`
-    }));
-
-    index.addBatch(marcasDiario);
-    console.log(`[stu-diario-oficial] Registradas ${marcasData.length} publicaciones de marcas de propiedad intelectual.`);
-  } catch (err) {
-    console.error('[stu-diario-oficial] Error al leer data_marcas.json:', err);
-  }
-}
-
-// 3. Fallback de muestras si no hubiera datos
-if (index.count() === 0) {
-  const sampleEntries = [
-    parseRawEntry(
-      `TRIBUNAL SEGUNDO DE SENTENCIA DE SANTA ANA. Causa Penal No. 120-2024.
-Se hace saber al señor DAVID SAUL ACOSTA MARTINEZ, con Documento Único de Identidad número 02444983-6, que mediante auto de fecha 15 de octubre de 2024 se ha dictado sentencia condenatoria en su contra en calidad de REBELDÍA por el delito de Estafa Informática en perjuicio de la Iglesia de Chalchuapa, condenándole a cuatro años de prisión y al pago de diecinueve mil quinientos dólares de los Estados Unidos de América en concepto de responsabilidad civil. Se libran las correspondientes órdenes de captura.`,
-      { tomo: 441, numero: 204, fecha: '2024-10-28', pagina: 45, pdfUrl: '/pdf/23-10-2026.pdf#page=45' }
-    ),
-    parseRawEntry(
-      `JUZGADO TERCERO DE LO CIVIL Y MERCANTIL DE SAN SALVADOR.
-Emplazamiento por edicto a la sociedad INVERSIONES SANTA ELENA, S.A. DE C.V., con NIT 0614-120598-101-2, en juicio ejecutivo mercantil promovido por Banco Agrícola para que en el plazo de diez días hábiles conteste la demanda bajo apercibimiento de ley.`,
-      { tomo: 442, numero: 210, fecha: '2024-11-04', pagina: 78, pdfUrl: '/pdf/23-10-2026.pdf#page=78' }
-    )
-  ];
-  index.addBatch(sampleEntries);
-}
+// Las marcas solo existen si un diario cargado trae avisos de marcas (categoría REGISTRO_MARCA).
+const marcasData = (): DiarioRecord[] => index.getAllRecords().filter((r) => r.categoria === 'REGISTRO_MARCA');
 
 // ------------------------------------------------------------------------------
 // ÍNDICES O(1) Y CACHÉ EN MEMORIA PARA ALTA CONCURRENCIA
 // ------------------------------------------------------------------------------
-const recordsByPage = new Map<number, DiarioRecord[]>();
+const registrosPorDiario = new Map<string, DiarioRecord[]>();
 for (const r of index.getAllRecords()) {
-  const list = recordsByPage.get(r.pagina);
-  if (list) list.push(r);
-  else recordsByPage.set(r.pagina, [r]);
+  const id = r.diarioId ?? r.fecha;
+  const lista = registrosPorDiario.get(id);
+  if (lista) lista.push(r);
+  else registrosPorDiario.set(id, [r]);
 }
 
 const cachedEdictos = {
@@ -143,10 +91,8 @@ const cachedEdictos = {
   edictos: index.getRecentByCategory('EDICTO_JUDICIAL', 20)
 };
 
-const cachedLeyes = {
-  total: index.getRecentByCategory('DECRETO_LEGISLATIVO', 15).length,
-  leyes: index.getRecentByCategory('DECRETO_LEGISLATIVO', 15)
-};
+const leyesLista = index.getAllRecords().filter((r) => (r.categoria === 'DECRETO_LEGISLATIVO' || r.categoria === 'ACUERDO_EJECUTIVO') && /^(Decreto|Acuerdo) No\./.test(r.titular)).slice(0, 40);
+const cachedLeyes = { total: leyesLista.length, leyes: leyesLista };
 
 let cachedPortalKey = '';
 let cachedPortalHtml = '';
@@ -161,7 +107,7 @@ function getPortalHtml(): string {
   const alerts = notifier.getSubscriptionsCount();
   const key = `${docs}:${alerts}`;
   if (key !== cachedPortalKey || !cachedPortalHtml) {
-    cachedPortalHtml = renderPortal({ totalDocumentos: docs, totalAlertas: alerts });
+    cachedPortalHtml = renderPortal({ totalDocumentos: docs, totalAlertas: alerts, diarios: catalogo });
     cachedPortalKey = key;
   }
   return cachedPortalHtml;
@@ -192,7 +138,8 @@ app.get(['/health', '/api/health'], (_req: Request, res: Response) => {
     service: 'stu-diario-oficial',
     uptimeSeconds: Math.floor(process.uptime()),
     indexedRecords: index.count(),
-    marcasCatalogadas: marcasData.length,
+    diarios: catalogo.length,
+    marcasCatalogadas: marcasData().length,
     activeSubscriptions: notifier.getSubscriptionsCount()
   });
 });
@@ -248,46 +195,73 @@ app.get('/visor', (req: Request, res: Response) => {
   res.redirect(302, destino);
 });
 
-// Endpoint O(1) para obtener todos los registros transcritos de una página específica para el visor Ebook
-app.get('/api/v1/page-data/:page', (req: Request, res: Response) => {
-  const pageNum = parseInt(String(req.params.page), 10);
-  if (isNaN(pageNum)) {
-    return res.status(400).json({ error: 'Número de página inválido' });
-  }
+// Catálogo de diarios disponibles (lo que el visor puede abrir).
+app.get('/api/v1/diarios', (_req: Request, res: Response) => {
+  res.set('Cache-Control', 'no-cache');
+  res.json({ diarios: catalogo });
+});
 
-  const pageRecords = recordsByPage.get(pageNum) ?? [];
-  res.set(EDGE_API_HEADERS);
+// Publicaciones de un diario con su texto y los rangos exactos que ocupan en el PDF (el visor las resalta).
+app.get('/api/v1/diarios/:id/registros', (req: Request, res: Response) => {
+  const id = String(req.params.id);
+  if (!ID_DIARIO.test(id) || !catalogo.some((d) => d.id === id)) return res.status(404).json({ error: 'Diario no encontrado' });
+  const lista = registrosPorDiario.get(id) ?? [];
+  res.set('Cache-Control', 'no-cache');
   res.json({
-    pagina: pageNum,
-    totalRegistros: pageRecords.length,
-    records: pageRecords
+    diario: id,
+    registros: lista.map((r) => ({
+      id: r.id,
+      pagina: r.pagina,
+      paginaFin: r.paginaFin ?? r.pagina,
+      titular: r.titular,
+      clasificacionJuridica: r.clasificacionJuridica,
+      contenido: r.contenido,
+      duisEncontrados: r.duisEncontrados,
+      rangos: r.rangos ?? []
+    }))
   });
 });
 
-// Endpoint especializado para el buscador de marcas
+// Dónde más aparece lo buscado: coincidencias por diario (para saltar de un diario a otro).
+app.get('/api/v1/coincidencias', limitarTasa(limiteBusqueda), (req: Request, res: Response) => {
+  const v = validarParametrosBusqueda({ q: req.query.q } as Record<string, unknown>);
+  if (!v.ok) return res.status(400).json({ error: 'Parámetros de búsqueda inválidos', diarios: [] });
+  const r = index.buscar({ q: v.valor.q, pagina: 1, porPagina: 5000 });
+  const por = new Map<string, { total: number; primeraPagina: number }>();
+  for (const x of r.resultados) {
+    const id = x.diario.diarioId ?? x.diario.fecha;
+    const u = por.get(id);
+    if (!u) por.set(id, { total: 1, primeraPagina: x.diario.pagina });
+    else {
+      u.total++;
+      if (x.diario.pagina < u.primeraPagina) u.primeraPagina = x.diario.pagina;
+    }
+  }
+  res.set('Cache-Control', 'no-cache');
+  res.json({
+    diarios: catalogo.map((d) => ({ id: d.id, tomo: d.tomo, numero: d.numero, fecha: d.fecha, total: por.get(d.id)?.total ?? 0, primeraPagina: por.get(d.id)?.primeraPagina ?? 1 }))
+  });
+});
+
+// Compatibilidad: publicaciones que ocupan una página (de todos los diarios, normalmente uno).
+app.get('/api/v1/page-data/:page', (req: Request, res: Response) => {
+  const pageNum = parseInt(String(req.params.page), 10);
+  if (isNaN(pageNum)) return res.status(400).json({ error: 'Número de página inválido' });
+  const pageRecords = index.getAllRecords().filter((r) => r.pagina <= pageNum && (r.paginaFin ?? r.pagina) >= pageNum);
+  res.set(EDGE_API_HEADERS);
+  res.json({ pagina: pageNum, totalRegistros: pageRecords.length, records: pageRecords });
+});
+
+// Marcas: solo avisos de marcas que existan en los diarios cargados.
 app.get('/api/v1/marcas', limitarTasa(limiteBusqueda), (req: Request, res: Response) => {
   const query = String(req.query.q || '').trim().toLowerCase().slice(0, 100);
-  const clase = req.query.clase ? String(req.query.clase).trim() : '';
-
-  let filtered = marcasData;
-
-  if (clase) {
-    filtered = filtered.filter(m => String(m.claseNiza) === clase);
-  }
-
-  if (query) {
-    filtered = filtered.filter(m =>
-      m.denominacion.toLowerCase().includes(query) ||
-      m.titular.toLowerCase().includes(query) ||
-      m.claseDescripcion.toLowerCase().includes(query) ||
-      m.expediente.toLowerCase().includes(query)
-    );
-  }
-
+  let filtered = marcasData();
+  if (query) filtered = filtered.filter((m) => `${m.titular} ${m.contenido}`.toLowerCase().includes(query));
   res.set(EDGE_API_HEADERS);
   res.json({
     total: filtered.length,
-    marcas: filtered
+    marcas: filtered.map((m) => ({ id: m.id, diarioId: m.diarioId ?? m.fecha, tomo: m.tomo, numero: m.numero, fecha: m.fecha, pagina: m.pagina, titular: m.titular, contenido: m.contenido })),
+    aviso: filtered.length === 0 ? 'Los diarios cargados no contienen avisos de marcas para este criterio.' : undefined
   });
 });
 
@@ -332,5 +306,5 @@ app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
 
 app.listen(PORT, () => {
   console.log(`[stu-diario-oficial] Servidor escuchando en puerto ${PORT}`);
-  console.log(`[stu-diario-oficial] Base de datos indexada con ${index.count()} publicaciones oficiales y ${marcasData.length} marcas.`);
+  console.log(`[stu-diario-oficial] ${index.count()} publicaciones indexadas en ${catalogo.length} diario(s).`);
 });
