@@ -292,7 +292,7 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
           <div class="flex flex-col sm:flex-row gap-3">
             <div class="relative flex-1">
               <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gs-text3"></i>
-              <input type="text" id="marca-query" placeholder="Buscar por denominación de marca o titular…"
+              <input type="text" id="marca-query" aria-label="Buscar por denominación de marca o titular" placeholder="Buscar por denominación de marca o titular…"
                 class="w-full bg-gs-bg border border-gs-border focus:border-gs-accent rounded-2xl pl-11 pr-4 py-3.5 text-gs-text text-sm outline-none">
             </div>
             <button type="submit" class="bg-gs-accent hover:bg-gs-accent-hover text-gs-ink font-semibold px-6 py-3.5 rounded-2xl text-xs sm:text-sm transition-all flex items-center justify-center gap-2">
@@ -478,7 +478,7 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
         <h3 class="text-xl font-bold text-gs-text flex items-center gap-2">
           <i class="fa-solid fa-bell text-gs-accent"></i> Alerta Preventiva por DUI
         </h3>
-        <button onclick="closeModalAlert()" class="text-gs-text2 hover:text-gs-text text-lg"><i class="fa-solid fa-xmark"></i></button>
+        <button type="button" aria-label="Cerrar" onclick="closeModalAlert()" class="text-gs-text2 hover:text-gs-text text-lg"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <p class="text-xs text-gs-text2 mb-6 leading-relaxed">
         Nuestro motor revisa cada nueva publicación del Diario Oficial. Si se detecta tu número de DUI, nombre o sociedad en un edicto judicial, orden de captura, embargo o registro de marca, te enviaremos una notificación inmediata.
@@ -486,12 +486,12 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
       <form onsubmit="submitAlert(event)" novalidate class="space-y-4">
         <div>
           <label class="block text-xs font-bold text-gs-text2 mb-1">DUI o Nombre a Monitorear</label>
-          <input type="text" id="alert-criterion" placeholder="ej. 00000000-0 o Nombre Completo" required
+          <input type="text" id="alert-criterion" aria-label="DUI o nombre a vigilar" placeholder="ej. 00000000-0 o Nombre Completo" required
             class="w-full bg-gs-bg border border-gs-border rounded-xl px-4 py-3 text-gs-text text-sm outline-none font-mono focus:border-gs-accent">
         </div>
         <div>
           <label class="block text-xs font-bold text-gs-text2 mb-1">Correo Electrónico para Alertas</label>
-          <input type="email" id="alert-email" placeholder="correo@ejemplo.com" required
+          <input type="email" id="alert-email" aria-label="Correo para recibir alertas" placeholder="correo@ejemplo.com" required
             class="w-full bg-gs-bg border border-gs-border rounded-xl px-4 py-3 text-gs-text text-sm outline-none focus:border-gs-accent">
         </div>
         <div>
