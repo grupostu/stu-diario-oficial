@@ -35,7 +35,7 @@ export class PortadaCache {
   private renderizar(): string {
     const clave = this.claveActual();
     if (clave !== this.clave || !this.html) {
-      this.html = renderPortal({ totalDocumentos: this.publicaciones.contar(), totalAlertas: this.suscripciones.contar(), diarios: this.catalogo });
+      this.html = renderPortal({ totalDocumentos: this.publicaciones.contar(), totalAlertas: this.suscripciones.contar(), diarios: this.catalogo }, { externalizarActivos: true });
       this.clave = clave;
       this.pre = null;
     }

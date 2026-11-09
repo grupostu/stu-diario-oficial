@@ -39,7 +39,7 @@ function pedir(opts: { path: string; method?: string; headers?: Record<string, s
 }
 
 /** Representación textual estable de una respuesta (sin valores volátiles). */
-function serializar(r: Resp, normalizar?: (t: string) => string): string {
+function serializar(r: Resp, normalizar?: (t: string) => string, soloHuella = false): string {
   let cuerpo = r.cuerpo;
   if (r.headers['content-encoding'] === 'gzip') cuerpo = gunzipSync(cuerpo);
   const lineas = [`HTTP ${r.status}`];
@@ -54,7 +54,7 @@ function serializar(r: Resp, normalizar?: (t: string) => string): string {
   let texto = cuerpo.toString('utf8');
   texto = texto.replace(/"tiempoMs":[\d.]+/g, '"tiempoMs":0');
   if (normalizar) texto = normalizar(texto);
-  if (cuerpo.length > MAX_CUERPO_LITERAL) {
+  if (soloHuella || cuerpo.length > MAX_CUERPO_LITERAL) {
     lineas.push('', `[cuerpo grande] bytes=${cuerpo.length} sha256=${createHash('sha256').update(cuerpo).digest('hex')}`);
   } else {
     lineas.push('', texto);
@@ -159,6 +159,23 @@ test('golden portada: revalidación con ETag responde 304', async () => {
   const primera = await pedir({ path: '/' });
   const r = await pedir({ path: '/', headers: { 'if-none-match': String(primera.headers.etag) } });
   compararGolden('portada_304', serializar(r));
+});
+
+test('golden activos estáticos de la portada (CSS y JS con huella, caché inmutable)', async () => {
+  const portada = (await pedir({ path: '/' })).cuerpo.toString('utf8');
+  const css = portada.match(/href="(\/estatico\/portada\.[0-9a-f]{12}\.css)"/)?.[1];
+  const js = portada.match(/src="(\/estatico\/portada\.[0-9a-f]{12}\.js)"/)?.[1];
+  assert.ok(css && js, 'la portada debe enlazar sus activos con huella');
+  assert.ok(!portada.includes('.record-card-flash') && !/function searchDiario/.test(portada), 'la portada ya no lleva CSS ni JS en línea');
+  for (const [nombre, ruta] of [['activo_css', css], ['activo_js', js]] as const) {
+    const r = await pedir({ path: ruta });
+    assert.equal(r.headers['cache-control'], 'public, max-age=31536000, immutable');
+    compararGolden(nombre, serializar(r, (t) => t, true));
+    const nuevo = await pedir({ path: ruta, headers: { 'if-none-match': String(r.headers.etag) } });
+    assert.equal(nuevo.status, 304);
+  }
+  const desconocido = await pedir({ path: '/estatico/portada.000000000000.js' });
+  compararGolden('activo_desconocido', serializar(desconocido));
 });
 
 test('golden HEAD portada', async () => {

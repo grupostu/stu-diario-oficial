@@ -1,8 +1,9 @@
 // Rutas de páginas y metadatos: portada, privacidad, robots, mapa del sitio, salud y enlace al visor.
-import { Router, type Request, type Response } from 'express';
+import { Router, type NextFunction, type Request, type Response } from 'express';
 import type { ContextoRutas } from './contexto.js';
 import { CABECERAS_BORDE_HTML, TIPO_HTML } from './contexto.js';
 import { renderError } from './pagina_base.js';
+import { activoPrecomprimido, CABECERAS_ACTIVO_INMUTABLE } from './portada_activos.js';
 import { renderPrivacidad } from './privacidad.js';
 import { enviarPrecomprimida, precomprimir } from './respuesta_cache.js';
 import { limitarTasa } from './seguridad_http.js';
@@ -35,6 +36,13 @@ export function rutasPaginas(ctx: ContextoRutas): Router {
   const privacidad = precomprimir(renderPrivacidad(), TIPO_HTML, 9);
   r.get('/privacidad', (req: Request, res: Response) => {
     enviarPrecomprimida(req, res, privacidad, CABECERAS_BORDE_HTML);
+  });
+
+  // CSS y JS de la portada con huella en el nombre: caché inmutable de un año, ETag y precomprimidos (gzip/br).
+  r.get('/estatico/:archivo', (req: Request, res: Response, next: NextFunction) => {
+    const pre = activoPrecomprimido(String(req.params.archivo));
+    if (!pre) return next();
+    enviarPrecomprimida(req, res, pre, CABECERAS_ACTIVO_INMUTABLE);
   });
 
   // Mapa del sitio y robots para buscadores (la portada es la única página pública indexable).

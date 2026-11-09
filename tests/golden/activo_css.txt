@@ -1,0 +1,13 @@
+HTTP 200
+content-type: text/css; charset=utf-8
+cache-control: public, max-age=31536000, immutable
+vary: Accept-Encoding
+etag: "chqkdRyNoN5-Ta2EV-y2yAMbpmc"
+x-content-type-options: nosniff
+x-frame-options: SAMEORIGIN
+referrer-policy: strict-origin-when-cross-origin
+content-security-policy: base-uri 'self'; object-src 'none'; frame-ancestors 'self'
+permissions-policy: camera=(), microphone=(), geolocation=(), payment=()
+cross-origin-opener-policy: same-origin
+
+[cuerpo grande] bytes=8846 sha256=a32a3acd421659e3fb7ce96b8e815b0c3171ab075d7cfcfff6bfbd3a7a05055d
