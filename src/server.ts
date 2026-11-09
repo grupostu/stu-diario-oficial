@@ -27,6 +27,9 @@ app.use((_req: Request, res: Response, next: NextFunction) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.setHeader('Content-Security-Policy', "base-uri 'self'; object-src 'none'; frame-ancestors 'self'");
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
   next();
 });
 const PORT = process.env.PORT || 4700;
@@ -140,8 +143,7 @@ app.get(['/health', '/api/health'], (_req: Request, res: Response) => {
     uptimeSeconds: Math.floor(process.uptime()),
     indexedRecords: index.count(),
     diarios: catalogo.length,
-    marcasCatalogadas: marcasData().length,
-    activeSubscriptions: notifier.getSubscriptionsCount()
+    marcasCatalogadas: marcasData().length
   });
 });
 
@@ -176,6 +178,11 @@ function limitarTasa(limitador: LimitadorTasa) {
   };
 }
 
+// Límite aparte, más estricto, para escritura de alertas (datos personales) y para lecturas de archivos en disco.
+const MAX_SUSCRIPCIONES = Number(process.env.MAX_SUSCRIPCIONES) || 50_000;
+const limiteAlertas = new LimitadorTasa(Number(process.env.RATE_LIMIT_ALERTS_MAX) || 5, 10 * 60_000);
+const limiteLecturas = new LimitadorTasa(Number(process.env.RATE_LIMIT_READS_MAX) || 120, 60_000);
+
 app.get('/api/v1/search', limitarTasa(limiteBusqueda), (req: Request, res: Response) => {
   const v = validarParametrosBusqueda(req.query as Record<string, unknown>);
   if (!v.ok) {
@@ -190,7 +197,7 @@ app.get('/api/v1/search', limitarTasa(limiteBusqueda), (req: Request, res: Respo
 });
 
 // Enlace directo desde cada resultado al folio del PDF en el Visor Ebook: /visor?id=...
-app.get('/visor', (req: Request, res: Response) => {
+app.get('/visor', limitarTasa(limiteLecturas), (req: Request, res: Response) => {
   const destino = resolverEnlaceVisor(index, req.query.id);
   if (!destino) return res.status(404).json({ error: 'Publicación no encontrada' });
   res.redirect(302, destino);
@@ -262,9 +269,9 @@ function obtenerPaginaTexto(diarioId: string, pagina: number): string | null {
 // Vista aparte de OCR (reconocido automáticamente, puede contener errores).
 // NUNCA se indexa en el buscador principal ni se mezcla con el texto oficial.
 // Marca siempre: robots: noindex y etiqueta visible obligatoria.
-app.get('/diarios/:id/paginas/:pagina/ocr', (req: Request, res: Response) => {
+app.get('/diarios/:id/paginas/:pagina/ocr', limitarTasa(limiteLecturas), (req: Request, res: Response) => {
   const id = String(req.params.id);
-  const pagina = parseInt(String(req.params.pagina), 10);
+  const pagina = /^\d{1,5}$/.test(String(req.params.pagina)) ? parseInt(String(req.params.pagina), 10) : NaN;
   const diario = catalogo.find((d) => d.id === id);
   if (!diario) return res.status(404).send('Diario Oficial no encontrado');
   if (isNaN(pagina) || pagina < 1 || pagina > diario.paginas) {
@@ -294,9 +301,9 @@ app.get('/diarios/:id/paginas/:pagina/ocr', (req: Request, res: Response) => {
 });
 
 // API de consulta para OCR separado por diario y página
-app.get('/api/v1/diarios/:id/paginas/:pagina/ocr', (req: Request, res: Response) => {
+app.get('/api/v1/diarios/:id/paginas/:pagina/ocr', limitarTasa(limiteLecturas), (req: Request, res: Response) => {
   const id = String(req.params.id);
-  const pagina = parseInt(String(req.params.pagina), 10);
+  const pagina = /^\d{1,5}$/.test(String(req.params.pagina)) ? parseInt(String(req.params.pagina), 10) : NaN;
   const diario = catalogo.find((d) => d.id === id);
   if (!diario) return res.status(404).json({ error: 'Diario no encontrado' });
   if (isNaN(pagina) || pagina < 1 || pagina > diario.paginas) {
@@ -322,8 +329,8 @@ app.get('/api/v1/diarios/:id/paginas/:pagina/ocr', (req: Request, res: Response)
 });
 
 // Compatibilidad: publicaciones que ocupan una página (de todos los diarios, normalmente uno).
-app.get('/api/v1/page-data/:page', (req: Request, res: Response) => {
-  const pageNum = parseInt(String(req.params.page), 10);
+app.get('/api/v1/page-data/:page', limitarTasa(limiteLecturas), (req: Request, res: Response) => {
+  const pageNum = /^\d{1,5}$/.test(String(req.params.page)) ? parseInt(String(req.params.page), 10) : NaN;
   if (isNaN(pageNum)) return res.status(400).json({ error: 'Número de página inválido' });
   const pageRecords = index.getAllRecords().filter((r) => r.pagina <= pageNum && (r.paginaFin ?? r.pagina) >= pageNum);
   res.set(EDGE_API_HEADERS);
@@ -355,12 +362,17 @@ app.get('/api/v1/leyes-recientes', (_req: Request, res: Response) => {
   res.json(cachedLeyes);
 });
 
-app.post('/api/v1/alerts', (req: Request, res: Response) => {
+app.post('/api/v1/alerts', limitarTasa(limiteAlertas), (req: Request, res: Response) => {
   const check = validarAlerta(req.body);
   if (!check.ok) {
     return res.status(400).json({ error: check.error });
   }
   const { usuarioEmail, telefonoWhatsapp, criterioBusqueda, tipoCriterio } = check.value;
+  // Tope de memoria: evita agotar el proceso con suscripciones masivas.
+  if (notifier.getSubscriptionsCount() >= MAX_SUSCRIPCIONES) {
+    res.set('Cache-Control', 'no-store');
+    return res.status(503).json({ error: 'El servicio de alertas no admite más suscripciones por ahora.' });
+  }
 
   const sub = notifier.subscribe({
     usuarioEmail,
