@@ -54,7 +54,7 @@ function gsHtmlTarjeta(item) {
   var cuerpo = (item.coincidencias || []).filter(function (f) { return f.ubicacion === 'cuerpo'; });
   var cabeceraCoincide = (item.coincidencias || []).filter(function (f) { return f.ubicacion === 'cabecera' && f.rangos.length > 0; });
   var clasif = d.clasificacionJuridica || 'Edicto Judicial';
-  var html = '<article class="glass-card p-5 sm:p-7 rounded-3xl border ' + (item.coincidenciaExacta ? 'border-brand-500/50 bg-brand-950/10' : 'border-slate-800') + ' hover:border-brand-500/70 transition-all text-left">';
+  var html = '<article class="glass-card p-5 sm:p-7 rounded-xl border ' + (item.coincidenciaExacta ? 'border-brand-500/50 bg-brand-950/10' : 'border-slate-800') + ' hover:border-brand-500/70 transition-all text-left">';
 
   // 1) Identificación del documento: tipo, número, título, órgano, fecha y ubicación en el diario
   html += '<div class="flex flex-wrap items-center justify-between gap-2 mb-3"><div class="flex flex-wrap items-center gap-2">' +
@@ -87,7 +87,7 @@ function gsHtmlTarjeta(item) {
 
   html += renderDuiChipsHtml(d.duisEncontrados, d.pagina);
   html += '<div class="flex flex-wrap items-center justify-between gap-3 text-xs border-t border-slate-800/80 pt-3 mt-3"><div class="flex flex-wrap items-center gap-3">' +
-    '<button type="button" data-gs-visor="1" data-pag="' + gsEscapar(d.pagina) + '" data-dia="' + gsEscapar(d.diarioId || '') + '" data-rec="' + gsEscapar(d.id) + '" data-term="" class="bg-brand-500 hover:bg-brand-400 text-slate-950 font-black px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 transition-all shadow-lg shadow-brand-500/20"><i class="fa-solid fa-book-open-reader"></i> Abrir en el visor y resaltar en el PDF (pág. ' + gsEscapar(d.pagina) + ')</button>' +
+    '<button type="button" data-gs-visor="1" data-pag="' + gsEscapar(d.pagina) + '" data-dia="' + gsEscapar(d.diarioId || '') + '" data-rec="' + gsEscapar(d.id) + '" data-term="" class="bg-brand-500 hover:bg-brand-400 text-slate-950 font-black px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 transition-all"><i class="fa-solid fa-book-open-reader"></i> Abrir en el visor y resaltar en el PDF (pág. ' + gsEscapar(d.pagina) + ')</button>' +
     '<a href="' + gsEscapar(String(d.pdfUrlOficial || '').split('#')[0]) + '" download class="text-slate-400 hover:text-white font-bold flex items-center gap-1"><i class="fa-solid fa-download"></i> PDF original</a></div>' +
     '<a href="https://www.diariooficial.gob.sv/" target="_blank" rel="noopener noreferrer" class="text-cyan-400 hover:text-cyan-300 font-bold flex items-center gap-1.5">Fuente Estatal: diariooficial.gob.sv <i class="fa-solid fa-arrow-up-right-from-square text-[11px]"></i></a></div>';
   return html + '</article>';

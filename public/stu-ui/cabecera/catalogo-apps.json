@@ -1,0 +1,138 @@
+{
+  "$schema": "https://grupostu.com/schemas/catalogo-apps-v1.json",
+  "version": "1.0.0",
+  "catalogoVersion": "2026.11",
+  "updatedAt": "2026-11-08T22:00:00Z",
+  "description": "Catálogo unificado y versionado de plataformas públicas oficiales de Grupo Stu. Excluye estrictamente servicios privados e internos.",
+  "cuentaHub": {
+    "name": "Cuenta Stu",
+    "url": "https://cuenta.grupostu.com",
+    "loginUrl": "https://cuenta.grupostu.com/login",
+    "logoutUrl": "https://cuenta.grupostu.com/logout",
+    "switchUrl": "https://cuenta.grupostu.com/switch",
+    "privacyUrl": "https://grupostu.com/es/legal/privacidad",
+    "termsUrl": "https://grupostu.com/es/legal/terminos"
+  },
+  "apps": [
+    {
+      "id": "herramientas",
+      "name": "Stu Herramienta",
+      "shortName": "Herramienta",
+      "description": "Cálculos fiscales salvadoreños, IVA, retenciones, utilidades y finanzas",
+      "url": "https://herramientas.grupostu.com",
+      "icon": "tool",
+      "monogram": "HT",
+      "category": "Finanzas & Fiscal",
+      "favorite": true,
+      "color": "#10B981"
+    },
+    {
+      "id": "studio",
+      "name": "Stu Studio",
+      "shortName": "Studio",
+      "description": "Suite creativa, diseño y producción multimedia asistida",
+      "url": "https://stustudioapp.grupostu.com",
+      "icon": "edit",
+      "monogram": "SA",
+      "category": "Creatividad",
+      "favorite": true,
+      "color": "#6366F1"
+    },
+    {
+      "id": "aprende",
+      "name": "Stu Aprende",
+      "shortName": "Aprende",
+      "description": "Cursos profesionales, formación ejecutiva y capacitación continua",
+      "url": "https://stuaprende.grupostu.com",
+      "icon": "book",
+      "monogram": "AP",
+      "category": "Educación",
+      "favorite": true,
+      "color": "#06B6D4"
+    },
+    {
+      "id": "crediflow",
+      "name": "CrediFlow ERP",
+      "shortName": "CrediFlow",
+      "description": "Gestión de microcréditos, cartera financiera y contabilidad empresarial",
+      "url": "https://crediflowerp.grupostu.com",
+      "icon": "credit-card",
+      "monogram": "CF",
+      "category": "Finanzas & Fiscal",
+      "favorite": true,
+      "color": "#10B981"
+    },
+    {
+      "id": "hosting",
+      "name": "Stu Hosting",
+      "shortName": "Hosting",
+      "description": "Servidores cloud, dominios, infraestructura y alojamiento gestionado",
+      "url": "https://hosting.grupostu.com",
+      "icon": "server",
+      "monogram": "HO",
+      "category": "Infraestructura",
+      "favorite": false,
+      "color": "#06B6D4"
+    },
+    {
+      "id": "erp",
+      "name": "Stu ERP",
+      "shortName": "ERP",
+      "description": "Control integral de inventarios, compras, ventas y facturación",
+      "url": "https://erp.grupostu.com",
+      "icon": "database",
+      "monogram": "ER",
+      "category": "Empresarial",
+      "favorite": false,
+      "color": "#6366F1"
+    },
+    {
+      "id": "clasificados",
+      "name": "Stu Clasificados",
+      "shortName": "Clasificados",
+      "description": "Marketplace de comercio local, compraventa y anuncios clasificados",
+      "url": "https://clasificados.grupostu.com",
+      "icon": "search",
+      "monogram": "CL",
+      "category": "Comercio",
+      "favorite": false,
+      "color": "#10B981"
+    },
+    {
+      "id": "diarios",
+      "name": "Stu Diario Oficial",
+      "shortName": "Diario Oficial",
+      "description": "Búsqueda, archivo histórico y análisis normativo de diarios oficiales",
+      "url": "https://diariosoficiales.grupostu.com",
+      "icon": "newspaper",
+      "monogram": "DO",
+      "category": "Legal & Normativo",
+      "favorite": false,
+      "color": "#0F172A"
+    },
+    {
+      "id": "holding",
+      "name": "Grupo Stu",
+      "shortName": "Grupo Stu",
+      "description": "Portal corporativo, gobierno, transparencia e información institucional",
+      "url": "https://grupostu.com",
+      "icon": "building",
+      "monogram": "GS",
+      "category": "Corporativo",
+      "favorite": false,
+      "color": "#020617"
+    },
+    {
+      "id": "stream",
+      "name": "Stu Streaming & Radio",
+      "shortName": "Streaming",
+      "description": "Transmisiones en vivo, audio institucional y streaming digital",
+      "url": "https://stream.grupostu.com",
+      "icon": "globe",
+      "monogram": "SR",
+      "category": "Multimedia",
+      "favorite": false,
+      "color": "#06B6D4"
+    }
+  ]
+}

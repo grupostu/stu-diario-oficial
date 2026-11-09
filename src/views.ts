@@ -12,7 +12,7 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
   const esc = (t: unknown): string => String(t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string));
   const etiquetaDiario = (d: Diario): string => `Tomo ${d.tomo} · N.° ${d.numero} · ${d.fecha.split('-').reverse().join('-')}`;
   return `<!DOCTYPE html>
-<html lang="es" class="dark">
+<html lang="es" class="dark" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -21,6 +21,9 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Sistema visual Stu_UI (copia local en /stu-ui, sin dependencias externas) -->
+  <link rel="stylesheet" href="/stu-ui/tokens.css?v=1">
+  <link rel="stylesheet" href="/stu-ui/cabecera/cabecera.css?v=1">
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -64,23 +67,26 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
       button, select, input:not([type=checkbox]):not([type=radio]), .tab-btn, summary { min-height: 44px; }
       a.block, a.inline-flex, nav a, footer a { min-height: 44px; display: inline-flex; align-items: center; }
     }
-    .glass { background: rgba(15, 23, 42, 0.78); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08); }
-    .glass-card { background: linear-gradient(135deg, rgba(30, 41, 59, 0.72) 0%, rgba(15, 23, 42, 0.88) 100%); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
-    .gradient-text { background: linear-gradient(135deg, #34d399 0%, #38bdf8 50%, #facc15 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-    .tab-btn.active { background: #10b981; color: #020617; font-weight: 800; border-color: #10b981; }
+    /* Superficies sobrias del sistema Stu_UI: fondo sólido y borde fino, sin degradados ni desenfoques */
+    .glass { background: #0f172a; border: 1px solid #263449; }
+    .glass-card { background: #0f172a; border: 1px solid #263449; }
+    /* La cabecera compartida queda fija arriba y no tapa el ancla de las secciones */
+    stu-cabecera { display: block; position: sticky; top: 0; z-index: 100; }
+    html { scroll-padding-top: 72px; }
+    /* Los paneles de la cabecera solo se ven abiertos (.stu-apps-panel declara display:flex después de display:none) */
+    stu-cabecera .stu-cabecera-panel:not(.is-open) { display: none; }
     
     ${VISOR_CSS}
     /* Fragmentos remarcados interactivos en la transcripción */
     mark.highlight, mark.highlight-clickable {
-      background: linear-gradient(135deg, #facc15 0%, #fbbf24 100%);
+      background: #fde047;
       color: #020617;
-      font-weight: 900;
+      font-weight: 800;
       padding: 2px 6px;
-      border-radius: 5px;
+      border-radius: 4px;
       cursor: pointer;
-      box-shadow: 0 0 12px rgba(250, 204, 21, 0.45);
-      border: 1px solid #fef08a;
-      transition: all 0.2s ease;
+      border: 1px solid #facc15;
+      transition: background-color 0.15s ease;
       display: inline-block;
     }
     /* Coincidencias de la búsqueda: amarillo con texto casi negro (contraste > 12:1), sin romper el salto de línea */
@@ -98,9 +104,7 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
     mark.highlight-clickable:focus-visible, button:focus-visible, [data-ebook-pag]:focus-visible, a:focus-visible, select:focus-visible, input:focus-visible { outline: 3px solid #38bdf8; outline-offset: 2px; }
     @media (forced-colors: active) { mark { background: Mark; color: MarkText; forced-color-adjust: none; } }
     mark.highlight-clickable:hover {
-      transform: scale(1.05);
       background: #fef08a;
-      box-shadow: 0 0 20px rgba(250, 204, 21, 0.85);
     }
 
     /* Contenedor PDF.js + Capa de Texto + Resaltados en el PDF */
@@ -109,8 +113,8 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
       margin: 0 auto 32px auto;
       flex-shrink: 0;
       display: inline-block;
-      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.85);
-      border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+      border-radius: 4px;
       background: #ffffff;
     }
     #pdf-interactive-scroll-container {
@@ -158,131 +162,77 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
       transform-origin: 0% 0%;
     }
     /* Resaltado fluorescente directo en el PDF original */
+    /* Resaltado en el PDF original: relleno amarillo y borde, sin brillos ni animaciones */
     .pdf-highlight-box {
-      background: rgba(250, 204, 21, 0.48) !important;
+      background: rgba(250, 204, 21, 0.45) !important;
       border: 2px solid #f59e0b !important;
-      border-radius: 4px !important;
-      box-shadow: 0 0 16px rgba(250, 204, 21, 0.85), inset 0 0 6px rgba(254, 240, 138, 0.7) !important;
+      border-radius: 3px !important;
       cursor: pointer !important;
       z-index: 10 !important;
-      animation: pdfPulseGlow 1.8s infinite alternate;
     }
     .pdf-highlight-box.pdf-radar-focus {
-      background: rgba(250, 204, 21, 0.72) !important;
+      background: rgba(250, 204, 21, 0.65) !important;
       border: 3px solid #10b981 !important;
-      box-shadow: 0 0 0 6px rgba(250, 204, 21, 0.55), 0 0 35px 12px rgba(16, 185, 129, 0.95) !important;
-      animation: radarFlash 0.85s ease-in-out 4;
-    }
-    @keyframes pdfPulseGlow {
-      0% { box-shadow: 0 0 10px rgba(250, 204, 21, 0.65); }
-      100% { box-shadow: 0 0 22px rgba(245, 158, 11, 0.95); }
-    }
-    @keyframes radarFlash {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.12); }
     }
     .record-card-flash {
       border-color: #facc15 !important;
-      box-shadow: 0 0 28px rgba(250, 204, 21, 0.45) !important;
       background: rgba(250, 204, 21, 0.08) !important;
     }
   </style>
 </head>
 <body class="bg-dark-950 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-brand-500 selection:text-slate-950">
 
-  <!-- Cintillo de Deslinde, Transparencia y Fuentes Gubernamentales Oficiales -->
-  <div class="bg-slate-950 border-b border-slate-800 text-xs py-2 px-4 text-slate-400">
-    <div class="max-w-none mx-auto flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono">
-      <span><i class="fa-solid fa-circle-info text-amber-400 mr-1.5"></i>Sitio independiente de consulta. <strong class="text-slate-200">No es el Diario Oficial ni una entidad del Estado.</strong></span>
-      <span>Fuente oficial: <a href="https://www.diariooficial.gob.sv/" target="_blank" rel="noopener noreferrer" class="text-brand-400 hover:underline">diariooficial.gob.sv</a> · <a href="https://www.imprentanacional.gob.sv/" target="_blank" rel="noopener noreferrer" class="text-brand-400 hover:underline">Imprenta Nacional</a></span>
-    </div>
-  </div>
+  <!-- Cabecera institucional única de Grupo Stu (Stu_UI): menú del sitio + apps + cuenta, 60 px, siempre visible -->
+  <stu-cabecera
+    platform="diarios"
+    platform-name="Diarios Oficiales"
+    platform-url="https://diariosoficiales.grupostu.com"
+    login-url="https://cuenta.grupostu.com/login"
+    theme-toggle="false">
+    <nav slot="nav" aria-label="Secciones de Diarios Oficiales">
+      <a href="#buscador" data-tab="dui" aria-current="page">Buscador</a>
+      <a href="#marcas" data-tab="marcas">Marcas</a>
+      <a href="#edictos" data-tab="recientes">Edictos</a>
+      <a href="#decretos" data-tab="leyes">Decretos y acuerdos</a>
+      <a href="#hemeroteca" data-tab="hemeroteca">Hemeroteca</a>
+      <a href="#guia" data-tab="faq">Guía ciudadana</a>
+    </nav>
+  </stu-cabecera>
 
-  <!-- Header Institucional -->
-  <header class="border-b border-slate-800/80 bg-slate-950/90 sticky top-0 z-40 backdrop-blur-md">
-    <div class="max-w-none mx-auto px-4 sm:px-6 lg:px-8 py-3 lg:py-0 lg:h-20 flex flex-wrap lg:flex-nowrap items-center justify-between gap-3">
-      <div class="flex items-center gap-3.5 min-w-0">
-        <span class="w-12 h-12 shrink-0 rounded-2xl bg-brand-500/10 border border-brand-500/30 flex items-center justify-center text-brand-400 text-xl" aria-hidden="true"><i class="fa-solid fa-book-open"></i></span>
-        <div class="min-w-0">
-          <div class="flex flex-wrap items-center gap-x-2">
-            <span class="font-black text-white text-base sm:text-lg tracking-tight">DIARIOS OFICIALES</span>
-            <span class="text-brand-400 font-extrabold text-xs tracking-wider uppercase px-2 py-0.5 rounded bg-brand-500/10 border border-brand-500/20">DE EL SALVADOR</span>
-          </div>
-          <p class="hidden sm:block text-[11px] text-slate-400 font-mono tracking-wide">
-            diariosoficiales.grupostu.com <span class="text-slate-600">|</span> Busca en los diarios y léelos con lo buscado resaltado en el PDF
-          </p>
-        </div>
-      </div>
-      <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto">
-        ${ultimo ? `<button onclick="openEbookViewer(1, '', '${esc(ultimo.id)}')" class="bg-slate-900 hover:bg-slate-800 border border-amber-500/40 text-amber-300 font-bold px-3.5 py-2 rounded-xl text-xs sm:text-sm transition-all flex items-center gap-2 shadow-md shadow-amber-500/10">
-          <i class="fa-solid fa-book-open-reader text-amber-400"></i> Abrir el diario más reciente
+  <!-- Contenedor Principal (márgenes laterales siempre visibles) -->
+  <main class="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 w-full">
+
+    <!-- Aviso de deslinde: no es publicación oficial -->
+    <div role="note" class="mb-6 px-4 py-3 rounded-lg border border-slate-700 bg-slate-900 text-xs sm:text-sm text-slate-300 flex flex-wrap items-center justify-between gap-x-6 gap-y-1">
+      <span><strong class="text-slate-100">Sitio independiente de consulta. No es el Diario Oficial ni una entidad del Estado.</strong></span>
+      <span>Fuente oficial: <a href="https://www.diariooficial.gob.sv/" target="_blank" rel="noopener noreferrer" class="text-brand-400 underline">diariooficial.gob.sv</a> · <a href="https://www.imprentanacional.gob.sv/" target="_blank" rel="noopener noreferrer" class="text-brand-400 underline">Imprenta Nacional</a></span>
+    </div>
+
+    <!-- Encabezado de la página -->
+    <section class="mb-8 text-left">
+      <h1 class="text-2xl sm:text-4xl font-bold text-white tracking-tight leading-tight">Diario Oficial de El Salvador: consulta y notificaciones</h1>
+      <p class="mt-3 text-slate-300 text-sm sm:text-base max-w-3xl leading-relaxed">
+        Verifica si tu <strong>DUI</strong> (en números o en letras notariales), <strong>nombre</strong> o <strong>sociedad</strong> figura en edictos de aceptación de herencia, emplazamientos, rebeldías, remates o marcas. Cada resultado enlaza al PDF original, con lo buscado resaltado.
+      </p>
+      <p class="mt-3 text-xs sm:text-sm text-slate-400">
+        <strong class="text-slate-200">${stats.totalDocumentos}</strong> publicaciones indexadas · <strong class="text-slate-200">${diarios.length}</strong> ${diarios.length === 1 ? 'diario disponible' : 'diarios disponibles'}${ultimo ? ` · último: ${esc(etiquetaDiario(ultimo))} (${ultimo.paginas} págs.)` : ''} · Sin registro de tus búsquedas
+      </p>
+      <div class="mt-4 flex flex-wrap gap-3">
+        ${ultimo ? `<button type="button" onclick="openEbookViewer(1, '', '${esc(ultimo.id)}')" class="bg-slate-900 hover:bg-slate-800 border border-slate-600 text-slate-100 font-semibold px-4 py-2 rounded-lg text-sm transition-colors flex items-center gap-2">
+          <i class="fa-solid fa-book-open-reader"></i> Abrir el diario más reciente
         </button>` : ''}
-        <button onclick="openModalAlert()" class="bg-gradient-to-r from-brand-500 to-cyan-500 hover:from-brand-400 hover:to-cyan-400 text-slate-950 font-extrabold px-4 sm:px-5 py-2 rounded-xl text-xs sm:text-sm transition-all shadow-lg shadow-brand-500/20 flex items-center gap-2">
+        <button type="button" onclick="openModalAlert()" class="bg-brand-500 hover:bg-brand-400 text-slate-950 font-bold px-4 py-2 rounded-lg text-sm transition-colors flex items-center gap-2">
           <i class="fa-solid fa-bell"></i> Vigilancia por DUI
         </button>
       </div>
-    </div>
-  </header>
+    </section>
 
-  <!-- Métricas Rápidas -->
-  <div class="border-b border-slate-800/60 bg-slate-950/40 py-2.5">
-    <div class="max-w-none mx-auto px-4 flex flex-wrap items-center justify-between gap-3 text-xs font-mono text-slate-400">
-      <div class="flex items-center gap-5 sm:gap-7 flex-wrap">
-        <span><strong class="text-white">${stats.totalDocumentos}</strong> publicaciones indexadas</span>
-        <span><strong class="text-amber-400">${diarios.length}</strong> ${diarios.length === 1 ? 'diario disponible' : 'diarios disponibles'}${ultimo ? ` · último: ${esc(etiquetaDiario(ultimo))} (${ultimo.paginas} págs.)` : ''}</span>
-        <span><strong class="text-brand-400">DUI</strong> en números o en letras</span>
-        <span><strong class="text-cyan-400">Sin registro</strong> de tus búsquedas</span>
-      </div>
-      <div class="flex items-center gap-2 text-emerald-400 font-bold">
-        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Visor de documento listo
-      </div>
-    </div>
-  </div>
-
-  <!-- Contenedor Principal -->
-  <main class="flex-1 max-w-none mx-auto px-4 py-8 sm:py-10 w-full">
-    
-    <!-- Hero Principal con Sellos Gráficos -->
-    <div class="text-center mb-8">
-      <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-brand-500/10 border border-brand-500/20 text-brand-400 text-xs font-bold uppercase tracking-wider mb-3">
-        <img src="/assets/graphics/icono-detector-dui.svg" alt="DUI" class="w-4 h-4">
-        Prevención de Juicios en Rebeldía · Sincronización Bidireccional PDF ↔ Transcripción
-      </div>
-      <h1 class="text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight">
-        Consulta y Notificaciones del <span class="gradient-text">Diario Oficial de El Salvador</span>
-      </h1>
-      <p class="mt-3 text-slate-300 text-xs sm:text-base max-w-3xl mx-auto leading-relaxed">
-        Verifica al instante si tu <strong>DUI</strong> (en números o en letras notariales), <strong>Nombre</strong> o <strong>Sociedad</strong> figura en edictos de aceptación de herencia, emplazamientos, rebeldías, remates o marcas. Haz clic en cualquier texto remarcado para enfocar el párrafo exacto en el PDF original.
-      </p>
-    </div>
-
-    <!-- Pestañas de Navegación -->
-    <div class="flex flex-wrap gap-2 mb-6 border-b border-slate-800 pb-3" role="tablist">
-      <button onclick="switchTab('dui')" id="tab-btn-dui" class="tab-btn active px-4 py-2.5 rounded-xl border border-slate-700 text-xs sm:text-sm font-bold flex items-center gap-2 transition-all">
-        <i class="fa-solid fa-id-card"></i> Buscador de Edictos y DUI
-      </button>
-      <button onclick="switchTab('marcas')" id="tab-btn-marcas" class="tab-btn px-4 py-2.5 rounded-xl border border-slate-700 bg-slate-900/60 text-slate-300 hover:text-white text-xs sm:text-sm font-medium flex items-center gap-2 transition-all">
-        <i class="fa-solid fa-trademark"></i> Marcas
-      </button>
-      <button onclick="switchTab('recientes')" id="tab-btn-recientes" class="tab-btn px-4 py-2.5 rounded-xl border border-slate-700 bg-slate-900/60 text-slate-300 hover:text-white text-xs sm:text-sm font-medium flex items-center gap-2 transition-all">
-        <i class="fa-solid fa-gavel"></i> Últimos Edictos Oficiales
-      </button>
-      <button onclick="switchTab('leyes')" id="tab-btn-leyes" class="tab-btn px-4 py-2.5 rounded-xl border border-slate-700 bg-slate-900/60 text-slate-300 hover:text-white text-xs sm:text-sm font-medium flex items-center gap-2 transition-all">
-        <i class="fa-solid fa-landmark"></i> Decretos y acuerdos
-      </button>
-      <button onclick="switchTab('hemeroteca')" id="tab-btn-hemeroteca" class="tab-btn px-4 py-2.5 rounded-xl border border-slate-700 bg-slate-900/60 text-slate-300 hover:text-white text-xs sm:text-sm font-medium flex items-center gap-2 transition-all">
-        <i class="fa-solid fa-book-atlas"></i> Hemeroteca y cómo funciona
-      </button>
-      <button onclick="switchTab('faq')" id="tab-btn-faq" class="tab-btn px-4 py-2.5 rounded-xl border border-slate-700 bg-slate-900/60 text-slate-300 hover:text-white text-xs sm:text-sm font-medium flex items-center gap-2 transition-all">
-        <i class="fa-solid fa-circle-question"></i> Guía Ciudadana
-      </button>
-    </div>
 
     <!-- ========================================================================= -->
     <!-- TAB 1: BUSCADOR GENERAL Y DUI -->
     <!-- ========================================================================= -->
     <div id="tab-content-dui" class="space-y-6">
-      <div class="glass-card p-5 sm:p-7 rounded-3xl border border-slate-800 shadow-2xl">
+      <div class="glass-card p-5 sm:p-7 rounded-xl border border-slate-800">
         <form onsubmit="searchDiario(event)" novalidate class="space-y-4">
           <div>
             <div class="relative">
@@ -319,7 +269,7 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
               <label for="force-dui-check" class="text-xs text-slate-300 select-none cursor-pointer">Filtrar exclusivamente por DUI</label>
             </div>
 
-            <button type="submit" id="btn-search" class="bg-brand-500 hover:bg-brand-400 text-slate-950 font-black px-8 py-3.5 rounded-2xl text-xs sm:text-sm transition-all flex items-center justify-center gap-2 shrink-0 shadow-lg shadow-brand-500/20">
+            <button type="submit" id="btn-search" class="bg-brand-500 hover:bg-brand-400 text-slate-950 font-black px-8 py-3.5 rounded-2xl text-xs sm:text-sm transition-all flex items-center justify-center gap-2 shrink-0">
               <i class="fa-solid fa-bolt"></i> Consultar Archivo Oficial
             </button>
           </div>
@@ -338,7 +288,7 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
     <!-- TAB 2: BUSCADOR DE MARCAS REGISTRADAS (CNR) -->
     <!-- ========================================================================= -->
     <div id="tab-content-marcas" class="hidden space-y-6">
-      <div class="glass-card p-5 sm:p-7 rounded-3xl border border-slate-800 shadow-2xl">
+      <div class="glass-card p-5 sm:p-7 rounded-xl border border-slate-800">
         <div class="flex items-center gap-3 mb-4">
           <img src="/assets/graphics/icono-registro-marca.svg" alt="Marcas CNR" class="w-11 h-11 rounded-xl">
           <div>
@@ -352,9 +302,9 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
             <div class="relative flex-1">
               <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
               <input type="text" id="marca-query" placeholder="Buscar por denominación de marca o titular…"
-                class="w-full bg-slate-950/90 border border-slate-700 focus:border-cyan-500 rounded-2xl pl-11 pr-4 py-3.5 text-white text-sm outline-none">
+                class="w-full bg-slate-950/90 border border-slate-700 focus:border-brand-500 rounded-2xl pl-11 pr-4 py-3.5 text-white text-sm outline-none">
             </div>
-            <button type="submit" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black px-6 py-3.5 rounded-2xl text-xs sm:text-sm transition-all flex items-center justify-center gap-2">
+            <button type="submit" class="bg-brand-500 hover:bg-brand-400 text-slate-950 font-black px-6 py-3.5 rounded-2xl text-xs sm:text-sm transition-all flex items-center justify-center gap-2">
               <i class="fa-solid fa-magnifying-glass"></i> Buscar marcas
             </button>
           </div>
@@ -370,7 +320,7 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
     <!-- TAB 3: ÚLTIMOS EDICTOS JUDICIALES -->
     <!-- ========================================================================= -->
     <div id="tab-content-recientes" class="hidden space-y-4">
-      <div class="glass-card p-6 rounded-3xl border border-slate-800 flex items-center justify-between">
+      <div class="glass-card p-6 rounded-xl border border-slate-800 flex items-center justify-between">
         <div class="flex items-center gap-3">
           <img src="/assets/graphics/icono-edicto-judicial.svg" alt="Edictos" class="w-11 h-11 rounded-xl">
           <div>
@@ -393,7 +343,7 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
     <!-- TAB 4: LEYES Y DECRETOS OFICIALES -->
     <!-- ========================================================================= -->
     <div id="tab-content-leyes" class="hidden space-y-4">
-      <div class="glass-card p-6 rounded-3xl border border-slate-800 flex items-center gap-3">
+      <div class="glass-card p-6 rounded-xl border border-slate-800 flex items-center gap-3">
         <img src="/assets/graphics/icono-decreto-acuerdo.svg" alt="Decretos" class="w-11 h-11 rounded-xl">
         <div>
           <h3 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
@@ -411,7 +361,7 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
     <!-- TAB 5: HEMEROTECA -->
     <!-- ========================================================================= -->
     <div id="tab-content-hemeroteca" class="hidden space-y-6 text-left">
-      <div class="glass-card p-6 sm:p-8 rounded-3xl border border-slate-800 space-y-6">
+      <div class="glass-card p-6 sm:p-8 rounded-xl border border-slate-800 space-y-6">
         <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-4">
           <div>
             <h3 class="text-xl font-black text-white flex items-center gap-2.5">
@@ -461,7 +411,7 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
     <!-- TAB 6: GUÍA CIUDADANA Y PREGUNTAS CLAVE -->
     <!-- ========================================================================= -->
     <div id="tab-content-faq" class="hidden space-y-4 text-left">
-      <div class="glass-card p-6 sm:p-8 rounded-3xl border border-slate-800">
+      <div class="glass-card p-6 sm:p-8 rounded-xl border border-slate-800">
         <h3 class="text-xl font-bold text-white mb-2 flex items-center gap-2">
           <i class="fa-solid fa-scale-balanced text-brand-400"></i> ¿Qué preguntas debe responder la mayor plataforma de Diarios Oficiales?
         </h3>
@@ -481,7 +431,7 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
 
           <div class="bg-slate-950/70 p-5 rounded-2xl border border-slate-800">
             <h4 class="text-sm font-bold text-white mb-1.5 flex items-center gap-2">
-              <span class="text-cyan-400">02.</span> ¿Cómo reclamar o verificar una herencia si vi a un familiar en un edicto?
+              <span class="text-brand-400">02.</span> ¿Cómo reclamar o verificar una herencia si vi a un familiar en un edicto?
             </h4>
             <p class="text-xs text-slate-300 leading-relaxed">
               Los edictos de aceptación de herencia (publicados por juzgados civiles y por notarios) confieren la <em>administración y representación definitiva de la sucesión</em> a los herederos declarados. Si consideras que tienes igual o mejor derecho hereditario, el edicto publicado en el Diario Oficial es la prueba legal para personarte ante el juez o notario.
@@ -531,8 +481,8 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
   ${VISOR_HTML}
 
   <!-- Modal para Suscripción de Alertas Preventivas -->
-  <div id="modal-alert" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
-    <div class="glass-card max-w-md w-full p-6 sm:p-8 rounded-3xl border border-slate-700 text-left">
+  <div id="modal-alert" class="fixed inset-0 bg-slate-950/80 hidden items-center justify-center p-4 z-50">
+    <div class="glass-card max-w-md w-full p-6 sm:p-8 rounded-xl border border-slate-700 text-left">
       <div class="flex justify-between items-center mb-4">
         <h3 class="text-xl font-bold text-white flex items-center gap-2">
           <i class="fa-solid fa-bell text-brand-400"></i> Alerta Preventiva por DUI
@@ -566,7 +516,7 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
           <span>He leído el aviso de privacidad y autorizo a Grupo Stu, S.A.S. a tratar estos datos para enviarme las alertas.</span>
         </label>
         <p id="alert-msg" role="status" class="hidden text-xs rounded-xl px-3 py-2"></p>
-        <button type="submit" class="w-full bg-gradient-to-r from-brand-500 to-cyan-500 hover:from-brand-400 hover:to-cyan-400 text-slate-950 font-black py-3.5 rounded-xl text-sm transition-all shadow-lg shadow-brand-500/20">
+        <button type="submit" class="w-full bg-brand-500 hover:bg-brand-400 text-slate-950 font-black py-3.5 rounded-xl text-sm transition-all">
           Guardar Alerta y Proteger mi Identidad
         </button>
       </form>
@@ -575,7 +525,17 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
 
   ${MASTER_FOOTER_HTML}
 
+  <script type="module" src="/stu-ui/cabecera/cabecera.js?v=1"></script>
   <script>
+    // Menú de la cabecera compartida: delegado en el documento porque el componente vuelve a pintar su navegación
+    document.addEventListener('click', function (e) {
+      var a = e.target && e.target.closest ? e.target.closest('stu-cabecera a[data-tab]') : null;
+      if (!a) return;
+      e.preventDefault();
+      switchTab(a.getAttribute('data-tab'));
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
     const DIGIT_WORDS = ['CERO', 'UNO', 'DOS', 'TRES', 'CUATRO', 'CINCO', 'SEIS', 'SIETE', 'OCHO', 'NUEVE'];
 
     function duiToNotarialWordsJS(dui) {
@@ -692,18 +652,13 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
     function switchTab(tabId) {
       const tabs = ['dui', 'marcas', 'recientes', 'leyes', 'hemeroteca', 'faq'];
       tabs.forEach(t => {
-        const btn = document.getElementById('tab-btn-' + t);
         const content = document.getElementById('tab-content-' + t);
-        if (!btn || !content) return;
-        if (t === tabId) {
-          btn.classList.add('active');
-          btn.classList.remove('bg-slate-900/60', 'text-slate-300');
-          content.classList.remove('hidden');
-        } else {
-          btn.classList.remove('active');
-          btn.classList.add('bg-slate-900/60', 'text-slate-300');
-          content.classList.add('hidden');
-        }
+        if (!content) return;
+        content.classList.toggle('hidden', t !== tabId);
+      });
+      // El menú de la cabecera compartida marca la sección activa (aria-current)
+      document.querySelectorAll('stu-cabecera a[data-tab]').forEach(a => {
+        if (a.getAttribute('data-tab') === tabId) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
       });
 
       if (tabId === 'marcas' && document.getElementById('marcas-results-container').children.length === 0) {
@@ -722,7 +677,7 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
     let gsPaginaActual = 1;
 
     function gsMostrarFallo(contenedor, titulo, detalle, conReintento) {
-      contenedor.innerHTML = '<div role="alert" class="glass-card p-6 rounded-3xl text-center border border-rose-500/40">' +
+      contenedor.innerHTML = '<div role="alert" class="glass-card p-6 rounded-xl text-center border border-rose-500/40">' +
         '<h4 class="text-base font-bold text-white">' + escapeHtmlText(titulo) + '</h4>' +
         '<p class="text-xs sm:text-sm text-slate-300 mt-1 max-w-md mx-auto">' + escapeHtmlText(detalle) + '</p>' +
         (conReintento ? '<button type="button" data-gs-reintentar="1" class="mt-3 px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-brand-400 font-bold text-xs">Reintentar</button>' : '') +
@@ -802,7 +757,7 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
             return;
           }
           if (res.status === 400) {
-            resContainer.innerHTML = '<div role="alert" class="glass-card p-6 rounded-3xl text-center border border-amber-500/40"><i class="fa-solid fa-triangle-exclamation text-3xl text-amber-400 mb-2"></i><h4 class="text-base font-bold text-white">Revisa lo que escribiste</h4><p class="text-xs sm:text-sm text-slate-300 mt-1 max-w-md mx-auto">' + escapeHtmlText(data.aviso || 'La consulta no es válida.') + '</p></div>';
+            resContainer.innerHTML = '<div role="alert" class="glass-card p-6 rounded-xl text-center border border-amber-500/40"><i class="fa-solid fa-triangle-exclamation text-3xl text-amber-400 mb-2"></i><h4 class="text-base font-bold text-white">Revisa lo que escribiste</h4><p class="text-xs sm:text-sm text-slate-300 mt-1 max-w-md mx-auto">' + escapeHtmlText(data.aviso || 'La consulta no es válida.') + '</p></div>';
             return;
           }
           if (!res.ok || !Array.isArray(data.resultados)) {
@@ -815,7 +770,7 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
           }
           // Entrada inválida sin resultados: nunca se dice «sin publicaciones». Con resultados (p. ej. DUI con verificador dudoso) se muestran junto al aviso.
           if (data.entradaInvalida && !(data.total > 0)) {
-            resContainer.innerHTML = '<div role="alert" class="glass-card p-6 rounded-3xl text-center border border-amber-500/40"><i class="fa-solid fa-triangle-exclamation text-3xl text-amber-400 mb-2"></i><h4 class="text-base font-bold text-white">Revisa lo que escribiste</h4><p class="text-xs sm:text-sm text-slate-300 mt-1 max-w-md mx-auto">' + escapeHtmlText(data.aviso || 'La consulta no es válida.') + ' Todavía no se hizo una consulta confiable, así que no podemos decir si aparece o no en el archivo.</p></div>';
+            resContainer.innerHTML = '<div role="alert" class="glass-card p-6 rounded-xl text-center border border-amber-500/40"><i class="fa-solid fa-triangle-exclamation text-3xl text-amber-400 mb-2"></i><h4 class="text-base font-bold text-white">Revisa lo que escribiste</h4><p class="text-xs sm:text-sm text-slate-300 mt-1 max-w-md mx-auto">' + escapeHtmlText(data.aviso || 'La consulta no es válida.') + ' Todavía no se hizo una consulta confiable, así que no podemos decir si aparece o no en el archivo.</p></div>';
             return;
           }
 
@@ -827,7 +782,7 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
               ? 'La página que pediste no existe: esta búsqueda solo tiene ' + escapeHtmlText(data.totalPaginas) + ' páginas de resultados.'
               : 'No se encontraron publicaciones que contengan todo lo que buscaste.') + '</p>';
             resumenEl.classList.remove('hidden');
-            resContainer.innerHTML = '<div class="glass-card p-8 sm:p-10 rounded-3xl text-center text-slate-400 border border-slate-800">' +
+            resContainer.innerHTML = '<div class="glass-card p-8 sm:p-10 rounded-xl text-center text-slate-400 border border-slate-800">' +
               '<i class="fa-regular fa-circle-check text-4xl text-brand-400 mb-3"></i>' +
               '<h4 class="text-base sm:text-lg font-bold text-white">Sin publicaciones oficiales encontradas</h4>' +
               '<p class="text-xs sm:text-sm text-slate-400 mt-1 max-w-md mx-auto">El criterio «<strong>' + escapeHtmlText(q) + '</strong>» no aparece en los títulos, números de decreto, órganos emisores ni en el texto de las publicaciones de este tomo. Prueba con menos palabras, revisa la ortografía (no importan las tildes ni las mayúsculas) o quita el filtro de sección.</p>' +
@@ -862,11 +817,11 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
         .then(r => { if (!r.ok) throw new Error('http'); return r.json(); })
         .then(data => {
           if (!data.marcas || data.marcas.length === 0) {
-            container.innerHTML = '<div class="col-span-2 glass-card p-8 rounded-3xl text-center text-slate-300 text-sm">' + escapeHtmlText(data.aviso || 'No hay avisos de marcas para este criterio en los diarios cargados.') + '</div>';
+            container.innerHTML = '<div class="col-span-2 glass-card p-8 rounded-xl text-center text-slate-300 text-sm">' + escapeHtmlText(data.aviso || 'No hay avisos de marcas para este criterio en los diarios cargados.') + '</div>';
             return;
           }
           container.innerHTML = data.marcas.map(m => \`
-            <div class="glass-card p-5 rounded-3xl border border-slate-800 hover:border-brand-500/50 transition-all text-left">
+            <div class="glass-card p-5 rounded-xl border border-slate-800 hover:border-brand-500/50 transition-all text-left">
               <div class="flex flex-wrap items-center justify-between gap-2 mb-2.5 text-xs font-mono">
                 <span class="font-bold text-slate-300">Tomo \${escapeHtmlText(m.tomo)} · N.° \${escapeHtmlText(m.numero)} · \${escapeHtmlText(m.fecha)}</span>
                 <span class="font-black px-2.5 py-0.5 rounded bg-amber-400 text-slate-950">Pág. \${escapeHtmlText(m.pagina)}</span>
@@ -928,7 +883,7 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
     // Cargar decretos y leyes con badges completos
     function loadRecentLeyes() {
       const container = document.getElementById('leyes-recientes-container');
-      container.innerHTML = '<div class="p-8 text-center text-slate-400"><i class="fa-solid fa-spinner fa-spin text-2xl text-cyan-400"></i></div>';
+      container.innerHTML = '<div class="p-8 text-center text-slate-400"><i class="fa-solid fa-spinner fa-spin text-2xl text-brand-400"></i></div>';
       fetch('/api/v1/leyes-recientes')
         .then(r => r.json())
         .then(data => {
@@ -950,7 +905,7 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
               <h4 class="text-sm font-bold text-white mb-2 break-words">\${escapeHtmlText(l.titular)}</h4>
               <p class="text-xs text-slate-300 line-clamp-4 leading-relaxed bg-slate-950/50 p-3 rounded-xl border border-slate-800/60 mb-2 font-mono break-words">\${escapeHtmlText(l.contenido)}</p>
               <div class="text-right">
-                <button type="button" data-ebook-pag="\${escapeHtmlText(parseInt(l.pagina, 10) || 1)}" data-dia="\${escapeHtmlText(l.diarioId || '')}" data-rec="\${escapeHtmlText(l.id)}" data-term="" class="text-xs text-cyan-400 hover:underline font-bold inline-flex items-center gap-1.5">
+                <button type="button" data-ebook-pag="\${escapeHtmlText(parseInt(l.pagina, 10) || 1)}" data-dia="\${escapeHtmlText(l.diarioId || '')}" data-rec="\${escapeHtmlText(l.id)}" data-term="" class="text-xs text-brand-400 hover:underline font-bold inline-flex items-center gap-1.5">
                   <i class="fa-solid fa-book-open-reader"></i> Abrir en el visor (pág. \${escapeHtmlText(l.pagina)}) &rarr;
                 </button>
               </div>

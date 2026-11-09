@@ -1,0 +1,305 @@
+/* ==========================================================================
+   Stu_UI — Reset y estilos base institucionales
+   Grupo Stu, S.A.S. — Sistema Visual v0.1.0
+   ========================================================================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  tab-size: 4;
+  scroll-behavior: smooth;
+  color-scheme: light dark;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  font-family: var(--gs-font);
+  font-size: var(--gs-fs-md);
+  line-height: var(--gs-lh-base);
+  font-weight: var(--gs-fw-regular);
+  color: var(--gs-text);
+  background-color: var(--gs-bg);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Tipografía de contenido */
+h1, h2, h3, h4, h5, h6 {
+  margin-top: 0;
+  margin-bottom: var(--gs-sp-2);
+  color: var(--gs-text);
+  font-weight: var(--gs-fw-semibold);
+  line-height: var(--gs-lh-tight);
+  letter-spacing: -0.015em;
+}
+
+h1 { font-size: var(--gs-fs-3xl); }
+h2 { font-size: var(--gs-fs-2xl); }
+h3 { font-size: var(--gs-fs-xl); }
+h4 { font-size: var(--gs-fs-lg); }
+h5 { font-size: var(--gs-fs-md); }
+h6 { font-size: var(--gs-fs-sm); }
+
+p {
+  margin-top: 0;
+  margin-bottom: var(--gs-sp-3);
+  color: var(--gs-text-2);
+}
+
+p:last-child {
+  margin-bottom: 0;
+}
+
+small {
+  font-size: var(--gs-fs-xs);
+  color: var(--gs-text-3);
+}
+
+code, kbd, samp, pre {
+  font-family: var(--gs-font-mono);
+  font-size: var(--gs-fs-sm);
+}
+
+code {
+  padding: 2px 6px;
+  background-color: var(--gs-surface-2);
+  border: 1px solid var(--gs-border);
+  border-radius: var(--gs-r-xs);
+  color: var(--gs-text);
+}
+
+pre {
+  margin: 0 0 var(--gs-sp-4);
+  padding: var(--gs-sp-4);
+  background-color: var(--gs-surface-2);
+  border: 1px solid var(--gs-border);
+  border-radius: var(--gs-r-md);
+  overflow-x: auto;
+}
+
+pre code {
+  padding: 0;
+  background: none;
+  border: none;
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--gs-border);
+  margin: var(--gs-sp-5) 0;
+}
+
+/* Enlaces sobrios sin decoraciones superfluas */
+a {
+  color: var(--gs-accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color var(--gs-dur-fast) var(--gs-ease);
+}
+
+a:hover {
+  color: var(--gs-accent-hover);
+}
+
+/* Foco accesible y visible (WCAG 2.4.7 / 1.4.11) */
+:focus {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--gs-focus);
+  outline-offset: 2px;
+}
+
+/* Soporte para preferencias de movimiento reducido */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Scrollbars uniformes y oscuros en modo oscuro */
+html,
+body,
+.stu-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--gs-scroll-thumb) var(--gs-scroll-track);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--gs-scroll-track);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--gs-scroll-thumb);
+  border-radius: var(--gs-r-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--gs-scroll-thumb-hover);
+}
+
+
+/* ==========================================================================
+   Stu_UI — Sistema de Layout y Márgenes Laterales Consistentes
+   Grupo Stu, S.A.S. — Sistema Visual v0.1.0
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Márgenes laterales responsivos siempre visibles
+   Garantiza que el contenido respire en todo tamaño de pantalla (375/1280/1920)
+   -------------------------------------------------------------------------- */
+:root {
+  --gs-gutter: 16px;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --gs-gutter: 24px;
+  }
+}
+
+@media (min-width: 1280px) {
+  :root {
+    --gs-gutter: 32px;
+  }
+}
+
+@media (min-width: 1920px) {
+  :root {
+    --gs-gutter: 48px;
+  }
+}
+
+/* Contenedor principal estándar institucional */
+.stu-container,
+.stu-shell {
+  width: 100%;
+  max-width: var(--gs-content-max, 1440px);
+  margin-inline: auto;
+  padding-inline: var(--gs-gutter);
+  box-sizing: border-box;
+}
+
+/* Contenedor estrecho para formularios, flujos de autenticación o modales */
+.stu-container--narrow {
+  max-width: 800px;
+}
+
+/* Contenedor óptimo para lectura y texto legal / normativo */
+.stu-container--prose {
+  max-width: 680px;
+}
+
+/* Contenedor a todo el ancho que preserva el margen lateral obligatorio */
+.stu-container--full {
+  max-width: 100%;
+}
+
+/* --------------------------------------------------------------------------
+   Primitivas de composición y estructura
+   -------------------------------------------------------------------------- */
+
+/* Apilamiento vertical con espaciado constante */
+.stu-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gs-sp-4);
+}
+
+.stu-stack--xs { gap: var(--gs-sp-1); }
+.stu-stack--sm { gap: var(--gs-sp-2); }
+.stu-stack--md { gap: var(--gs-sp-4); }
+.stu-stack--lg { gap: var(--gs-sp-5); }
+.stu-stack--xl { gap: var(--gs-sp-6); }
+
+/* Agrupación horizontal envolvente */
+.stu-cluster {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gs-sp-3);
+}
+
+.stu-cluster--sm { gap: var(--gs-sp-2); }
+.stu-cluster--lg { gap: var(--gs-sp-4); }
+
+/* Fila con distribución uniforme o extremos separados */
+.stu-row {
+  display: flex;
+  align-items: center;
+  gap: var(--gs-sp-3);
+}
+
+.stu-split {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gs-sp-3);
+  flex-wrap: wrap;
+}
+
+/* Rejilla responsive sin media queries rígidas */
+.stu-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--gs-sp-4);
+}
+
+.stu-grid--2 {
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+}
+
+.stu-grid--3 {
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.stu-grid--4 {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+@media (max-width: 640px) {
+  .stu-grid,
+  .stu-grid--2,
+  .stu-grid--3,
+  .stu-grid--4 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Ocultación visual accesible para lectores de pantalla */
+.stu-sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}

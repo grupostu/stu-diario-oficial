@@ -1,0 +1,275 @@
+/* ==========================================================================
+   Stu_UI — Tokens de Diseño (CSS Variables)
+   Grupo Stu, S.A.S. — Sistema Visual v0.1.0
+   Contraste WCAG 2.2 AA verificado en todos los pares funcionales
+   ========================================================================== */
+
+:root {
+  /* Marca Oficial Grupo Stu */
+  --gs-brand-emerald: #10B981;
+  --gs-brand-cyan: #06B6D4;
+  --gs-brand-indigo: #6366F1;
+  --gs-brand-obsidian: #020617;
+  --gs-brand-slate: #0F172A;
+  --gs-brand-blanco: #FFFFFF;
+
+  /* Tokens Base (Tipografía, Espaciado, Radios, Elevación) */
+  --gs-font: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --gs-font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  --gs-fs-xs: 0.75rem;
+  --gs-fs-sm: 0.8125rem;
+  --gs-fs-md: 0.875rem;
+  --gs-fs-lg: 1rem;
+  --gs-fs-xl: 1.25rem;
+  --gs-fs-2xl: 1.5rem;
+  --gs-fs-3xl: 2rem;
+  --gs-fs-4xl: 2.5rem;
+  --gs-lh-tight: 1.25;
+  --gs-lh-base: 1.5;
+  --gs-lh-loose: 1.65;
+  --gs-fw-regular: 400;
+  --gs-fw-medium: 500;
+  --gs-fw-semibold: 600;
+  --gs-sp-0: 0;
+  --gs-sp-1: 4px;
+  --gs-sp-2: 8px;
+  --gs-sp-3: 12px;
+  --gs-sp-4: 16px;
+  --gs-sp-5: 24px;
+  --gs-sp-6: 32px;
+  --gs-sp-7: 48px;
+  --gs-sp-8: 64px;
+  --gs-r-xs: 4px;
+  --gs-r-sm: 6px;
+  --gs-r-md: 8px;
+  --gs-r-lg: 12px;
+  --gs-r-full: 999px;
+  --gs-gutter: 16px;
+  --gs-content-max: 1440px;
+  --gs-control-h: 40px;
+  --gs-control-h-sm: 32px;
+  --gs-tap-min: 44px;
+  --gs-z-header: 100;
+  --gs-z-menu: 1000;
+  --gs-z-dialog: 1100;
+  --gs-z-toast: 1200;
+  --gs-dur-fast: 120ms;
+  --gs-dur-base: 200ms;
+  --gs-ease: cubic-bezier(0.2, 0, 0, 1);
+
+  /* Tema Claro (Por Defecto) */
+  --gs-bg: #F8FAFC;
+  --gs-surface: #FFFFFF;
+  --gs-surface-2: #F1F5F9;
+  --gs-surface-raised: #FFFFFF;
+  --gs-scrim: rgba(2, 6, 23, 0.48);
+  --gs-border: #E2E8F0;
+  --gs-border-strong: #7B879B;
+  --gs-text: #0F172A;
+  --gs-text-2: #475569;
+  --gs-text-3: #586579;
+  --gs-text-disabled: #94A3B8;
+  --gs-accent: #047857;
+  --gs-accent-hover: #065F46;
+  --gs-accent-active: #064E3B;
+  --gs-accent-ink: #FFFFFF;
+  --gs-accent-soft: #ECFDF5;
+  --gs-accent-soft-ink: #065F46;
+  --gs-focus: #4F46E5;
+  --gs-danger: #B91C1C;
+  --gs-danger-hover: #991B1B;
+  --gs-danger-ink: #FFFFFF;
+  --gs-danger-soft: #FEF2F2;
+  --gs-danger-soft-ink: #991B1B;
+  --gs-danger-border: #FECACA;
+  --gs-warning: #92400E;
+  --gs-warning-soft: #FFFBEB;
+  --gs-warning-soft-ink: #78350F;
+  --gs-warning-border: #FDE68A;
+  --gs-info: #0E7490;
+  --gs-info-soft: #ECFEFF;
+  --gs-info-soft-ink: #155E75;
+  --gs-info-border: #A5F3FC;
+  --gs-success: #047857;
+  --gs-success-soft: #ECFDF5;
+  --gs-success-soft-ink: #065F46;
+  --gs-success-border: #A7F3D0;
+  --gs-scroll-thumb: #94A3B8;
+  --gs-scroll-thumb-hover: #64748B;
+  --gs-scroll-track: #F1F5F9;
+  --gs-shadow-1: 0 1px 2px rgba(15, 23, 42, 0.08);
+  --gs-shadow-2: 0 4px 12px rgba(15, 23, 42, 0.12);
+  --gs-shadow-3: 0 12px 32px rgba(15, 23, 42, 0.18);
+
+  /* Alias de compatibilidad hacia atrás */
+  --gs-ok: var(--gs-success);
+  --gs-ok-soft: var(--gs-success-soft);
+  --gs-shadow: var(--gs-shadow-2);
+}
+
+@media (min-width: 768px) {
+  :root {
+    --gs-gutter: 24px;
+  }
+}
+
+@media (min-width: 1280px) {
+  :root {
+    --gs-gutter: 32px;
+  }
+}
+
+@media (min-width: 1920px) {
+  :root {
+    --gs-gutter: 48px;
+  }
+}
+
+/* Tema Oscuro automático (por preferencia del sistema) */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+  --gs-bg: #020617;
+  --gs-surface: #0F172A;
+  --gs-surface-2: #162033;
+  --gs-surface-raised: #1E293B;
+  --gs-scrim: rgba(2, 6, 23, 0.72);
+  --gs-border: #263449;
+  --gs-border-strong: #64748B;
+  --gs-text: #E2E8F0;
+  --gs-text-2: #A9B5C7;
+  --gs-text-3: #8B98AD;
+  --gs-text-disabled: #52607A;
+  --gs-accent: #10B981;
+  --gs-accent-hover: #34D399;
+  --gs-accent-active: #6EE7B7;
+  --gs-accent-ink: #020617;
+  --gs-accent-soft: #0B2B25;
+  --gs-accent-soft-ink: #6EE7B7;
+  --gs-focus: #818CF8;
+  --gs-danger: #F87171;
+  --gs-danger-hover: #FCA5A5;
+  --gs-danger-ink: #020617;
+  --gs-danger-soft: #2A1215;
+  --gs-danger-soft-ink: #FCA5A5;
+  --gs-danger-border: #5B2024;
+  --gs-warning: #FBBF24;
+  --gs-warning-soft: #2A1F08;
+  --gs-warning-soft-ink: #FCD34D;
+  --gs-warning-border: #5C4410;
+  --gs-info: #22D3EE;
+  --gs-info-soft: #082F3A;
+  --gs-info-soft-ink: #67E8F9;
+  --gs-info-border: #0E5262;
+  --gs-success: #34D399;
+  --gs-success-soft: #0B2B25;
+  --gs-success-soft-ink: #6EE7B7;
+  --gs-success-border: #14574A;
+  --gs-scroll-thumb: #3B4A63;
+  --gs-scroll-thumb-hover: #52627F;
+  --gs-scroll-track: #0F172A;
+  --gs-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --gs-shadow-2: 0 4px 12px rgba(0, 0, 0, 0.55);
+  --gs-shadow-3: 0 12px 32px rgba(0, 0, 0, 0.65);
+    --gs-ok: var(--gs-success);
+    --gs-ok-soft: var(--gs-success-soft);
+    --gs-shadow: var(--gs-shadow-2);
+  }
+}
+
+/* Tema Oscuro explícito */
+:root[data-theme="dark"] {
+  --gs-bg: #020617;
+  --gs-surface: #0F172A;
+  --gs-surface-2: #162033;
+  --gs-surface-raised: #1E293B;
+  --gs-scrim: rgba(2, 6, 23, 0.72);
+  --gs-border: #263449;
+  --gs-border-strong: #64748B;
+  --gs-text: #E2E8F0;
+  --gs-text-2: #A9B5C7;
+  --gs-text-3: #8B98AD;
+  --gs-text-disabled: #52607A;
+  --gs-accent: #10B981;
+  --gs-accent-hover: #34D399;
+  --gs-accent-active: #6EE7B7;
+  --gs-accent-ink: #020617;
+  --gs-accent-soft: #0B2B25;
+  --gs-accent-soft-ink: #6EE7B7;
+  --gs-focus: #818CF8;
+  --gs-danger: #F87171;
+  --gs-danger-hover: #FCA5A5;
+  --gs-danger-ink: #020617;
+  --gs-danger-soft: #2A1215;
+  --gs-danger-soft-ink: #FCA5A5;
+  --gs-danger-border: #5B2024;
+  --gs-warning: #FBBF24;
+  --gs-warning-soft: #2A1F08;
+  --gs-warning-soft-ink: #FCD34D;
+  --gs-warning-border: #5C4410;
+  --gs-info: #22D3EE;
+  --gs-info-soft: #082F3A;
+  --gs-info-soft-ink: #67E8F9;
+  --gs-info-border: #0E5262;
+  --gs-success: #34D399;
+  --gs-success-soft: #0B2B25;
+  --gs-success-soft-ink: #6EE7B7;
+  --gs-success-border: #14574A;
+  --gs-scroll-thumb: #3B4A63;
+  --gs-scroll-thumb-hover: #52627F;
+  --gs-scroll-track: #0F172A;
+  --gs-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --gs-shadow-2: 0 4px 12px rgba(0, 0, 0, 0.55);
+  --gs-shadow-3: 0 12px 32px rgba(0, 0, 0, 0.65);
+  --gs-ok: var(--gs-success);
+  --gs-ok-soft: var(--gs-success-soft);
+  --gs-shadow: var(--gs-shadow-2);
+}
+
+/* Tema Claro explícito */
+:root[data-theme="light"] {
+  --gs-bg: #F8FAFC;
+  --gs-surface: #FFFFFF;
+  --gs-surface-2: #F1F5F9;
+  --gs-surface-raised: #FFFFFF;
+  --gs-scrim: rgba(2, 6, 23, 0.48);
+  --gs-border: #E2E8F0;
+  --gs-border-strong: #7B879B;
+  --gs-text: #0F172A;
+  --gs-text-2: #475569;
+  --gs-text-3: #586579;
+  --gs-text-disabled: #94A3B8;
+  --gs-accent: #047857;
+  --gs-accent-hover: #065F46;
+  --gs-accent-active: #064E3B;
+  --gs-accent-ink: #FFFFFF;
+  --gs-accent-soft: #ECFDF5;
+  --gs-accent-soft-ink: #065F46;
+  --gs-focus: #4F46E5;
+  --gs-danger: #B91C1C;
+  --gs-danger-hover: #991B1B;
+  --gs-danger-ink: #FFFFFF;
+  --gs-danger-soft: #FEF2F2;
+  --gs-danger-soft-ink: #991B1B;
+  --gs-danger-border: #FECACA;
+  --gs-warning: #92400E;
+  --gs-warning-soft: #FFFBEB;
+  --gs-warning-soft-ink: #78350F;
+  --gs-warning-border: #FDE68A;
+  --gs-info: #0E7490;
+  --gs-info-soft: #ECFEFF;
+  --gs-info-soft-ink: #155E75;
+  --gs-info-border: #A5F3FC;
+  --gs-success: #047857;
+  --gs-success-soft: #ECFDF5;
+  --gs-success-soft-ink: #065F46;
+  --gs-success-border: #A7F3D0;
+  --gs-scroll-thumb: #94A3B8;
+  --gs-scroll-thumb-hover: #64748B;
+  --gs-scroll-track: #F1F5F9;
+  --gs-shadow-1: 0 1px 2px rgba(15, 23, 42, 0.08);
+  --gs-shadow-2: 0 4px 12px rgba(15, 23, 42, 0.12);
+  --gs-shadow-3: 0 12px 32px rgba(15, 23, 42, 0.18);
+  --gs-ok: var(--gs-success);
+  --gs-ok-soft: var(--gs-success-soft);
+  --gs-shadow: var(--gs-shadow-2);
+}

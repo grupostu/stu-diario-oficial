@@ -114,8 +114,8 @@ export const VISOR_HTML = `
   </div>
 
   <!-- Cómo citar -->
-  <div id="modal-certified-citation" class="fixed inset-0 bg-slate-950/85 backdrop-blur-sm hidden items-center justify-center p-4 z-[60]" role="dialog" aria-modal="true" aria-label="Cómo citar">
-    <div class="bg-slate-900 max-w-lg w-full p-5 sm:p-6 rounded-2xl border border-slate-700 text-left space-y-4 shadow-2xl">
+  <div id="modal-certified-citation" class="fixed inset-0 bg-slate-950/85 hidden items-center justify-center p-4 z-[60]" role="dialog" aria-modal="true" aria-label="Cómo citar">
+    <div class="bg-slate-900 max-w-lg w-full p-5 sm:p-6 rounded-2xl border border-slate-700 text-left space-y-4">
       <div class="flex items-start justify-between gap-3">
         <div>
           <h3 class="text-base font-black text-white">Cómo citar esta página</h3>
