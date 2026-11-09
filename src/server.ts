@@ -12,6 +12,7 @@ import { validarParametrosBusqueda } from './busqueda_esquema.js';
 import { LimitadorTasa } from './limitador.js';
 import type { DiarioRecord } from './types.js';
 import { cargarCatalogo, ID_DIARIO, type Diario } from './diarios.js';
+import { cargarOcr, renderVistaOcr, ETIQUETA_OCR } from './ocr.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -240,6 +241,83 @@ app.get('/api/v1/coincidencias', limitarTasa(limiteBusqueda), (req: Request, res
   res.set('Cache-Control', 'no-cache');
   res.json({
     diarios: catalogo.map((d) => ({ id: d.id, tomo: d.tomo, numero: d.numero, fecha: d.fecha, total: por.get(d.id)?.total ?? 0, primeraPagina: por.get(d.id)?.primeraPagina ?? 1 }))
+  });
+});
+
+function obtenerPaginaTexto(diarioId: string, pagina: number): string | null {
+  for (const p of possiblePublicPaths) {
+    const arch = path.join(p, 'data', `paginas-${diarioId}.json`);
+    if (fs.existsSync(arch)) {
+      try {
+        const j = JSON.parse(fs.readFileSync(arch, 'utf8'));
+        if (Array.isArray(j.paginas) && j.paginas[pagina - 1] !== undefined) {
+          return String(j.paginas[pagina - 1]);
+        }
+      } catch {}
+    }
+  }
+  return null;
+}
+
+// Vista aparte de OCR (reconocido automáticamente, puede contener errores).
+// NUNCA se indexa en el buscador principal ni se mezcla con el texto oficial.
+// Marca siempre: robots: noindex y etiqueta visible obligatoria.
+app.get('/diarios/:id/paginas/:pagina/ocr', (req: Request, res: Response) => {
+  const id = String(req.params.id);
+  const pagina = parseInt(String(req.params.pagina), 10);
+  const diario = catalogo.find((d) => d.id === id);
+  if (!diario) return res.status(404).send('Diario Oficial no encontrado');
+  if (isNaN(pagina) || pagina < 1 || pagina > diario.paginas) {
+    return res.status(400).send('Número de página inválido');
+  }
+
+  const ocrData = cargarOcr(id);
+  const pagOcr = ocrData?.paginas[String(pagina)];
+  const textoPagina = obtenerPaginaTexto(id, pagina);
+  const charsCuerpo = (textoPagina ?? '').replace(/DIARIO OFICIAL.*|Tomo Nº \d+|^\d+\s*$/g, '').trim().length;
+  const sinCapaDeTexto = charsCuerpo < 80;
+
+  const html = renderVistaOcr({
+    diarioId: id,
+    tomo: diario.tomo,
+    numero: diario.numero,
+    fecha: diario.fecha,
+    pagina,
+    pdf: diario.pdf,
+    sinCapaDeTexto,
+    ocr: pagOcr ? { pagina: pagOcr, motor: ocrData!.motor, generado: ocrData!.generado } : null
+  });
+
+  res.set('Content-Type', 'text/html; charset=utf-8');
+  res.set('Cache-Control', 'no-store');
+  res.send(html);
+});
+
+// API de consulta para OCR separado por diario y página
+app.get('/api/v1/diarios/:id/paginas/:pagina/ocr', (req: Request, res: Response) => {
+  const id = String(req.params.id);
+  const pagina = parseInt(String(req.params.pagina), 10);
+  const diario = catalogo.find((d) => d.id === id);
+  if (!diario) return res.status(404).json({ error: 'Diario no encontrado' });
+  if (isNaN(pagina) || pagina < 1 || pagina > diario.paginas) {
+    return res.status(400).json({ error: 'Número de página fuera de rango' });
+  }
+
+  const ocrData = cargarOcr(id);
+  const pagOcr = ocrData?.paginas[String(pagina)];
+  const textoPagina = obtenerPaginaTexto(id, pagina);
+  const charsCuerpo = (textoPagina ?? '').replace(/DIARIO OFICIAL.*|Tomo Nº \d+|^\d+\s*$/g, '').trim().length;
+  const sinCapaDeTexto = charsCuerpo < 80;
+
+  res.set('Cache-Control', 'no-store');
+  res.json({
+    origen: 'ocr',
+    etiqueta: ETIQUETA_OCR,
+    diarioId: id,
+    pagina,
+    sinCapaDeTexto,
+    disponible: !!pagOcr,
+    ocr: pagOcr ? { ...pagOcr, motor: ocrData!.motor, generado: ocrData!.generado } : null
   });
 });
 
