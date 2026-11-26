@@ -4,10 +4,11 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
-
-concurrency:
-  group: deploy-stu-diario-oficial
-  cancel-in-progress: false
+    inputs:
+      authorization:
+        description: 'Escribe exactamente: Autorizo desplegar'
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -15,8 +16,6 @@ permissions:
 env:
   CONTABO_HOST: 169.58.255.217
   DEPLOY_DIR: /srv/stu/stu-diario-oficial
-  SSH_USER: ${{ secrets.CONTABO_SSH_USER || 'root' }}
-  SSH_PORT: ${{ secrets.CONTABO_SSH_PORT || 22 }}
 
 jobs:
   verify:
@@ -24,8 +23,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
       - name: Verify & Test
@@ -37,10 +38,23 @@ jobs:
   deploy:
     name: Deploy to Contabo (diariosoficiales.grupostu.com)
     needs: verify
+    # Un push solo valida; production exige despacho manual, texto de autorización y revisión del environment si está protegida externamente.
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.authorization == 'Autorizo desplegar'
+    environment: production
+    # Un deploy a la vez, sin cancelar el que está en curso; no bloquea las verificaciones.
+    concurrency:
+      group: deploy-stu-diario-oficial
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    # Derivados de secretos: solo en el job que los usa, no en las verificaciones.
+    env:
+      SSH_USER: ${{ secrets.CONTABO_SSH_USER || 'root' }}
+      SSH_PORT: ${{ secrets.CONTABO_SSH_PORT || 22 }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
       - name: Configure SSH
         env:
           CONTABO_SSH_KEY: ${{ secrets.CONTABO_SSH_KEY }}
@@ -48,12 +62,16 @@ jobs:
           install -m 700 -d ~/.ssh
           printf '%s\n' "$CONTABO_SSH_KEY" > ~/.ssh/id_deploy
           chmod 600 ~/.ssh/id_deploy
+          # Usuario y puerto van a ssh-keyscan y a ~/.ssh/config: se validan antes de usarlos (evita inyectar directivas).
+          case "$SSH_USER" in ''|*[!A-Za-z0-9._-]*) echo "CONTABO_SSH_USER vacío o con caracteres no válidos"; exit 1;; esac
+          case "$SSH_PORT" in ''|*[!0-9]*) echo "CONTABO_SSH_PORT debe ser numérico"; exit 1;; esac
           ssh-keyscan -p "$SSH_PORT" -T 15 -H "$CONTABO_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
-          cat << 'SSHEOF' > ~/.ssh/config
-          Host contabo-vps ${{ env.CONTABO_HOST }}
-            HostName ${{ env.CONTABO_HOST }}
-            User ${{ env.SSH_USER }}
-            Port ${{ env.SSH_PORT }}
+          # Heredoc sin comillas: solo expande $CONTABO_HOST, $SSH_USER y $SSH_PORT (vienen de env, no del script).
+          cat << SSHEOF > ~/.ssh/config
+          Host contabo-vps $CONTABO_HOST
+            HostName $CONTABO_HOST
+            User $SSH_USER
+            Port $SSH_PORT
             IdentityFile ~/.ssh/id_deploy
             IdentitiesOnly yes
             ConnectTimeout 25
@@ -85,7 +103,7 @@ jobs:
 
           retry ssh contabo-vps "mkdir -p $DEPLOY_DIR"
           retry rsync -az --delete -e "ssh" \
-            --exclude='.git' --exclude='node_modules' --exclude='dist' \
+            --exclude='.git' --exclude='node_modules' --exclude='dist' --exclude='.env' --exclude='.env.*' \
             ./ contabo-vps:$DEPLOY_DIR/
 
       - name: Build and Start Containers
