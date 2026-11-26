@@ -14,16 +14,21 @@ export function rutasAlertas(ctx: ContextoRutas): Router {
       return;
     }
     const { usuarioEmail, telefonoWhatsapp, criterioBusqueda, tipoCriterio } = check.value;
-    // Tope de memoria: evita agotar el proceso con suscripciones masivas.
-    if (ctx.suscripciones.contar() >= ctx.maxSuscripciones) {
+    // La inserción y el límite se resuelven juntos; reintentos de red recuperan la misma alerta.
+    const resultado = ctx.suscripciones.suscribirUnaVez({ usuarioEmail, telefonoWhatsapp, criterioBusqueda, tipoCriterio: tipoCriterio || 'DUI' }, ctx.maxSuscripciones);
+    if (resultado.estado === 'limite') {
       res.set('Cache-Control', 'no-store');
       res.status(503).json({ error: 'El servicio de alertas no admite más suscripciones por ahora.' });
       return;
     }
-    const sub = ctx.suscripciones.suscribir({ usuarioEmail, telefonoWhatsapp, criterioBusqueda, tipoCriterio: tipoCriterio || 'DUI' });
-    ctx.portada.invalidar();
+    const sub = resultado.suscripcion;
+    if (!sub) {
+      res.status(500).json({ error: 'No se pudo confirmar el registro de la alerta.' });
+      return;
+    }
+    if (resultado.estado === 'creada') ctx.portada.invalidar();
     // Minimización: no se devuelven DUI, correo ni teléfono; solo el identificador de la alerta.
-    res.status(201).json({ success: true, id: sub.id });
+    res.status(resultado.estado === 'creada' ? 201 : 200).json({ success: true, id: sub.id });
   });
 
   return r;

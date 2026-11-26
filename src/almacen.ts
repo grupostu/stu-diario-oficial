@@ -3,6 +3,7 @@
 // rutas ni contratos. Cada método recibe `tenantId` (por defecto el diario público) para que el aislamiento por
 // inquilino quede en la firma desde ya. Las interfaces son síncronas hoy; pasarán a asíncronas al conectar la BD.
 import fs from 'node:fs';
+import { createHmac, randomBytes } from 'node:crypto';
 import path from 'node:path';
 import type { DiarioIndex, ParametrosIndice, RespuestaBusqueda } from './indexer.js';
 import type { NotifierEngine } from './notifier.js';
@@ -29,6 +30,7 @@ export interface AlmacenPublicaciones {
 
 export interface AlmacenSuscripciones {
   suscribir(sub: Omit<AlertaSuscripcion, 'id' | 'activa' | 'fechaCreacion'>, tenantId?: string): AlertaSuscripcion;
+  suscribirUnaVez(sub: Omit<AlertaSuscripcion, 'id' | 'activa' | 'fechaCreacion'>, maxSuscripciones: number, tenantId?: string): { suscripcion?: AlertaSuscripcion; estado: 'creada' | 'existente' | 'limite' };
   contar(tenantId?: string): number;
 }
 
@@ -52,7 +54,7 @@ export class AlmacenPublicacionesEnMemoria implements AlmacenPublicaciones {
     }
   }
 
-  contar(): number {
+  contar(_tenantId?: string): number {
     return this.indice.count();
   }
   todas(): DiarioRecord[] {
@@ -80,11 +82,40 @@ export class AlmacenPublicacionesEnMemoria implements AlmacenPublicaciones {
 
 /** Suscripciones en memoria (se pierden al reiniciar; la BD las hará persistentes). */
 export class AlmacenSuscripcionesEnMemoria implements AlmacenSuscripciones {
+  private readonly porPayload = new Map<string, AlertaSuscripcion>();
+  private readonly claveDedupe = randomBytes(32);
+
   constructor(private readonly motor: NotifierEngine) {}
   suscribir(sub: Omit<AlertaSuscripcion, 'id' | 'activa' | 'fechaCreacion'>): AlertaSuscripcion {
     return this.motor.subscribe(sub);
   }
-  contar(): number {
+
+  suscribirUnaVez(
+    sub: Omit<AlertaSuscripcion, 'id' | 'activa' | 'fechaCreacion'>,
+    maxSuscripciones: number,
+    tenantId = TENANT_PUBLICO
+  ): { suscripcion?: AlertaSuscripcion; estado: 'creada' | 'existente' | 'limite' } {
+    const material = JSON.stringify({
+      tenantId,
+      email: sub.usuarioEmail.trim().toLocaleLowerCase('en-US'),
+      telefono: sub.telefonoWhatsapp?.replace(/[\s()-]/g, '') ?? '',
+      criterio: sub.tipoCriterio === 'DUI'
+        ? sub.criterioBusqueda.replace(/\D/g, '')
+        : sub.criterioBusqueda.trim().toLocaleLowerCase('es-SV'),
+      tipo: sub.tipoCriterio
+    });
+    const digest = createHmac('sha256', this.claveDedupe).update(material).digest('base64url');
+    const existente = this.porPayload.get(digest);
+    if (existente?.activa) return { suscripcion: existente, estado: 'existente' };
+    if (existente) this.porPayload.delete(digest);
+    if (this.contar(tenantId) >= maxSuscripciones) return { estado: 'limite' };
+
+    const suscripcion = this.motor.subscribe(sub);
+    this.porPayload.set(digest, suscripcion);
+    return { suscripcion, estado: 'creada' };
+  }
+
+  contar(_tenantId?: string): number {
     return this.motor.getSubscriptionsCount();
   }
 }

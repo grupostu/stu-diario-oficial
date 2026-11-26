@@ -205,6 +205,10 @@ test('golden alertas: validaciones, JSON roto y alta correcta', async () => {
   }
   const ok = await pedir({ path: '/api/v1/alerts', method: 'POST', headers: json, body: JSON.stringify({ usuarioEmail: 'prueba@example.com', criterioBusqueda: 'Juan Perez', consentimiento: true }) });
   compararGolden('alerta_ok', serializar(ok, (t) => t.replace(/"id":"[^"]+"/, '"id":"alert-X"')));
+  const reintento = await pedir({ path: '/api/v1/alerts', method: 'POST', headers: json, body: JSON.stringify({ usuarioEmail: 'prueba@example.com', criterioBusqueda: 'Juan Perez', consentimiento: true }) });
+  assert.equal(ok.status, 201);
+  assert.equal(reintento.status, 200);
+  assert.equal(JSON.parse(reintento.cuerpo.toString('utf8')).id, JSON.parse(ok.cuerpo.toString('utf8')).id);
   // El alta cambia el contador de la portada (se refresca como máximo cada 5 s): el estado y los datos sensibles no se exponen.
   const salud = await pedir({ path: '/health' });
   assert.ok(!/activeSubscriptions|prueba@example\.com/.test(salud.cuerpo.toString('utf8')));
