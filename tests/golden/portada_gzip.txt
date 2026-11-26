@@ -4,7 +4,7 @@ cache-control: public, max-age=300, s-maxage=3600, stale-while-revalidate=86400
 cdn-cache-control: public, max-age=3600, stale-while-revalidate=86400
 vary: Accept-Encoding
 content-encoding: gzip
-etag: "F-qd6ZpFHsWFyj3fPgITNnL9X2Y"
+etag: "cfNOeeQqoOXmpeAS3pHpm3PhYsQ"
 x-content-type-options: nosniff
 x-frame-options: SAMEORIGIN
 referrer-policy: strict-origin-when-cross-origin
@@ -18,7 +18,7 @@ cross-origin-opener-policy: same-origin
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Diarios Oficiales de El Salvador · Busca edictos, marcas y leyes por DUI o nombre</title>
-  <meta name="description" content="Busca tu DUI, tu nombre o el de tu empresa en los edictos, marcas y leyes del Diario Oficial de El Salvador, lee el PDF original y recibe alertas por correo cuando aparezcas.">
+  <meta name="description" content="Busca tu DUI, tu nombre o el de tu empresa en los edictos, marcas y leyes del Diario Oficial de El Salvador y consulta el PDF original.">
   <!-- Sistema visual Stu_UI (copia local en /stu-ui, sin dependencias externas) -->
   <script>(function(){var t='light';try{var s=localStorage.getItem('stu-theme');if(s==='dark'||s==='light')t=s;}catch(_){}document.documentElement.setAttribute('data-theme',t);})();</script>
   <link rel="stylesheet" href="/stu-ui/tokens.css?v=1">
@@ -82,7 +82,7 @@ cross-origin-opener-policy: same-origin
 
     <!-- Encabezado de la página -->
     <section class="mb-8 text-left">
-      <h1 class="text-2xl sm:text-4xl font-bold text-gs-text tracking-tight leading-tight">Diario Oficial de El Salvador: consulta y notificaciones</h1>
+      <h1 class="text-2xl sm:text-4xl font-bold text-gs-text tracking-tight leading-tight">Diario Oficial de El Salvador: consulta de publicaciones</h1>
       <p class="mt-3 text-gs-text2 text-sm sm:text-base max-w-3xl leading-relaxed">
         Verifica si tu <strong>DUI</strong> (en números o en letras notariales), <strong>nombre</strong> o <strong>sociedad</strong> figura en edictos de aceptación de herencia, emplazamientos, rebeldías, remates o marcas. Cada resultado enlaza al PDF original, con lo buscado resaltado.
       </p>
@@ -94,7 +94,7 @@ cross-origin-opener-policy: same-origin
           <i class="fa-solid fa-book-open-reader"></i> Abrir el diario más reciente
         </button>
         <button type="button" onclick="openModalAlert()" class="bg-gs-accent hover:bg-gs-accent-hover text-gs-ink font-bold px-4 py-2 rounded-lg text-sm transition-colors flex items-center gap-2">
-          <i class="fa-solid fa-bell"></i> Vigilancia por DUI
+          <i class="fa-solid fa-bell"></i> Ver estado de alertas
         </button>
       </div>
     </section>
@@ -435,46 +435,19 @@ cross-origin-opener-policy: same-origin
   </div>
 
 
-  <!-- Modal para Suscripción de Alertas Preventivas -->
+  <!-- Modal informativo: las alertas aún no están disponibles y no se recopilan datos. -->
   <div id="modal-alert" class="fixed inset-0 bg-gs-bg hidden items-center justify-center p-4 z-50" aria-hidden="true">
     <div class="glass-card max-w-md w-full p-6 sm:p-8 rounded-xl border border-gs-border text-left" role="dialog" aria-modal="true" aria-labelledby="alert-modal-title" tabindex="-1">
       <div class="flex justify-between items-center mb-4">
         <h3 id="alert-modal-title" class="text-xl font-bold text-gs-text flex items-center gap-2">
-          <i class="fa-solid fa-bell text-gs-accent"></i> Alerta Preventiva por DUI
+          <i class="fa-solid fa-bell text-gs-accent"></i> Alertas por correo
         </h3>
         <button type="button" aria-label="Cerrar" onclick="closeModalAlert()" class="text-gs-text2 hover:text-gs-text text-lg"><i class="fa-solid fa-xmark"></i></button>
       </div>
-      <p class="text-xs text-gs-text2 mb-6 leading-relaxed">
-        Nuestro motor revisa cada nueva publicación del Diario Oficial. Si se detecta tu número de DUI, nombre o sociedad en un edicto judicial, orden de captura, embargo o registro de marca, te enviaremos una notificación inmediata.
+      <p class="text-sm text-gs-text2 mb-6 leading-relaxed" role="status">
+        El servicio de alertas por correo está temporalmente deshabilitado. No ingreses ni envíes datos personales aquí; esta ventana no recopila ni guarda información.
       </p>
-      <form onsubmit="submitAlert(event)" novalidate class="space-y-4">
-        <div>
-          <label for="alert-criterion" class="block text-xs font-bold text-gs-text2 mb-1">DUI o Nombre a Monitorear</label>
-          <input type="text" id="alert-criterion" placeholder="ej. 00000000-0 o Nombre Completo" required
-            class="w-full bg-gs-bg border border-gs-border rounded-xl px-4 py-3 text-gs-text text-sm outline-none font-mono focus:border-gs-accent">
-        </div>
-        <div>
-          <label for="alert-email" class="block text-xs font-bold text-gs-text2 mb-1">Correo Electrónico para Alertas</label>
-          <input type="email" id="alert-email" placeholder="correo@ejemplo.com" required
-            class="w-full bg-gs-bg border border-gs-border rounded-xl px-4 py-3 text-gs-text text-sm outline-none focus:border-gs-accent">
-        </div>
-        <div>
-          <label for="alert-phone" class="block text-xs font-bold text-gs-text2 mb-1">WhatsApp de Urgencia (Opcional)</label>
-          <input type="tel" id="alert-phone" placeholder="+503 7000-0000"
-            class="w-full bg-gs-bg border border-gs-border rounded-xl px-4 py-3 text-gs-text text-sm outline-none focus:border-gs-accent">
-        </div>
-        <div class="rounded-xl border border-gs-border bg-gs-bg p-3 text-[11px] leading-relaxed text-gs-text2">
-          <p><strong class="text-gs-text">Aviso de privacidad.</strong> Grupo Stu, S.A.S. de C.V. usa tu correo, tu WhatsApp (si lo das) y el DUI o nombre que escribas solo para enviarte alertas cuando aparezcan en el Diario Oficial. Los guardamos mientras la alerta siga activa y puedes pedir la baja y el borrado en cualquier momento. No los vendemos ni los usamos para otra cosa. <a href="/privacidad" target="_blank" rel="noopener" class="text-gs-accent underline">Leer el aviso completo</a>.</p>
-        </div>
-        <label class="flex items-start gap-2 text-xs text-gs-text cursor-pointer">
-          <input type="checkbox" id="alert-consent" required class="mt-0.5 h-4 w-4 accent-emerald-500">
-          <span>He leído el aviso de privacidad y autorizo a Grupo Stu, S.A.S. de C.V. a tratar estos datos para enviarme las alertas.</span>
-        </label>
-        <p id="alert-msg" role="status" class="hidden text-xs rounded-xl px-3 py-2"></p>
-        <button type="submit" class="w-full bg-gs-accent hover:bg-gs-accent-hover text-gs-ink font-semibold py-3.5 rounded-xl text-sm transition-all">
-          Guardar Alerta y Proteger mi Identidad
-        </button>
-      </form>
+      <a href="/privacidad" class="text-gs-accent underline">Leer el aviso de privacidad</a>
     </div>
   </div>
 
@@ -527,9 +500,9 @@ cross-origin-opener-policy: same-origin
   <div class="gs-footer__in">
     <div class="gs-footer__grid">
       <div>
-        <div class="gs-footer__product"><div class="gs-footer__brand"><span class="gs-footer__seal gs-footer__seal--product" aria-hidden="true">DO</span><a class="gs-footer__bname" href="https://diariosoficiales.grupostu.com">Diarios Oficiales</a></div><p>Facilita la búsqueda de edictos, avisos y normativa publicada en diarios oficiales, con alertas por correo y enlaces estables a cada documento para que puedas citarlo y conservarlo.</p></div>
+        <div class="gs-footer__product"><div class="gs-footer__brand"><span class="gs-footer__seal gs-footer__seal--product" aria-hidden="true">DO</span><a class="gs-footer__bname" href="https://diariosoficiales.grupostu.com">Diarios Oficiales</a></div><p>Facilita la búsqueda de edictos, avisos y normativa publicada en diarios oficiales y ofrece enlaces estables a cada documento para que puedas citarlo y conservarlo.</p></div>
         <div class="gs-footer__brand"><span class="gs-footer__seal" aria-hidden="true">GS</span><span class="gs-footer__bname">Grupo Stu</span></div>
-        <p>Grupo Stu desarrolla productos de software desde San Salvador, El Salvador: herramientas en línea, hospedaje, constructor de aplicaciones, software de gestión, formación y clasificados, con un mismo estándar de seguridad, privacidad y soporte.</p>
+        <p>Grupo Stu desarrolla productos de software desde San Salvador, El Salvador. Cada plataforma publica sus propias funciones, condiciones y canales de soporte.</p>
         <div class="gs-footer__notice" role="note">Servicio de consulta y seguimiento. Para efectos legales rige siempre el ejemplar publicado por la autoridad emisora, al que cada registro enlaza.</div>
       </div>
       <nav aria-label="Plataformas de Grupo Stu">
@@ -539,19 +512,19 @@ cross-origin-opener-policy: same-origin
         </ul>
       </nav>
       <div>
-        <h3>Legal y transparencia</h3>
+        <h3>Legal e información corporativa</h3>
         <ul>
           <li class="gs-footer__item"><a href="https://grupostu.com/es/legal/privacidad">Política de Privacidad</a><small>Qué datos recopilamos, para qué, por cuánto tiempo y cómo ejercer tus derechos, conforme a la legislación de El Salvador.</small></li>
           <li class="gs-footer__item"><a href="https://grupostu.com/es/legal/terminos">Términos y Condiciones</a><small>Reglas de uso de los servicios, responsabilidades, pagos, cancelaciones y resolución de controversias.</small></li>
-          <li class="gs-footer__item"><a href="https://grupostu.com/es/legal/transparencia">Transparencia y Acceso a la Información</a><small>Información pública y vías de solicitud según los artículos 10 y 11 de la LAIP.</small></li>
-          <li class="gs-footer__item"><a href="mailto:soporte@grupostu.com?subject=Reporte%20de%20seguridad">Seguridad y reporte de vulnerabilidades</a><small>Canal para notificar fallos de seguridad de forma responsable.</small></li>
+          <li class="gs-footer__item"><a href="https://grupostu.com/es/legal/transparencia">Información corporativa</a><small>Información sobre la empresa, el alcance de sus servicios y fuentes públicas citadas. No es un portal oficial de acceso a información pública.</small></li>
+          <li class="gs-footer__item"><a href="mailto:soporte@grupostu.com?subject=Reporte%20de%20seguridad">Seguridad y reporte de vulnerabilidades</a><small>Correo publicado para informar una posible vulnerabilidad. Evita pruebas que afecten servicios o datos de terceros.</small></li>
         </ul>
       </div>
       <div>
         <h3>Soporte y contacto</h3>
         <ul>
-          <li class="gs-footer__item"><a href="mailto:soporte@grupostu.com">soporte@grupostu.com</a><small>Canal oficial único de soporte técnico, facturación, privacidad y avisos legales de todos los productos.</small></li>
-          <li class="gs-footer__item"><span class="gs-footer__cur">San Salvador, El Salvador</span><small>Nunca pedimos contraseñas ni códigos de verificación por correo o chat.</small></li>
+          <li class="gs-footer__item"><a href="mailto:soporte@grupostu.com">soporte@grupostu.com</a><small>Correo de contacto publicado por Grupo Stu para consultas generales. Indica el producto al que se refiere tu mensaje.</small></li>
+          <li class="gs-footer__item"><span class="gs-footer__cur">San Salvador, El Salvador</span><small>No compartas contraseñas ni códigos de verificación con personas que te contacten.</small></li>
         </ul>
       </div>
     </div>
@@ -559,13 +532,13 @@ cross-origin-opener-policy: same-origin
       <h3 id="gs-faq-h">Preguntas frecuentes — Diarios Oficiales</h3>
       <div class="gs-footer__faq-grid">
         <details open><summary>¿Los documentos tienen validez legal?</summary><p>Diarios Oficiales es un servicio de consulta y seguimiento: indexa y organiza publicaciones para facilitar su búsqueda. Para efectos legales rige siempre el ejemplar publicado por la autoridad emisora; cada registro enlaza a su fuente para que puedas contrastarlo.</p></details>
-        <details><summary>¿Cómo funcionan las alertas por correo?</summary><p>Defines el término o la materia que te interesa y recibes un aviso cuando aparece una publicación coincidente. Debes confirmar tu correo para activar la alerta y puedes darte de baja desde cualquier mensaje.</p></details>
+        <details><summary>¿Están disponibles las alertas por correo?</summary><p>No. Las alertas por correo están temporalmente deshabilitadas. El sitio no permite registrarse ni guarda datos para ese fin.</p></details>
         <details><summary>¿Cada cuánto se actualiza el contenido?</summary><p>La indexación se ejecuta de forma periódica a lo largo del día. Puede existir un desfase entre la publicación oficial y su aparición aquí; ante una urgencia, confirma siempre en el sitio de la autoridad emisora.</p></details>
-        <details><summary>¿Qué es Grupo Stu?</summary><p>Grupo Stu desarrolla y opera desde San Salvador, El Salvador, un conjunto de productos de software: herramientas en línea, hospedaje, constructor de aplicaciones, ERP, software financiero, formación, clasificados y publicaciones oficiales. Cada producto tiene su propio sitio, pero comparten identidad, estándares de seguridad y canal de soporte.</p></details>
-        <details><summary>¿Cómo contacto a soporte y cuánto tarda la respuesta?</summary><p>Escribe a soporte@grupostu.com indicando el producto, tu correo de registro y una descripción del problema (capturas de pantalla ayudan). Es el único canal oficial: no solicitamos contraseñas, códigos de verificación ni datos completos de tarjeta por ningún medio. Respondemos en orden de llegada y priorizamos incidentes que afecten pagos, acceso o seguridad.</p></details>
-        <details><summary>¿Qué leyes rigen el uso de los servicios?</summary><p>La Política de Privacidad y los Términos y Condiciones se rigen por la legislación de la República de El Salvador. Los textos vigentes están publicados en grupostu.com/es/legal, junto con la página de Transparencia y Acceso a la Información conforme a los artículos 10 y 11 de la LAIP.</p></details>
-        <details><summary>¿Cómo protegen mis datos?</summary><p>Aplicamos cifrado en tránsito (HTTPS), validación estricta de todo lo que recibe cada sistema, separación de datos entre clientes, límites de intentos y registros de auditoría que nunca guardan contraseñas, tokens ni datos completos de tarjetas. Los respaldos se prueban de forma periódica y el acceso administrativo requiere autenticación reforzada.</p></details>
-        <details><summary>¿Cómo reporto una vulnerabilidad de seguridad?</summary><p>Envía el detalle a soporte@grupostu.com con el asunto «Reporte de seguridad»: URL afectada, pasos para reproducirlo e impacto estimado. Evalúa sin acceder a datos de terceros ni degradar el servicio; confirmamos la recepción, corregimos según la gravedad y te informamos cuando esté resuelto.</p></details>
+        <details><summary>¿Qué es Grupo Stu?</summary><p>Grupo Stu desarrolla y opera desde San Salvador, El Salvador, productos de software como herramientas en línea, hospedaje, constructor de aplicaciones, ERP, formación, clasificados y servicios de consulta de publicaciones. Cada producto tiene su propio sitio y puede tener condiciones, características y canales de contacto específicos.</p></details>
+        <details><summary>¿Cómo contacto a Grupo Stu?</summary><p>Para consultas generales puedes escribir a soporte@grupostu.com e indicar el producto y una descripción breve. No incluyas contraseñas, códigos de verificación ni datos completos de tarjeta en mensajes o capturas. Revisa la documentación del servicio para conocer sus opciones de soporte específicas.</p></details>
+        <details><summary>¿Qué leyes rigen el uso de los servicios?</summary><p>La Política de Privacidad y los Términos y Condiciones se rigen por la legislación aplicable de la República de El Salvador. Sus versiones vigentes están publicadas en grupostu.com/es/legal. La página de información corporativa describe a la empresa y no es un portal oficial de acceso a información pública.</p></details>
+        <details><summary>¿Cómo protegen mis datos?</summary><p>Consulta la Política de Privacidad y la documentación del producto para conocer qué datos recoge cada servicio y cómo se tratan. Las características y medidas aplicables pueden variar entre productos. No compartas datos sensibles en consultas de soporte.</p></details>
+        <details><summary>¿Cómo reporto una vulnerabilidad de seguridad?</summary><p>Puedes informar una posible vulnerabilidad a soporte@grupostu.com con el asunto «Reporte de seguridad» e incluir la URL y los pasos observados. No accedas a datos de terceros, evadas controles ni realices pruebas que afecten la disponibilidad del servicio. No incluyas credenciales o secretos en el mensaje.</p></details>
         <details><summary>¿Una misma cuenta sirve en todos los productos?</summary><p>Estamos implementando una cuenta única de Grupo Stu para acceder a las plataformas públicas con un solo inicio de sesión. Mientras se integra cada producto, algunos pueden mantener su propio registro; lo comunicaremos en el sitio de cada producto cuando corresponda. Las áreas internas y privadas quedan fuera de esta cuenta.</p></details>
       </div>
     </section>
@@ -575,6 +548,6 @@ cross-origin-opener-policy: same-origin
 
 
   <script type="module" src="/stu-ui/cabecera/cabecera.js?v=1"></script>
-  <script src="/estatico/portada.b19ae6811ae5.js"></script>
+  <script src="/estatico/portada.b8bbb12c646e.js"></script>
 </body>
 </html>

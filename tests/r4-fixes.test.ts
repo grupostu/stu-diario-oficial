@@ -28,11 +28,12 @@ describe('Ronda 4: alertas rechazan criterios basura (R3-002)', () => {
     const nombre = validarAlerta({ ...base, criterioBusqueda: "María José Ñandú O'Brien" });
     assert.ok(nombre.ok && nombre.value.tipoCriterio === 'NOMBRE');
   });
-  it('el navegador usa la misma función que el servidor', () => {
+  it('el portal no pide datos mientras las alertas están deshabilitadas', () => {
     const html = renderPortal({ totalDocumentos: 1, totalAlertas: 0, diarios: cargarCatalogo() });
-    assert.ok(html.includes('function evaluarCriterio(entrada)'));
-    assert.ok(html.includes('const evaluado = evaluarCriterio(crit);'));
-    assert.ok(html.includes('escapeHtmlText(q)'));
+    assert.match(html, /Las alertas por correo están temporalmente deshabilitadas/);
+    assert.match(html, /no recopila ni guarda información/);
+    assert.doesNotMatch(html, /id="alert-(criterion|email|phone|consent)"/);
+    assert.doesNotMatch(html, /submitAlert\(event\)/);
     assert.equal(evaluarCriterio('abc').ok, true);
   });
 });

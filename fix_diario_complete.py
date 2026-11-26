@@ -155,7 +155,7 @@ old_modal_fn = """    function openCertifiedCitationModal() {
         <div><strong>Clasificación Jurídica:</strong> ${clasif}</div>
         <div><strong>Término / DUI Verificado:</strong> ${currentHighlightedTerm || (duisList.length ? duisList.join(', ') : 'Consulta General de Hoja')}</div>
         <div><strong>URL Primaria Estatal:</strong> https://www.diariooficial.gob.sv/</div>
-        <div class="text-[11px] text-emerald-400 pt-2 border-t border-slate-800">✔ Copia fiel digitalizada y sincronizada mediante índice O(1) de Grupo Stu, S.A.S.</div>
+        <div class="text-[11px] text-emerald-400 pt-2 border-t border-slate-800">✔ Copia fiel digitalizada y sincronizada mediante índice O(1) de Grupo Stu, S.A.S. de C.V.</div>
       `;
       modal.classList.remove('hidden');
       modal.classList.add('flex');
@@ -178,7 +178,7 @@ new_modal_fn = """    let activeArticleIndex = 0;
         <div><strong>Artículo / Edicto Seleccionado:</strong> ${titular} (${clasif})</div>
         <div><strong>Criterio / DUI en este Edicto:</strong> ${currentHighlightedTerm || (duisList.length ? duisList.join(', ') : 'Ningún DUI asociado a este edicto específico')}</div>
         <div class="mt-3 p-3 rounded-xl bg-amber-950/30 border border-amber-500/30 text-[10px] text-amber-200/90 leading-relaxed">
-          <strong>DESCARGO LEGAL IMPORTANTE (TÉRMINOS Y CONDICIONES):</strong> Este resumen es una guía informática de ubicación bibliográfica generada por software privado de <strong>Grupo Stu, S.A.S.</strong> <u>NO constituye certificación, constancia oficial, copia fiel ni documento público</u> (facultad exclusiva de la Imprenta Nacional o funcionarios/notarios autorizados por ley). El texto indexado proviene de lectura óptica automatizada (OCR) y puede contener imprecisiones. <strong>Grupo Stu, S.A.S. no asume responsabilidad alguna por la información contenida ni por el uso, interpretación o decisiones que el usuario o terceros tomen con base en la misma.</strong> Verifique siempre el documento original estatal.
+          <strong>DESCARGO LEGAL IMPORTANTE (TÉRMINOS Y CONDICIONES):</strong> Este resumen es una guía informática de ubicación bibliográfica generada por software privado de <strong>Grupo Stu, S.A.S. de C.V.</strong> <u>NO constituye certificación, constancia oficial, copia fiel ni documento público</u> (facultad exclusiva de la Imprenta Nacional o funcionarios/notarios autorizados por ley). El texto indexado proviene de lectura óptica automatizada (OCR) y puede contener imprecisiones. <strong>Grupo Stu, S.A.S. de C.V. no asume responsabilidad alguna por la información contenida ni por el uso, interpretación o decisiones que el usuario o terceros tomen con base en la misma.</strong> Verifique siempre el documento original estatal.
         </div>
       `;
       modal.classList.remove('hidden');
@@ -201,19 +201,19 @@ old_laip_box = """    <!-- Escudo y Blindaje Legal (LAIP Arts. 10 y 11) -->
           <strong>1. Pleno Dominio Público (LAIP Arts. 10 y 11):</strong> De conformidad con los Artículos 10 y 11 de la <em>Ley de Acceso a la Información Pública</em> de El Salvador, las leyes, decretos, reglamentos, edictos judiciales, carteles notariales y resoluciones divulgados en el Diario Oficial tienen el carácter legal de <strong>información oficiosa de libre consulta y de pleno dominio público</strong>.
         </p>
         <p class="mt-1.5">
-          <strong>2. Independencia Tecnológica:</strong> Esta plataforma es un servicio independiente de indexación, analítica y monitoreo cívico desarrollado y operado por <strong>Grupo Stu, S.A.S.</strong> La fuente originaria es accesible en <code>diariooficial.gob.sv</code> e <code>imprentanacional.gob.sv</code>.
+          <strong>2. Independencia Tecnológica:</strong> Esta plataforma es un servicio independiente de indexación, analítica y monitoreo cívico desarrollado y operado por <strong>Grupo Stu, S.A.S. de C.V.</strong> La fuente originaria es accesible en <code>diariooficial.gob.sv</code> e <code>imprentanacional.gob.sv</code>.
         </p>
       </div>
     </div>"""
 
-new_laip_box = """    <!-- Marco Legal, Términos y Condiciones y Descargo de Responsabilidad de Grupo Stu, S.A.S. -->
+new_laip_box = """    <!-- Marco Legal, Términos y Condiciones y Descargo de Responsabilidad de Grupo Stu, S.A.S. de C.V. -->
     <div class="mt-8 p-6 rounded-2xl border border-slate-800/90 bg-slate-950/85 text-xs text-slate-400 leading-relaxed text-left space-y-3">
       <div class="flex items-center justify-between flex-wrap gap-2 border-b border-slate-800 pb-2.5">
         <div class="flex items-center gap-2.5 text-slate-100 font-bold">
           <span class="w-8 h-8 rounded-lg bg-brand-500/10 border border-brand-500/30 flex items-center justify-center text-brand-400">
             <i class="fa-solid fa-scale-balanced"></i>
           </span>
-          <span>Términos de Uso, Naturaleza Informativa y Descargo Legal de Responsabilidad — Grupo Stu, S.A.S.</span>
+          <span>Términos de Uso, Naturaleza Informativa y Descargo Legal de Responsabilidad — Grupo Stu, S.A.S. de C.V.</span>
         </div>
         <span class="text-[10px] font-mono px-2.5 py-1 rounded bg-slate-900 border border-slate-700 text-slate-300">Cumplimiento LAIP Arts. 10 y 11 · Uso Informativo</span>
       </div>
@@ -224,11 +224,11 @@ new_laip_box = """    <!-- Marco Legal, Términos y Condiciones y Descargo de Re
         </div>
         <div class="bg-slate-900/50 p-3.5 rounded-xl border border-slate-800/70">
           <strong class="text-white block mb-1">2. No Sustitución ni Carácter Certificante:</strong>
-          <strong>Grupo Stu, S.A.S.</strong> es una entidad privada e independiente; no representa ni sustituye a la Imprenta Nacional (<code>diariooficial.gob.sv</code>) ni emite certificaciones, constancias oficiales o copias fieles con valor probatorio judicial.
+          <strong>Grupo Stu, S.A.S. de C.V.</strong> es una entidad privada e independiente; no representa ni sustituye a la Imprenta Nacional (<code>diariooficial.gob.sv</code>) ni emite certificaciones, constancias oficiales o copias fieles con valor probatorio judicial.
         </div>
         <div class="bg-slate-900/50 p-3.5 rounded-xl border border-slate-800/70">
           <strong class="text-amber-300 block mb-1">3. Limitación Total de Responsabilidad:</strong>
-          Las transcripciones provienen de procesos automatizados (OCR) y se ofrecen «tal cual» con fines orientativos. <strong>Grupo Stu, S.A.S. no es responsable de la exactitud de la información contenida ni del uso, interpretación o decisiones tomadas por el usuario.</strong>
+          Las transcripciones provienen de procesos automatizados (OCR) y se ofrecen «tal cual» con fines orientativos. <strong>Grupo Stu, S.A.S. de C.V. no es responsable de la exactitud de la información contenida ni del uso, interpretación o decisiones tomadas por el usuario.</strong>
         </div>
       </div>
     </div>"""

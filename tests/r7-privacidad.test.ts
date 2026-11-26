@@ -15,7 +15,9 @@ describe('Ronda 7: privacidad', () => {
   it('la portada no contiene DUI ni nombres reales de ejemplo ni about:blank', () => {
     const html = renderPortal({ totalDocumentos: 1, totalAlertas: 0, diarios: cargarCatalogo() });
     for (const v of ['00356274', '003562742', '01239641', 'about:blank']) assert.ok(!html.includes(v), v);
-    assert.ok(html.includes('id="alert-consent"') && html.includes('href="/privacidad"'));
+    assert.ok(html.includes('Las alertas por correo están temporalmente deshabilitadas'));
+    assert.ok(html.includes('no recopila ni guarda información') && html.includes('href="/privacidad"'));
+    assert.ok(!html.includes('id="alert-email"') && !html.includes('id="alert-consent"'));
   });
   it('existe la página de privacidad', () => {
     assert.ok(renderPrivacidad().includes('Grupo Stu, S.A.S.'));

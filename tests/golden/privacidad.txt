@@ -3,7 +3,7 @@ content-type: text/html; charset=utf-8
 cache-control: public, max-age=300, s-maxage=3600, stale-while-revalidate=86400
 cdn-cache-control: public, max-age=3600, stale-while-revalidate=86400
 vary: Accept-Encoding
-etag: "dMjrR5J_oSu1tBNB8gHdhs4zVa0"
+etag: "4HKukadRmlOsPlTmA_vcIZF1VG8"
 x-content-type-options: nosniff
 x-frame-options: SAMEORIGIN
 referrer-policy: strict-origin-when-cross-origin
@@ -17,7 +17,7 @@ cross-origin-opener-policy: same-origin
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Aviso de privacidad · Diarios Oficiales de El Salvador</title>
-  <meta name="description" content="Qué datos pedimos para las alertas del Diario Oficial, para qué los usamos, cuánto tiempo los guardamos y cómo pedir tu baja.">
+  <meta name="description" content="Información sobre privacidad y tratamiento de datos en el sitio del Diario Oficial.">
   
   <script>(function(){var t='light';try{var s=localStorage.getItem('stu-theme');if(s==='dark'||s==='light')t=s;}catch(_){}document.documentElement.setAttribute('data-theme',t);})();</script>
   <link rel="stylesheet" href="/stu-ui/tokens.css?v=1">
@@ -44,27 +44,20 @@ cross-origin-opener-policy: same-origin
   <main><div class="contenido">
   <p><a href="/">&larr; Volver al buscador</a></p>
   <h1>Aviso de privacidad</h1>
-  <p>Este aviso explica cómo trata tus datos el servicio de alertas de este sitio. Lo responsable del tratamiento es <strong>Grupo Stu, S.A.S. de C.V.</strong></p>
+  <p>Este aviso explica cómo se trata la información cuando consultas este sitio. El responsable del tratamiento es <strong>Grupo Stu, S.A.S. de C.V.</strong></p>
 
-  <h2>Qué datos pedimos</h2>
-  <ul>
-    <li>El DUI o el nombre que quieres vigilar.</li>
-    <li>Tu correo electrónico, para enviarte la alerta.</li>
-    <li>Tu número de WhatsApp, solo si decides darlo (es opcional).</li>
-  </ul>
-  <p>La búsqueda en el sitio no guarda lo que escribes: se consulta el archivo y se muestra el resultado.</p>
+  <h2>Consultas y datos enviados</h2>
+  <p>El sitio permite consultar publicaciones públicas. Las alertas por correo están temporalmente deshabilitadas: no solicites ni envíes por este medio tu DUI, nombre, correo o teléfono para registrarte en alertas. La API rechaza las altas y no las guarda.</p>
+  <p>Los sistemas de entrega y seguridad pueden registrar datos técnicos necesarios para operar el sitio, como dirección IP, ruta solicitada, fecha, estado de respuesta y errores operativos. El período de conservación depende de la configuración vigente de la infraestructura.</p>
 
-  <h2>Para qué los usamos</h2>
-  <p>Únicamente para avisarte cuando el DUI o el nombre que indicaste aparezca en una nueva publicación del Diario Oficial. No los usamos para publicidad ni los vendemos o cedemos a terceros con otros fines.</p>
+  <h2>Finalidades y conservación</h2>
+  <p>La información pública consultada se usa para mostrar resultados. No se crea un perfil de alertas ni se conserva una suscripción desde este sitio. El período de conservación de los datos técnicos depende de la configuración efectiva de infraestructura.</p>
 
-  <h2>Cuánto tiempo los guardamos</h2>
-  <p>Mientras tu alerta siga activa. Si pides la baja, se desactiva y se borran tus datos.</p>
+  <h2>Tus derechos y contacto</h2>
+  <p>Puedes presentar directamente a Grupo Stu solicitudes de acceso y copia, corrección, eliminación, oposición, portabilidad, olvido o limitación, según la legislación aplicable. Escríbenos a <a href="mailto:soporte@grupostu.com">soporte@grupostu.com</a>; verificaremos tu identidad de manera proporcional a la solicitud y te indicaremos el trámite que corresponde. No envíes contraseñas, códigos de acceso ni datos completos de pago.</p>
 
-  <h2>Tus derechos</h2>
-  <p>Puedes pedir en cualquier momento que te demos de baja, que corrijamos o que borremos tus datos. Escribe a <a href="mailto:soporte@grupostu.com">soporte@grupostu.com</a> indicando el correo con el que te registraste.</p>
-
-  <h2>Seguridad y registros</h2>
-  <p>No escribimos tu DUI, correo ni teléfono en los registros del servidor, y las respuestas del sitio no te devuelven esos datos. El consentimiento es obligatorio para guardar una alerta.</p>
+  <h2>Seguridad</h2>
+  <p>El sitio aplica medidas técnicas para proteger el servicio. No incluyas información sensible en búsquedas. Las altas de alertas están deshabilitadas y la API no almacena datos de suscripción.</p>
 
   <h2>Sobre el contenido del Diario Oficial</h2>
   <p>Los edictos y avisos que se muestran son publicaciones oficiales ya públicas. Si crees que una publicación te afecta, la fuente original es el Diario Oficial.</p>
@@ -120,9 +113,9 @@ cross-origin-opener-policy: same-origin
   <div class="gs-footer__in">
     <div class="gs-footer__grid">
       <div>
-        <div class="gs-footer__product"><div class="gs-footer__brand"><span class="gs-footer__seal gs-footer__seal--product" aria-hidden="true">DO</span><a class="gs-footer__bname" href="https://diariosoficiales.grupostu.com">Diarios Oficiales</a></div><p>Facilita la búsqueda de edictos, avisos y normativa publicada en diarios oficiales, con alertas por correo y enlaces estables a cada documento para que puedas citarlo y conservarlo.</p></div>
+        <div class="gs-footer__product"><div class="gs-footer__brand"><span class="gs-footer__seal gs-footer__seal--product" aria-hidden="true">DO</span><a class="gs-footer__bname" href="https://diariosoficiales.grupostu.com">Diarios Oficiales</a></div><p>Facilita la búsqueda de edictos, avisos y normativa publicada en diarios oficiales y ofrece enlaces estables a cada documento para que puedas citarlo y conservarlo.</p></div>
         <div class="gs-footer__brand"><span class="gs-footer__seal" aria-hidden="true">GS</span><span class="gs-footer__bname">Grupo Stu</span></div>
-        <p>Grupo Stu desarrolla productos de software desde San Salvador, El Salvador: herramientas en línea, hospedaje, constructor de aplicaciones, software de gestión, formación y clasificados, con un mismo estándar de seguridad, privacidad y soporte.</p>
+        <p>Grupo Stu desarrolla productos de software desde San Salvador, El Salvador. Cada plataforma publica sus propias funciones, condiciones y canales de soporte.</p>
         <div class="gs-footer__notice" role="note">Servicio de consulta y seguimiento. Para efectos legales rige siempre el ejemplar publicado por la autoridad emisora, al que cada registro enlaza.</div>
       </div>
       <nav aria-label="Plataformas de Grupo Stu">
@@ -132,19 +125,19 @@ cross-origin-opener-policy: same-origin
         </ul>
       </nav>
       <div>
-        <h3>Legal y transparencia</h3>
+        <h3>Legal e información corporativa</h3>
         <ul>
           <li class="gs-footer__item"><a href="https://grupostu.com/es/legal/privacidad">Política de Privacidad</a><small>Qué datos recopilamos, para qué, por cuánto tiempo y cómo ejercer tus derechos, conforme a la legislación de El Salvador.</small></li>
           <li class="gs-footer__item"><a href="https://grupostu.com/es/legal/terminos">Términos y Condiciones</a><small>Reglas de uso de los servicios, responsabilidades, pagos, cancelaciones y resolución de controversias.</small></li>
-          <li class="gs-footer__item"><a href="https://grupostu.com/es/legal/transparencia">Transparencia y Acceso a la Información</a><small>Información pública y vías de solicitud según los artículos 10 y 11 de la LAIP.</small></li>
-          <li class="gs-footer__item"><a href="mailto:soporte@grupostu.com?subject=Reporte%20de%20seguridad">Seguridad y reporte de vulnerabilidades</a><small>Canal para notificar fallos de seguridad de forma responsable.</small></li>
+          <li class="gs-footer__item"><a href="https://grupostu.com/es/legal/transparencia">Información corporativa</a><small>Información sobre la empresa, el alcance de sus servicios y fuentes públicas citadas. No es un portal oficial de acceso a información pública.</small></li>
+          <li class="gs-footer__item"><a href="mailto:soporte@grupostu.com?subject=Reporte%20de%20seguridad">Seguridad y reporte de vulnerabilidades</a><small>Correo publicado para informar una posible vulnerabilidad. Evita pruebas que afecten servicios o datos de terceros.</small></li>
         </ul>
       </div>
       <div>
         <h3>Soporte y contacto</h3>
         <ul>
-          <li class="gs-footer__item"><a href="mailto:soporte@grupostu.com">soporte@grupostu.com</a><small>Canal oficial único de soporte técnico, facturación, privacidad y avisos legales de todos los productos.</small></li>
-          <li class="gs-footer__item"><span class="gs-footer__cur">San Salvador, El Salvador</span><small>Nunca pedimos contraseñas ni códigos de verificación por correo o chat.</small></li>
+          <li class="gs-footer__item"><a href="mailto:soporte@grupostu.com">soporte@grupostu.com</a><small>Correo de contacto publicado por Grupo Stu para consultas generales. Indica el producto al que se refiere tu mensaje.</small></li>
+          <li class="gs-footer__item"><span class="gs-footer__cur">San Salvador, El Salvador</span><small>No compartas contraseñas ni códigos de verificación con personas que te contacten.</small></li>
         </ul>
       </div>
     </div>
@@ -152,13 +145,13 @@ cross-origin-opener-policy: same-origin
       <h3 id="gs-faq-h">Preguntas frecuentes — Diarios Oficiales</h3>
       <div class="gs-footer__faq-grid">
         <details open><summary>¿Los documentos tienen validez legal?</summary><p>Diarios Oficiales es un servicio de consulta y seguimiento: indexa y organiza publicaciones para facilitar su búsqueda. Para efectos legales rige siempre el ejemplar publicado por la autoridad emisora; cada registro enlaza a su fuente para que puedas contrastarlo.</p></details>
-        <details><summary>¿Cómo funcionan las alertas por correo?</summary><p>Defines el término o la materia que te interesa y recibes un aviso cuando aparece una publicación coincidente. Debes confirmar tu correo para activar la alerta y puedes darte de baja desde cualquier mensaje.</p></details>
+        <details><summary>¿Están disponibles las alertas por correo?</summary><p>No. Las alertas por correo están temporalmente deshabilitadas. El sitio no permite registrarse ni guarda datos para ese fin.</p></details>
         <details><summary>¿Cada cuánto se actualiza el contenido?</summary><p>La indexación se ejecuta de forma periódica a lo largo del día. Puede existir un desfase entre la publicación oficial y su aparición aquí; ante una urgencia, confirma siempre en el sitio de la autoridad emisora.</p></details>
-        <details><summary>¿Qué es Grupo Stu?</summary><p>Grupo Stu desarrolla y opera desde San Salvador, El Salvador, un conjunto de productos de software: herramientas en línea, hospedaje, constructor de aplicaciones, ERP, software financiero, formación, clasificados y publicaciones oficiales. Cada producto tiene su propio sitio, pero comparten identidad, estándares de seguridad y canal de soporte.</p></details>
-        <details><summary>¿Cómo contacto a soporte y cuánto tarda la respuesta?</summary><p>Escribe a soporte@grupostu.com indicando el producto, tu correo de registro y una descripción del problema (capturas de pantalla ayudan). Es el único canal oficial: no solicitamos contraseñas, códigos de verificación ni datos completos de tarjeta por ningún medio. Respondemos en orden de llegada y priorizamos incidentes que afecten pagos, acceso o seguridad.</p></details>
-        <details><summary>¿Qué leyes rigen el uso de los servicios?</summary><p>La Política de Privacidad y los Términos y Condiciones se rigen por la legislación de la República de El Salvador. Los textos vigentes están publicados en grupostu.com/es/legal, junto con la página de Transparencia y Acceso a la Información conforme a los artículos 10 y 11 de la LAIP.</p></details>
-        <details><summary>¿Cómo protegen mis datos?</summary><p>Aplicamos cifrado en tránsito (HTTPS), validación estricta de todo lo que recibe cada sistema, separación de datos entre clientes, límites de intentos y registros de auditoría que nunca guardan contraseñas, tokens ni datos completos de tarjetas. Los respaldos se prueban de forma periódica y el acceso administrativo requiere autenticación reforzada.</p></details>
-        <details><summary>¿Cómo reporto una vulnerabilidad de seguridad?</summary><p>Envía el detalle a soporte@grupostu.com con el asunto «Reporte de seguridad»: URL afectada, pasos para reproducirlo e impacto estimado. Evalúa sin acceder a datos de terceros ni degradar el servicio; confirmamos la recepción, corregimos según la gravedad y te informamos cuando esté resuelto.</p></details>
+        <details><summary>¿Qué es Grupo Stu?</summary><p>Grupo Stu desarrolla y opera desde San Salvador, El Salvador, productos de software como herramientas en línea, hospedaje, constructor de aplicaciones, ERP, formación, clasificados y servicios de consulta de publicaciones. Cada producto tiene su propio sitio y puede tener condiciones, características y canales de contacto específicos.</p></details>
+        <details><summary>¿Cómo contacto a Grupo Stu?</summary><p>Para consultas generales puedes escribir a soporte@grupostu.com e indicar el producto y una descripción breve. No incluyas contraseñas, códigos de verificación ni datos completos de tarjeta en mensajes o capturas. Revisa la documentación del servicio para conocer sus opciones de soporte específicas.</p></details>
+        <details><summary>¿Qué leyes rigen el uso de los servicios?</summary><p>La Política de Privacidad y los Términos y Condiciones se rigen por la legislación aplicable de la República de El Salvador. Sus versiones vigentes están publicadas en grupostu.com/es/legal. La página de información corporativa describe a la empresa y no es un portal oficial de acceso a información pública.</p></details>
+        <details><summary>¿Cómo protegen mis datos?</summary><p>Consulta la Política de Privacidad y la documentación del producto para conocer qué datos recoge cada servicio y cómo se tratan. Las características y medidas aplicables pueden variar entre productos. No compartas datos sensibles en consultas de soporte.</p></details>
+        <details><summary>¿Cómo reporto una vulnerabilidad de seguridad?</summary><p>Puedes informar una posible vulnerabilidad a soporte@grupostu.com con el asunto «Reporte de seguridad» e incluir la URL y los pasos observados. No accedas a datos de terceros, evadas controles ni realices pruebas que afecten la disponibilidad del servicio. No incluyas credenciales o secretos en el mensaje.</p></details>
         <details><summary>¿Una misma cuenta sirve en todos los productos?</summary><p>Estamos implementando una cuenta única de Grupo Stu para acceder a las plataformas públicas con un solo inicio de sesión. Mientras se integra cada producto, algunos pueden mantener su propio registro; lo comunicaremos en el sitio de cada producto cuando corresponda. Las áreas internas y privadas quedan fuera de esta cuenta.</p></details>
       </div>
     </section>

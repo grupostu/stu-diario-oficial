@@ -30,7 +30,7 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Diarios Oficiales de El Salvador · Busca edictos, marcas y leyes por DUI o nombre</title>
-  <meta name="description" content="Busca tu DUI, tu nombre o el de tu empresa en los edictos, marcas y leyes del Diario Oficial de El Salvador, lee el PDF original y recibe alertas por correo cuando aparezcas.">
+  <meta name="description" content="Busca tu DUI, tu nombre o el de tu empresa en los edictos, marcas y leyes del Diario Oficial de El Salvador y consulta el PDF original.">
   <!-- Sistema visual Stu_UI (copia local en /stu-ui, sin dependencias externas) -->
   <script>${THEME_BOOT}</script>
   <link rel="stylesheet" href="/stu-ui/tokens.css?v=1">
@@ -94,7 +94,7 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
 
     <!-- Encabezado de la página -->
     <section class="mb-8 text-left">
-      <h1 class="text-2xl sm:text-4xl font-bold text-gs-text tracking-tight leading-tight">Diario Oficial de El Salvador: consulta y notificaciones</h1>
+      <h1 class="text-2xl sm:text-4xl font-bold text-gs-text tracking-tight leading-tight">Diario Oficial de El Salvador: consulta de publicaciones</h1>
       <p class="mt-3 text-gs-text2 text-sm sm:text-base max-w-3xl leading-relaxed">
         Verifica si tu <strong>DUI</strong> (en números o en letras notariales), <strong>nombre</strong> o <strong>sociedad</strong> figura en edictos de aceptación de herencia, emplazamientos, rebeldías, remates o marcas. Cada resultado enlaza al PDF original, con lo buscado resaltado.
       </p>
@@ -106,7 +106,7 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
           <i class="fa-solid fa-book-open-reader"></i> Abrir el diario más reciente
         </button>` : ''}
         <button type="button" onclick="openModalAlert()" class="bg-gs-accent hover:bg-gs-accent-hover text-gs-ink font-bold px-4 py-2 rounded-lg text-sm transition-colors flex items-center gap-2">
-          <i class="fa-solid fa-bell"></i> Vigilancia por DUI
+          <i class="fa-solid fa-bell"></i> Ver estado de alertas
         </button>
       </div>
     </section>
@@ -341,7 +341,7 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
           <span class="w-8 h-8 rounded-lg bg-gs-accent/10 border border-gs-border flex items-center justify-center text-gs-accent">
             <i class="fa-solid fa-scale-balanced"></i>
           </span>
-          <span>Términos de Uso, Naturaleza Informativa y Descargo Legal de Responsabilidad — Grupo Stu, S.A.S.</span>
+          <span>Términos de Uso, Naturaleza Informativa y Descargo Legal de Responsabilidad — Grupo Stu, S.A.S. de C.V.</span>
         </div>
         <span class="text-[10px] font-mono px-2.5 py-1 rounded bg-gs-surface border border-gs-border text-gs-text2">Uso informativo</span>
       </div>
@@ -352,11 +352,11 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
         </div>
         <div class="bg-gs-surface p-3.5 rounded-xl border border-gs-border">
           <strong class="text-gs-text block mb-1">2. No Sustitución ni Carácter Certificante:</strong>
-          <strong>Grupo Stu, S.A.S.</strong> es una entidad privada e independiente; no representa ni sustituye a la Imprenta Nacional (<code>diariooficial.gob.sv</code>) ni emite certificaciones, constancias oficiales o copias fieles con valor probatorio judicial.
+          <strong>Grupo Stu, S.A.S. de C.V.</strong> es una entidad privada e independiente; no representa ni sustituye a la Imprenta Nacional (<code>diariooficial.gob.sv</code>) ni emite certificaciones, constancias oficiales o copias fieles con valor probatorio judicial.
         </div>
         <div class="bg-gs-surface p-3.5 rounded-xl border border-gs-border">
           <strong class="text-gs-warning block mb-1">3. Limitación Total de Responsabilidad:</strong>
-          Las transcripciones se extraen automáticamente del texto del PDF y se ofrecen «tal cual» con fines orientativos. <strong>Grupo Stu, S.A.S. no es responsable de la exactitud de la información contenida ni del uso, interpretación o decisiones tomadas por el usuario.</strong>
+          Las transcripciones se extraen automáticamente del texto del PDF y se ofrecen «tal cual» con fines orientativos. <strong>Grupo Stu, S.A.S. de C.V. no es responsable de la exactitud de la información contenida ni del uso, interpretación o decisiones tomadas por el usuario.</strong>
         </div>
       </div>
     </div>
@@ -364,46 +364,19 @@ export function renderPortal(stats: { totalDocumentos: number; totalAlertas: num
 
   ${VISOR_HTML}
 
-  <!-- Modal para Suscripción de Alertas Preventivas -->
-  <div id="modal-alert" class="fixed inset-0 bg-gs-bg hidden items-center justify-center p-4 z-50">
-    <div class="glass-card max-w-md w-full p-6 sm:p-8 rounded-xl border border-gs-border text-left">
+  <!-- Modal informativo: las alertas aún no están disponibles y no se recopilan datos. -->
+  <div id="modal-alert" class="fixed inset-0 bg-gs-bg hidden items-center justify-center p-4 z-50" aria-hidden="true">
+    <div class="glass-card max-w-md w-full p-6 sm:p-8 rounded-xl border border-gs-border text-left" role="dialog" aria-modal="true" aria-labelledby="alert-modal-title" tabindex="-1">
       <div class="flex justify-between items-center mb-4">
-        <h3 class="text-xl font-bold text-gs-text flex items-center gap-2">
-          <i class="fa-solid fa-bell text-gs-accent"></i> Alerta Preventiva por DUI
+        <h3 id="alert-modal-title" class="text-xl font-bold text-gs-text flex items-center gap-2">
+          <i class="fa-solid fa-bell text-gs-accent"></i> Alertas por correo
         </h3>
         <button type="button" aria-label="Cerrar" onclick="closeModalAlert()" class="text-gs-text2 hover:text-gs-text text-lg"><i class="fa-solid fa-xmark"></i></button>
       </div>
-      <p class="text-xs text-gs-text2 mb-6 leading-relaxed">
-        Nuestro motor revisa cada nueva publicación del Diario Oficial. Si se detecta tu número de DUI, nombre o sociedad en un edicto judicial, orden de captura, embargo o registro de marca, te enviaremos una notificación inmediata.
+      <p class="text-sm text-gs-text2 mb-6 leading-relaxed" role="status">
+        El servicio de alertas por correo está temporalmente deshabilitado. No ingreses ni envíes datos personales aquí; esta ventana no recopila ni guarda información.
       </p>
-      <form onsubmit="submitAlert(event)" novalidate class="space-y-4">
-        <div>
-          <label class="block text-xs font-bold text-gs-text2 mb-1">DUI o Nombre a Monitorear</label>
-          <input type="text" id="alert-criterion" aria-label="DUI o nombre a vigilar" placeholder="ej. 00000000-0 o Nombre Completo" required
-            class="w-full bg-gs-bg border border-gs-border rounded-xl px-4 py-3 text-gs-text text-sm outline-none font-mono focus:border-gs-accent">
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-gs-text2 mb-1">Correo Electrónico para Alertas</label>
-          <input type="email" id="alert-email" aria-label="Correo para recibir alertas" placeholder="correo@ejemplo.com" required
-            class="w-full bg-gs-bg border border-gs-border rounded-xl px-4 py-3 text-gs-text text-sm outline-none focus:border-gs-accent">
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-gs-text2 mb-1">WhatsApp de Urgencia (Opcional)</label>
-          <input type="tel" id="alert-phone" placeholder="+503 7000-0000"
-            class="w-full bg-gs-bg border border-gs-border rounded-xl px-4 py-3 text-gs-text text-sm outline-none focus:border-gs-accent">
-        </div>
-        <div class="rounded-xl border border-gs-border bg-gs-bg p-3 text-[11px] leading-relaxed text-gs-text2">
-          <p><strong class="text-gs-text">Aviso de privacidad.</strong> Grupo Stu, S.A.S. usa tu correo, tu WhatsApp (si lo das) y el DUI o nombre que escribas solo para enviarte alertas cuando aparezcan en el Diario Oficial. Los guardamos mientras la alerta siga activa y puedes pedir la baja y el borrado en cualquier momento. No los vendemos ni los usamos para otra cosa. <a href="/privacidad" target="_blank" rel="noopener" class="text-gs-accent underline">Leer el aviso completo</a>.</p>
-        </div>
-        <label class="flex items-start gap-2 text-xs text-gs-text cursor-pointer">
-          <input type="checkbox" id="alert-consent" required class="mt-0.5 h-4 w-4 accent-emerald-500">
-          <span>He leído el aviso de privacidad y autorizo a Grupo Stu, S.A.S. a tratar estos datos para enviarme las alertas.</span>
-        </label>
-        <p id="alert-msg" role="status" class="hidden text-xs rounded-xl px-3 py-2"></p>
-        <button type="submit" class="w-full bg-gs-accent hover:bg-gs-accent-hover text-gs-ink font-semibold py-3.5 rounded-xl text-sm transition-all">
-          Guardar Alerta y Proteger mi Identidad
-        </button>
-      </form>
+      <a href="/privacidad" class="text-gs-accent underline">Leer el aviso de privacidad</a>
     </div>
   </div>
 

@@ -76,7 +76,6 @@ function compararGolden(nombre: string, actual: string): void {
 }
 
 let hijo: ChildProcess;
-
 before(async () => {
   hijo = spawn(process.execPath, ['--import', 'tsx', 'src/server.ts'], {
     env: { ...process.env, PORT: String(PORT), RATE_LIMIT_ALERTS_MAX: '50', RATE_LIMIT_SEARCH_MAX: '1000', RATE_LIMIT_READS_MAX: '1000', NODE_ENV: 'production' },
@@ -92,8 +91,12 @@ before(async () => {
   throw new Error('El servidor no arrancó');
 });
 
-after(() => {
-  hijo?.kill();
+after(async () => {
+  if (hijo && hijo.exitCode === null && hijo.signalCode === null) {
+    const terminado = new Promise<void>((resolve) => hijo.once('exit', () => resolve()));
+    hijo.kill();
+    await terminado;
+  }
 });
 
 const ID_PUB = 'do-453-20261023-p1-r1';
@@ -188,7 +191,7 @@ test('golden método no permitido en la portada (POST) cae al 404', async () => 
   compararGolden('portada_post', serializar(r));
 });
 
-test('golden alertas: validaciones, JSON roto y alta correcta', async () => {
+test('golden alertas: validaciones, JSON roto y alta deshabilitada sin almacenar datos', async () => {
   const json = { 'content-type': 'application/json' };
   const casos: Array<{ nombre: string; cuerpo: string; headers?: Record<string, string> }> = [
     { nombre: 'alerta_sin_consentimiento', cuerpo: JSON.stringify({ usuarioEmail: 'a@b.com', criterioBusqueda: 'Juan Perez' }) },
@@ -204,12 +207,11 @@ test('golden alertas: validaciones, JSON roto y alta correcta', async () => {
     compararGolden(c.nombre, serializar(r));
   }
   const ok = await pedir({ path: '/api/v1/alerts', method: 'POST', headers: json, body: JSON.stringify({ usuarioEmail: 'prueba@example.com', criterioBusqueda: 'Juan Perez', consentimiento: true }) });
-  compararGolden('alerta_ok', serializar(ok, (t) => t.replace(/"id":"[^"]+"/, '"id":"alert-X"')));
-  const reintento = await pedir({ path: '/api/v1/alerts', method: 'POST', headers: json, body: JSON.stringify({ usuarioEmail: 'prueba@example.com', criterioBusqueda: 'Juan Perez', consentimiento: true }) });
-  assert.equal(ok.status, 201);
-  assert.equal(reintento.status, 200);
-  assert.equal(JSON.parse(reintento.cuerpo.toString('utf8')).id, JSON.parse(ok.cuerpo.toString('utf8')).id);
-  // El alta cambia el contador de la portada (se refresca como máximo cada 5 s): el estado y los datos sensibles no se exponen.
+  compararGolden('alerta_ok', serializar(ok));
+  assert.equal(ok.status, 503);
+  assert.equal(ok.headers['cache-control'], 'no-store');
+  assert.match(ok.cuerpo.toString('utf8'), /temporalmente deshabilitadas/);
+  // La API rechaza una alta válida sin modificar el contador ni conservar datos de contacto.
   const salud = await pedir({ path: '/health' });
   assert.ok(!/activeSubscriptions|prueba@example\.com/.test(salud.cuerpo.toString('utf8')));
 });

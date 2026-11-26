@@ -88,9 +88,9 @@ cross-origin-opener-policy: same-origin
   <div class="gs-footer__in">
     <div class="gs-footer__grid">
       <div>
-        <div class="gs-footer__product"><div class="gs-footer__brand"><span class="gs-footer__seal gs-footer__seal--product" aria-hidden="true">DO</span><a class="gs-footer__bname" href="https://diariosoficiales.grupostu.com">Diarios Oficiales</a></div><p>Facilita la búsqueda de edictos, avisos y normativa publicada en diarios oficiales, con alertas por correo y enlaces estables a cada documento para que puedas citarlo y conservarlo.</p></div>
+        <div class="gs-footer__product"><div class="gs-footer__brand"><span class="gs-footer__seal gs-footer__seal--product" aria-hidden="true">DO</span><a class="gs-footer__bname" href="https://diariosoficiales.grupostu.com">Diarios Oficiales</a></div><p>Facilita la búsqueda de edictos, avisos y normativa publicada en diarios oficiales y ofrece enlaces estables a cada documento para que puedas citarlo y conservarlo.</p></div>
         <div class="gs-footer__brand"><span class="gs-footer__seal" aria-hidden="true">GS</span><span class="gs-footer__bname">Grupo Stu</span></div>
-        <p>Grupo Stu desarrolla productos de software desde San Salvador, El Salvador: herramientas en línea, hospedaje, constructor de aplicaciones, software de gestión, formación y clasificados, con un mismo estándar de seguridad, privacidad y soporte.</p>
+        <p>Grupo Stu desarrolla productos de software desde San Salvador, El Salvador. Cada plataforma publica sus propias funciones, condiciones y canales de soporte.</p>
         <div class="gs-footer__notice" role="note">Servicio de consulta y seguimiento. Para efectos legales rige siempre el ejemplar publicado por la autoridad emisora, al que cada registro enlaza.</div>
       </div>
       <nav aria-label="Plataformas de Grupo Stu">
@@ -100,19 +100,19 @@ cross-origin-opener-policy: same-origin
         </ul>
       </nav>
       <div>
-        <h3>Legal y transparencia</h3>
+        <h3>Legal e información corporativa</h3>
         <ul>
           <li class="gs-footer__item"><a href="https://grupostu.com/es/legal/privacidad">Política de Privacidad</a><small>Qué datos recopilamos, para qué, por cuánto tiempo y cómo ejercer tus derechos, conforme a la legislación de El Salvador.</small></li>
           <li class="gs-footer__item"><a href="https://grupostu.com/es/legal/terminos">Términos y Condiciones</a><small>Reglas de uso de los servicios, responsabilidades, pagos, cancelaciones y resolución de controversias.</small></li>
-          <li class="gs-footer__item"><a href="https://grupostu.com/es/legal/transparencia">Transparencia y Acceso a la Información</a><small>Información pública y vías de solicitud según los artículos 10 y 11 de la LAIP.</small></li>
-          <li class="gs-footer__item"><a href="mailto:soporte@grupostu.com?subject=Reporte%20de%20seguridad">Seguridad y reporte de vulnerabilidades</a><small>Canal para notificar fallos de seguridad de forma responsable.</small></li>
+          <li class="gs-footer__item"><a href="https://grupostu.com/es/legal/transparencia">Información corporativa</a><small>Información sobre la empresa, el alcance de sus servicios y fuentes públicas citadas. No es un portal oficial de acceso a información pública.</small></li>
+          <li class="gs-footer__item"><a href="mailto:soporte@grupostu.com?subject=Reporte%20de%20seguridad">Seguridad y reporte de vulnerabilidades</a><small>Correo publicado para informar una posible vulnerabilidad. Evita pruebas que afecten servicios o datos de terceros.</small></li>
         </ul>
       </div>
       <div>
         <h3>Soporte y contacto</h3>
         <ul>
-          <li class="gs-footer__item"><a href="mailto:soporte@grupostu.com">soporte@grupostu.com</a><small>Canal oficial único de soporte técnico, facturación, privacidad y avisos legales de todos los productos.</small></li>
-          <li class="gs-footer__item"><span class="gs-footer__cur">San Salvador, El Salvador</span><small>Nunca pedimos contraseñas ni códigos de verificación por correo o chat.</small></li>
+          <li class="gs-footer__item"><a href="mailto:soporte@grupostu.com">soporte@grupostu.com</a><small>Correo de contacto publicado por Grupo Stu para consultas generales. Indica el producto al que se refiere tu mensaje.</small></li>
+          <li class="gs-footer__item"><span class="gs-footer__cur">San Salvador, El Salvador</span><small>No compartas contraseñas ni códigos de verificación con personas que te contacten.</small></li>
         </ul>
       </div>
     </div>
@@ -120,13 +120,13 @@ cross-origin-opener-policy: same-origin
       <h3 id="gs-faq-h">Preguntas frecuentes — Diarios Oficiales</h3>
       <div class="gs-footer__faq-grid">
         <details open><summary>¿Los documentos tienen validez legal?</summary><p>Diarios Oficiales es un servicio de consulta y seguimiento: indexa y organiza publicaciones para facilitar su búsqueda. Para efectos legales rige siempre el ejemplar publicado por la autoridad emisora; cada registro enlaza a su fuente para que puedas contrastarlo.</p></details>
-        <details><summary>¿Cómo funcionan las alertas por correo?</summary><p>Defines el término o la materia que te interesa y recibes un aviso cuando aparece una publicación coincidente. Debes confirmar tu correo para activar la alerta y puedes darte de baja desde cualquier mensaje.</p></details>
+        <details><summary>¿Están disponibles las alertas por correo?</summary><p>No. Las alertas por correo están temporalmente deshabilitadas. El sitio no permite registrarse ni guarda datos para ese fin.</p></details>
         <details><summary>¿Cada cuánto se actualiza el contenido?</summary><p>La indexación se ejecuta de forma periódica a lo largo del día. Puede existir un desfase entre la publicación oficial y su aparición aquí; ante una urgencia, confirma siempre en el sitio de la autoridad emisora.</p></details>
-        <details><summary>¿Qué es Grupo Stu?</summary><p>Grupo Stu desarrolla y opera desde San Salvador, El Salvador, un conjunto de productos de software: herramientas en línea, hospedaje, constructor de aplicaciones, ERP, software financiero, formación, clasificados y publicaciones oficiales. Cada producto tiene su propio sitio, pero comparten identidad, estándares de seguridad y canal de soporte.</p></details>
-        <details><summary>¿Cómo contacto a soporte y cuánto tarda la respuesta?</summary><p>Escribe a soporte@grupostu.com indicando el producto, tu correo de registro y una descripción del problema (capturas de pantalla ayudan). Es el único canal oficial: no solicitamos contraseñas, códigos de verificación ni datos completos de tarjeta por ningún medio. Respondemos en orden de llegada y priorizamos incidentes que afecten pagos, acceso o seguridad.</p></details>
-        <details><summary>¿Qué leyes rigen el uso de los servicios?</summary><p>La Política de Privacidad y los Términos y Condiciones se rigen por la legislación de la República de El Salvador. Los textos vigentes están publicados en grupostu.com/es/legal, junto con la página de Transparencia y Acceso a la Información conforme a los artículos 10 y 11 de la LAIP.</p></details>
-        <details><summary>¿Cómo protegen mis datos?</summary><p>Aplicamos cifrado en tránsito (HTTPS), validación estricta de todo lo que recibe cada sistema, separación de datos entre clientes, límites de intentos y registros de auditoría que nunca guardan contraseñas, tokens ni datos completos de tarjetas. Los respaldos se prueban de forma periódica y el acceso administrativo requiere autenticación reforzada.</p></details>
-        <details><summary>¿Cómo reporto una vulnerabilidad de seguridad?</summary><p>Envía el detalle a soporte@grupostu.com con el asunto «Reporte de seguridad»: URL afectada, pasos para reproducirlo e impacto estimado. Evalúa sin acceder a datos de terceros ni degradar el servicio; confirmamos la recepción, corregimos según la gravedad y te informamos cuando esté resuelto.</p></details>
+        <details><summary>¿Qué es Grupo Stu?</summary><p>Grupo Stu desarrolla y opera desde San Salvador, El Salvador, productos de software como herramientas en línea, hospedaje, constructor de aplicaciones, ERP, formación, clasificados y servicios de consulta de publicaciones. Cada producto tiene su propio sitio y puede tener condiciones, características y canales de contacto específicos.</p></details>
+        <details><summary>¿Cómo contacto a Grupo Stu?</summary><p>Para consultas generales puedes escribir a soporte@grupostu.com e indicar el producto y una descripción breve. No incluyas contraseñas, códigos de verificación ni datos completos de tarjeta en mensajes o capturas. Revisa la documentación del servicio para conocer sus opciones de soporte específicas.</p></details>
+        <details><summary>¿Qué leyes rigen el uso de los servicios?</summary><p>La Política de Privacidad y los Términos y Condiciones se rigen por la legislación aplicable de la República de El Salvador. Sus versiones vigentes están publicadas en grupostu.com/es/legal. La página de información corporativa describe a la empresa y no es un portal oficial de acceso a información pública.</p></details>
+        <details><summary>¿Cómo protegen mis datos?</summary><p>Consulta la Política de Privacidad y la documentación del producto para conocer qué datos recoge cada servicio y cómo se tratan. Las características y medidas aplicables pueden variar entre productos. No compartas datos sensibles en consultas de soporte.</p></details>
+        <details><summary>¿Cómo reporto una vulnerabilidad de seguridad?</summary><p>Puedes informar una posible vulnerabilidad a soporte@grupostu.com con el asunto «Reporte de seguridad» e incluir la URL y los pasos observados. No accedas a datos de terceros, evadas controles ni realices pruebas que afecten la disponibilidad del servicio. No incluyas credenciales o secretos en el mensaje.</p></details>
         <details><summary>¿Una misma cuenta sirve en todos los productos?</summary><p>Estamos implementando una cuenta única de Grupo Stu para acceder a las plataformas públicas con un solo inicio de sesión. Mientras se integra cada producto, algunos pueden mantener su propio registro; lo comunicaremos en el sitio de cada producto cuando corresponda. Las áreas internas y privadas quedan fuera de esta cuenta.</p></details>
       </div>
     </section>

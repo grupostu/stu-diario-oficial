@@ -1,5 +1,6 @@
-HTTP 201
+HTTP 503
 content-type: application/json; charset=utf-8
+cache-control: no-store
 x-content-type-options: nosniff
 x-frame-options: SAMEORIGIN
 referrer-policy: strict-origin-when-cross-origin
@@ -7,4 +8,4 @@ content-security-policy: base-uri 'self'; object-src 'none'; frame-ancestors 'se
 permissions-policy: camera=(), microphone=(), geolocation=(), payment=()
 cross-origin-opener-policy: same-origin
 
-{"success":true,"id":"alert-X"}
+{"error":"Las alertas por correo están temporalmente deshabilitadas."}

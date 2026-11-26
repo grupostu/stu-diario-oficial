@@ -1,7 +1,7 @@
 {
   "name": "@stu/diario-oficial",
   "version": "1.0.0",
-  "description": "Plataforma Inteligente de Búsqueda, Digitalización y Alertas de Diarios Oficiales de El Salvador - Grupo Stu, S.A.S. (diario.grupostu.com)",
+  "description": "Plataforma Inteligente de Búsqueda, Digitalización y Alertas de Diarios Oficiales de El Salvador - Grupo Stu, S.A.S. de C.V. (diario.grupostu.com)",
   "main": "dist/server.js",
   "type": "module",
   "packageManager": "pnpm@12.16.1",
@@ -21,7 +21,7 @@
     "alertas",
     "grupo-stu"
   ],
-  "author": "Grupo Stu, S.A.S.",
+  "author": "Grupo Stu, S.A.S. de C.V.",
   "license": "UNLICENSED",
   "dependencies": {
     "express": "^4.21.2"

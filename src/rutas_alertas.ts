@@ -1,4 +1,4 @@
-// Alta de alertas (datos personales): validación estricta, límite de uso propio y minimización en la respuesta.
+// Las alertas están deshabilitadas hasta que exista un ciclo completo de confirmación, entrega y baja.
 import { Router, type Request, type Response } from 'express';
 import { validarAlerta } from './alert_validation.js';
 import type { ContextoRutas } from './contexto.js';
@@ -13,22 +13,9 @@ export function rutasAlertas(ctx: ContextoRutas): Router {
       res.status(400).json({ error: check.error });
       return;
     }
-    const { usuarioEmail, telefonoWhatsapp, criterioBusqueda, tipoCriterio } = check.value;
-    // La inserción y el límite se resuelven juntos; reintentos de red recuperan la misma alerta.
-    const resultado = ctx.suscripciones.suscribirUnaVez({ usuarioEmail, telefonoWhatsapp, criterioBusqueda, tipoCriterio: tipoCriterio || 'DUI' }, ctx.maxSuscripciones);
-    if (resultado.estado === 'limite') {
-      res.set('Cache-Control', 'no-store');
-      res.status(503).json({ error: 'El servicio de alertas no admite más suscripciones por ahora.' });
-      return;
-    }
-    const sub = resultado.suscripcion;
-    if (!sub) {
-      res.status(500).json({ error: 'No se pudo confirmar el registro de la alerta.' });
-      return;
-    }
-    if (resultado.estado === 'creada') ctx.portada.invalidar();
-    // Minimización: no se devuelven DUI, correo ni teléfono; solo el identificador de la alerta.
-    res.status(resultado.estado === 'creada' ? 201 : 200).json({ success: true, id: sub.id });
+    // No se almacena ni reenvía ningún dato hasta implementar y verificar el ciclo completo.
+    res.set('Cache-Control', 'no-store');
+    res.status(503).json({ error: 'Las alertas por correo están temporalmente deshabilitadas.' });
   });
 
   return r;

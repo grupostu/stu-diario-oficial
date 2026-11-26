@@ -83,20 +83,6 @@ export const PORTADA_JS = `    // Menú de la cabecera compartida: delegado en e
 
     let previousAlertFocus = null;
     let previousAlertInertStates = new Map();
-    let alertOpenGeneration = 0;
-    let alertRequestPending = false;
-    let alertRequestResult = null;
-    let alertSuccessfulPayloadKey = null;
-
-    function getAlertPayloadKey() {
-      return JSON.stringify({
-        criterion: document.getElementById('alert-criterion').value.trim(),
-        email: document.getElementById('alert-email').value.trim(),
-        phone: document.getElementById('alert-phone').value.trim(),
-        consent: document.getElementById('alert-consent').checked
-      });
-    }
-
     function getAlertFocusable(dialog) {
       return Array.from(dialog.querySelectorAll('button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])'))
         .filter(element => element.getAttribute('aria-hidden') !== 'true');
@@ -161,32 +147,24 @@ export const PORTADA_JS = `    // Menú de la cabecera compartida: delegado en e
       const modal = document.getElementById('modal-alert');
       if (!modal.classList.contains('hidden')) return;
       previousAlertFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-      alertOpenGeneration += 1;
       modal.classList.remove('hidden');
       modal.classList.add('flex');
       modal.setAttribute('aria-hidden', 'false');
       setAlertBackgroundInert();
       document.addEventListener('keydown', handleAlertDialogKeydown);
       document.addEventListener('focusin', handleAlertDialogFocusIn);
-      modal.addEventListener('input', handleAlertPayloadChange);
-      modal.addEventListener('change', handleAlertPayloadChange);
-      showAlertRequestState();
-      if (alertRequestPending) modal.querySelector('button[aria-label="Cerrar"]').focus();
-      else document.getElementById('alert-criterion').focus();
+      modal.querySelector('button[aria-label="Cerrar"]').focus();
     }
 
     function closeModalAlert() {
       const modal = document.getElementById('modal-alert');
       if (modal.classList.contains('hidden')) return;
-      alertOpenGeneration += 1;
       modal.classList.add('hidden');
       modal.classList.remove('flex');
       modal.setAttribute('aria-hidden', 'true');
       restoreAlertBackground();
       document.removeEventListener('keydown', handleAlertDialogKeydown);
       document.removeEventListener('focusin', handleAlertDialogFocusIn);
-      modal.removeEventListener('input', handleAlertPayloadChange);
-      modal.removeEventListener('change', handleAlertPayloadChange);
       if (previousAlertFocus && previousAlertFocus.isConnected) previousAlertFocus.focus();
       previousAlertFocus = null;
     }
@@ -364,7 +342,7 @@ export const PORTADA_JS = `    // Menú de la cabecera compartida: delegado en e
               '<i class="fa-regular fa-circle-check text-4xl text-gs-accent mb-3"></i>' +
               '<h4 class="text-base sm:text-lg font-bold text-gs-text">Sin publicaciones oficiales encontradas</h4>' +
               '<p class="text-xs sm:text-sm text-gs-text2 mt-1 max-w-md mx-auto">El criterio «<strong>' + escapeHtmlText(q) + '</strong>» no aparece en los títulos, números de decreto, órganos emisores ni en el texto de las publicaciones de este tomo. Prueba con menos palabras, revisa la ortografía (no importan las tildes ni las mayúsculas) o quita el filtro de sección.</p>' +
-              '<div class="mt-5"><button type="button" onclick="openModalAlert()" class="px-5 py-2.5 rounded-xl bg-gs-surface border border-gs-border text-gs-accent font-bold text-xs hover:bg-gs-surface2">Crear una alerta para este criterio</button></div></div>';
+              '<div class="mt-5"><button type="button" onclick="openModalAlert()" class="px-5 py-2.5 rounded-xl bg-gs-surface border border-gs-border text-gs-accent font-bold text-xs hover:bg-gs-surface2">Ver estado de alertas</button></div></div>';
             return;
           }
 
@@ -493,110 +471,6 @@ export const PORTADA_JS = `    // Menú de la cabecera compartida: delegado en e
         .catch(() => {
           container.innerHTML = '<div role="alert" class="glass-card p-6 text-center text-gs-danger">No pudimos cargar las leyes. Inténtalo de nuevo en unos segundos.</div>';
         });
-    }
-
-    function showAlertMsg(ok, text) {
-      const el = document.getElementById('alert-msg');
-      el.innerText = text;
-      el.className = 'text-xs rounded-xl px-3 py-2 ' + (ok ? 'bg-gs-surface2 text-gs-accent border border-gs-border' : 'bg-gs-surface2 text-gs-danger border border-gs-border');
-    }
-
-    function setAlertPending(pending) {
-      const form = document.querySelector('#modal-alert form');
-      const submit = form.querySelector('button[type="submit"]');
-      alertRequestPending = pending;
-      form.setAttribute('aria-busy', String(pending));
-      form.querySelectorAll('input, select, textarea').forEach(control => { control.disabled = pending; });
-      const sameSuccessfulPayload = alertRequestResult === 'success' && alertSuccessfulPayloadKey === getAlertPayloadKey();
-      submit.disabled = pending || sameSuccessfulPayload;
-      submit.textContent = pending ? 'Guardando alerta…' : sameSuccessfulPayload ? 'Alerta guardada' : 'Guardar Alerta y Proteger mi Identidad';
-    }
-
-    function showAlertRequestState() {
-      if (alertRequestPending) {
-        showAlertMsg(false, 'Hay una solicitud en curso. Espera a que se confirme antes de enviar otra.');
-      } else if (alertRequestResult === 'success' && alertSuccessfulPayloadKey === getAlertPayloadKey()) {
-        showAlertMsg(true, 'La alerta ya se registró. No necesitas enviarla de nuevo.');
-      } else if (alertRequestResult === 'failure') {
-        showAlertMsg(false, 'No se confirmó la solicitud anterior. Revisa los datos y vuelve a intentarlo.');
-      } else {
-        document.getElementById('alert-msg').classList.add('hidden');
-      }
-      setAlertPending(alertRequestPending);
-    }
-
-    function handleAlertPayloadChange() {
-      if (alertRequestPending) return;
-      if (alertRequestResult === 'success') {
-        if (alertSuccessfulPayloadKey === getAlertPayloadKey()) {
-          showAlertMsg(true, 'La alerta ya se registró. No necesitas enviarla de nuevo.');
-        } else {
-          document.getElementById('alert-msg').classList.add('hidden');
-        }
-        setAlertPending(false);
-      }
-    }
-
-    async function submitAlert(e) {
-      e.preventDefault();
-      if (alertRequestPending) return;
-      const crit = document.getElementById('alert-criterion').value.trim();
-      const email = document.getElementById('alert-email').value.trim();
-      const phone = document.getElementById('alert-phone').value.trim();
-      const payloadKey = getAlertPayloadKey();
-      if (alertRequestResult === 'success' && alertSuccessfulPayloadKey === payloadKey) {
-        showAlertMsg(true, 'La alerta ya se registró. No necesitas enviarla de nuevo.');
-        return;
-      }
-
-      const evaluado = evaluarCriterio(crit);
-      if (!evaluado.ok) return showAlertMsg(false, evaluado.error);
-      if (!document.getElementById('alert-consent').checked) return showAlertMsg(false, 'Para guardar la alerta debes aceptar el aviso de privacidad.');
-      if (!/^[^@ ]+@[^@ ]+[.][^@ ]{2,}$/.test(email)) return showAlertMsg(false, 'Escribe un correo electrónico válido.');
-      if (phone && !/^[+]?[0-9 ()-]{8,20}$/.test(phone)) return showAlertMsg(false, 'El teléfono solo admite números, espacios y el signo +.');
-
-      const generation = alertOpenGeneration;
-      alertRequestResult = null;
-      const controller = new AbortController();
-      const requestTimeout = setTimeout(() => controller.abort(), 30000);
-      showAlertMsg(true, 'Enviando alerta. Los campos quedan bloqueados hasta recibir respuesta.');
-      setAlertPending(true);
-      try {
-        const r = await fetch('/api/v1/alerts', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          signal: controller.signal,
-          body: JSON.stringify({
-            criterioBusqueda: evaluado.valor,
-            tipoCriterio: evaluado.tipo,
-            usuarioEmail: email,
-            telefonoWhatsapp: phone,
-            consentimiento: true
-          })
-        });
-        const body = await r.json().catch(() => ({}));
-        alertRequestResult = r.ok ? 'success' : 'failure';
-        if (r.ok) alertSuccessfulPayloadKey = payloadKey;
-        if (generation === alertOpenGeneration && !document.getElementById('modal-alert').classList.contains('hidden')) {
-          setAlertPending(false);
-          showAlertMsg(r.ok, r.ok ? 'Alerta registrada para «' + evaluado.valor + '».' : body.error || 'No se pudo registrar la alerta. Revisa los datos.');
-        } else if (!document.getElementById('modal-alert').classList.contains('hidden')) {
-          showAlertRequestState();
-        }
-      } catch {
-        alertRequestResult = 'failure';
-        if (!document.getElementById('modal-alert').classList.contains('hidden')) {
-          setAlertPending(false);
-          showAlertMsg(false, 'No se confirmó la solicitud. Revisa si la alerta quedó registrada antes de volver a intentarlo.');
-        }
-      } finally {
-        clearTimeout(requestTimeout);
-        alertRequestPending = false;
-        if (!document.getElementById('modal-alert').classList.contains('hidden')) {
-          setAlertPending(false);
-          if (generation !== alertOpenGeneration) showAlertRequestState();
-        }
-      }
     }
 
     // Ejecutar una búsqueda inicial demostrativa al cargar para mostrar las tarjetas enriquecidas de inmediato
