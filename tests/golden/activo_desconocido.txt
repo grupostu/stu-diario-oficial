@@ -63,7 +63,7 @@ cross-origin-opener-policy: same-origin
 .gs-footer__nav a[aria-current="page"]{background:var(--gsf-hover);border-left-color:var(--gsf-ok);color:var(--gsf-title);font-weight:700}
 .gs-footer__nav small{margin-left:auto;font-size:11px;color:var(--gsf-ok);font-weight:600;white-space:nowrap}
 @media(max-width:600px){.gs-footer__grid{grid-template-columns:1fr}}
-@media(max-width:600px),(pointer:coarse){.gs-footer__nav a{min-height:44px;box-sizing:border-box}
+@media(max-width:600px),(pointer:coarse){.gs-footer__nav a{min-height:44px;box-sizing:border-box}}
 .gs-footer h3{margin:0 0 14px;color:var(--gsf-strong);font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:700}
 .gs-footer ul{list-style:none;margin:0;padding:0;display:grid;gap:12px}
 .gs-footer p{margin:0 0 10px}

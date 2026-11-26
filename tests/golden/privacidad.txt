@@ -3,7 +3,7 @@ content-type: text/html; charset=utf-8
 cache-control: public, max-age=300, s-maxage=3600, stale-while-revalidate=86400
 cdn-cache-control: public, max-age=3600, stale-while-revalidate=86400
 vary: Accept-Encoding
-etag: "upbOU0hJLpVjqn8Ke9BfkbfXvqs"
+etag: "dMjrR5J_oSu1tBNB8gHdhs4zVa0"
 x-content-type-options: nosniff
 x-frame-options: SAMEORIGIN
 referrer-policy: strict-origin-when-cross-origin
@@ -44,7 +44,7 @@ cross-origin-opener-policy: same-origin
   <main><div class="contenido">
   <p><a href="/">&larr; Volver al buscador</a></p>
   <h1>Aviso de privacidad</h1>
-  <p>Este aviso explica cómo trata tus datos el servicio de alertas de este sitio. Lo responsable del tratamiento es <strong>Grupo Stu, S.A.S.</strong></p>
+  <p>Este aviso explica cómo trata tus datos el servicio de alertas de este sitio. Lo responsable del tratamiento es <strong>Grupo Stu, S.A.S. de C.V.</strong></p>
 
   <h2>Qué datos pedimos</h2>
   <ul>
@@ -69,7 +69,7 @@ cross-origin-opener-policy: same-origin
   <h2>Sobre el contenido del Diario Oficial</h2>
   <p>Los edictos y avisos que se muestran son publicaciones oficiales ya públicas. Si crees que una publicación te afecta, la fuente original es el Diario Oficial.</p>
 
-  <p style="margin-top:2rem;font-size:.85rem">Grupo Stu, S.A.S. · Esta página puede actualizarse; la versión vigente es la que ves aquí.</p>
+  <p style="margin-top:2rem;font-size:.85rem">Grupo Stu, S.A.S. de C.V. · Esta página puede actualizarse; la versión vigente es la que ves aquí.</p>
 </div></main>
   <!-- FOOTER INSTITUCIONAL MAESTRO v3 — Grupo Stu · generado por identidad_marca_grupo_stu/footer/build-footers.mjs; no editar a mano -->
 <style>
@@ -95,7 +95,7 @@ cross-origin-opener-policy: same-origin
 .gs-footer__nav a[aria-current="page"]{background:var(--gsf-hover);border-left-color:var(--gsf-ok);color:var(--gsf-title);font-weight:700}
 .gs-footer__nav small{margin-left:auto;font-size:11px;color:var(--gsf-ok);font-weight:600;white-space:nowrap}
 @media(max-width:600px){.gs-footer__grid{grid-template-columns:1fr}}
-@media(max-width:600px),(pointer:coarse){.gs-footer__nav a{min-height:44px;box-sizing:border-box}
+@media(max-width:600px),(pointer:coarse){.gs-footer__nav a{min-height:44px;box-sizing:border-box}}
 .gs-footer h3{margin:0 0 14px;color:var(--gsf-strong);font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:700}
 .gs-footer ul{list-style:none;margin:0;padding:0;display:grid;gap:12px}
 .gs-footer p{margin:0 0 10px}

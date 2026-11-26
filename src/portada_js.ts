@@ -81,14 +81,114 @@ export const PORTADA_JS = `    // Menú de la cabecera compartida: delegado en e
       return String(t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     }
 
+    let previousAlertFocus = null;
+    let previousAlertInertStates = new Map();
+    let alertOpenGeneration = 0;
+    let alertRequestPending = false;
+    let alertRequestResult = null;
+    let alertSuccessfulPayloadKey = null;
+
+    function getAlertPayloadKey() {
+      return JSON.stringify({
+        criterion: document.getElementById('alert-criterion').value.trim(),
+        email: document.getElementById('alert-email').value.trim(),
+        phone: document.getElementById('alert-phone').value.trim(),
+        consent: document.getElementById('alert-consent').checked
+      });
+    }
+
+    function getAlertFocusable(dialog) {
+      return Array.from(dialog.querySelectorAll('button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])'))
+        .filter(element => element.getAttribute('aria-hidden') !== 'true');
+    }
+
+    function handleAlertDialogKeydown(event) {
+      const modal = document.getElementById('modal-alert');
+      if (modal.classList.contains('hidden')) return;
+      const dialog = modal.querySelector('[role="dialog"]');
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        closeModalAlert();
+        return;
+      }
+      if (event.key !== 'Tab') return;
+      const focusable = getAlertFocusable(dialog);
+      if (!focusable.length) {
+        event.preventDefault();
+        dialog.focus();
+        return;
+      }
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && (document.activeElement === first || document.activeElement === dialog)) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && (document.activeElement === last || document.activeElement === dialog)) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+
+    function handleAlertDialogFocusIn(event) {
+      const modal = document.getElementById('modal-alert');
+      if (modal.classList.contains('hidden')) return;
+      const dialog = modal.querySelector('[role="dialog"]');
+      if (dialog.contains(event.target)) return;
+      (getAlertFocusable(dialog)[0] || dialog).focus();
+    }
+
+    function setAlertBackgroundInert() {
+      const modal = document.getElementById('modal-alert');
+      let branch = modal;
+      while (branch && branch.parentElement) {
+        const parent = branch.parentElement;
+        Array.from(parent.children).forEach(sibling => {
+          if (sibling === branch || !(sibling instanceof HTMLElement)) return;
+          if (!previousAlertInertStates.has(sibling)) previousAlertInertStates.set(sibling, sibling.inert);
+          sibling.inert = true;
+        });
+        if (parent === document.body) break;
+        branch = parent;
+      }
+    }
+
+    function restoreAlertBackground() {
+      previousAlertInertStates.forEach((wasInert, element) => { element.inert = wasInert; });
+      previousAlertInertStates.clear();
+    }
+
     function openModalAlert() {
-      document.getElementById('modal-alert').classList.remove('hidden');
-      document.getElementById('modal-alert').classList.add('flex');
+      const modal = document.getElementById('modal-alert');
+      if (!modal.classList.contains('hidden')) return;
+      previousAlertFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      alertOpenGeneration += 1;
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      modal.setAttribute('aria-hidden', 'false');
+      setAlertBackgroundInert();
+      document.addEventListener('keydown', handleAlertDialogKeydown);
+      document.addEventListener('focusin', handleAlertDialogFocusIn);
+      modal.addEventListener('input', handleAlertPayloadChange);
+      modal.addEventListener('change', handleAlertPayloadChange);
+      showAlertRequestState();
+      if (alertRequestPending) modal.querySelector('button[aria-label="Cerrar"]').focus();
+      else document.getElementById('alert-criterion').focus();
     }
 
     function closeModalAlert() {
-      document.getElementById('modal-alert').classList.add('hidden');
-      document.getElementById('modal-alert').classList.remove('flex');
+      const modal = document.getElementById('modal-alert');
+      if (modal.classList.contains('hidden')) return;
+      alertOpenGeneration += 1;
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      modal.setAttribute('aria-hidden', 'true');
+      restoreAlertBackground();
+      document.removeEventListener('keydown', handleAlertDialogKeydown);
+      document.removeEventListener('focusin', handleAlertDialogFocusIn);
+      modal.removeEventListener('input', handleAlertPayloadChange);
+      modal.removeEventListener('change', handleAlertPayloadChange);
+      if (previousAlertFocus && previousAlertFocus.isConnected) previousAlertFocus.focus();
+      previousAlertFocus = null;
     }
 
     // Previsualizador dinámico de DUI mientras el usuario escribe
@@ -401,11 +501,53 @@ export const PORTADA_JS = `    // Menú de la cabecera compartida: delegado en e
       el.className = 'text-xs rounded-xl px-3 py-2 ' + (ok ? 'bg-gs-surface2 text-gs-accent border border-gs-border' : 'bg-gs-surface2 text-gs-danger border border-gs-border');
     }
 
-    function submitAlert(e) {
+    function setAlertPending(pending) {
+      const form = document.querySelector('#modal-alert form');
+      const submit = form.querySelector('button[type="submit"]');
+      alertRequestPending = pending;
+      form.setAttribute('aria-busy', String(pending));
+      form.querySelectorAll('input, select, textarea').forEach(control => { control.disabled = pending; });
+      const sameSuccessfulPayload = alertRequestResult === 'success' && alertSuccessfulPayloadKey === getAlertPayloadKey();
+      submit.disabled = pending || sameSuccessfulPayload;
+      submit.textContent = pending ? 'Guardando alerta…' : sameSuccessfulPayload ? 'Alerta guardada' : 'Guardar Alerta y Proteger mi Identidad';
+    }
+
+    function showAlertRequestState() {
+      if (alertRequestPending) {
+        showAlertMsg(false, 'Hay una solicitud en curso. Espera a que se confirme antes de enviar otra.');
+      } else if (alertRequestResult === 'success' && alertSuccessfulPayloadKey === getAlertPayloadKey()) {
+        showAlertMsg(true, 'La alerta ya se registró. No necesitas enviarla de nuevo.');
+      } else if (alertRequestResult === 'failure') {
+        showAlertMsg(false, 'No se confirmó la solicitud anterior. Revisa los datos y vuelve a intentarlo.');
+      } else {
+        document.getElementById('alert-msg').classList.add('hidden');
+      }
+      setAlertPending(alertRequestPending);
+    }
+
+    function handleAlertPayloadChange() {
+      if (alertRequestPending) return;
+      if (alertRequestResult === 'success') {
+        if (alertSuccessfulPayloadKey === getAlertPayloadKey()) {
+          showAlertMsg(true, 'La alerta ya se registró. No necesitas enviarla de nuevo.');
+        } else {
+          document.getElementById('alert-msg').classList.add('hidden');
+        }
+        setAlertPending(false);
+      }
+    }
+
+    async function submitAlert(e) {
       e.preventDefault();
+      if (alertRequestPending) return;
       const crit = document.getElementById('alert-criterion').value.trim();
       const email = document.getElementById('alert-email').value.trim();
       const phone = document.getElementById('alert-phone').value.trim();
+      const payloadKey = getAlertPayloadKey();
+      if (alertRequestResult === 'success' && alertSuccessfulPayloadKey === payloadKey) {
+        showAlertMsg(true, 'La alerta ya se registró. No necesitas enviarla de nuevo.');
+        return;
+      }
 
       const evaluado = evaluarCriterio(crit);
       if (!evaluado.ok) return showAlertMsg(false, evaluado.error);
@@ -413,24 +555,48 @@ export const PORTADA_JS = `    // Menú de la cabecera compartida: delegado en e
       if (!/^[^@ ]+@[^@ ]+[.][^@ ]{2,}$/.test(email)) return showAlertMsg(false, 'Escribe un correo electrónico válido.');
       if (phone && !/^[+]?[0-9 ()-]{8,20}$/.test(phone)) return showAlertMsg(false, 'El teléfono solo admite números, espacios y el signo +.');
 
-      fetch('/api/v1/alerts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          criterioBusqueda: evaluado.valor,
-          tipoCriterio: evaluado.tipo,
-          usuarioEmail: email,
-          telefonoWhatsapp: phone,
-          consentimiento: true
-        })
-      })
-      .then(async (r) => {
+      const generation = alertOpenGeneration;
+      alertRequestResult = null;
+      const controller = new AbortController();
+      const requestTimeout = setTimeout(() => controller.abort(), 30000);
+      showAlertMsg(true, 'Enviando alerta. Los campos quedan bloqueados hasta recibir respuesta.');
+      setAlertPending(true);
+      try {
+        const r = await fetch('/api/v1/alerts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          signal: controller.signal,
+          body: JSON.stringify({
+            criterioBusqueda: evaluado.valor,
+            tipoCriterio: evaluado.tipo,
+            usuarioEmail: email,
+            telefonoWhatsapp: phone,
+            consentimiento: true
+          })
+        });
         const body = await r.json().catch(() => ({}));
-        if (!r.ok) return showAlertMsg(false, body.error || 'No se pudo registrar la alerta. Revisa los datos.');
-        showAlertMsg(true, 'Alerta registrada para «' + evaluado.valor + '».');
-        setTimeout(closeModalAlert, 2500);
-      })
-      .catch(() => showAlertMsg(false, 'No pudimos conectar. Inténtalo de nuevo en unos segundos.'));
+        alertRequestResult = r.ok ? 'success' : 'failure';
+        if (r.ok) alertSuccessfulPayloadKey = payloadKey;
+        if (generation === alertOpenGeneration && !document.getElementById('modal-alert').classList.contains('hidden')) {
+          setAlertPending(false);
+          showAlertMsg(r.ok, r.ok ? 'Alerta registrada para «' + evaluado.valor + '».' : body.error || 'No se pudo registrar la alerta. Revisa los datos.');
+        } else if (!document.getElementById('modal-alert').classList.contains('hidden')) {
+          showAlertRequestState();
+        }
+      } catch {
+        alertRequestResult = 'failure';
+        if (!document.getElementById('modal-alert').classList.contains('hidden')) {
+          setAlertPending(false);
+          showAlertMsg(false, 'No se confirmó la solicitud. Revisa si la alerta quedó registrada antes de volver a intentarlo.');
+        }
+      } finally {
+        clearTimeout(requestTimeout);
+        alertRequestPending = false;
+        if (!document.getElementById('modal-alert').classList.contains('hidden')) {
+          setAlertPending(false);
+          if (generation !== alertOpenGeneration) showAlertRequestState();
+        }
+      }
     }
 
     // Ejecutar una búsqueda inicial demostrativa al cargar para mostrar las tarjetas enriquecidas de inmediato
